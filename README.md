@@ -28,7 +28,7 @@ dependencies: [
 ## Usage
 
 ```swift
-import Chrono_swift
+import Chrono
 
 // Parse a date
 let results = Chrono.parse(text: "Let's meet tomorrow at 6:30pm")
@@ -94,7 +94,3 @@ chrono.addParser(MyCustomParser())
 // Use your custom parser
 let results = chrono.parse(text: "special_date_format")
 ```
-
-## License
-
-MIT License

@@ -8,7 +8,7 @@
 ## Build & Test Commands
 - Build package: `swift build`
 - Run all tests: `swift test`
-- Run single test: `swift test --filter Chrono_swiftTests/testName`
+- Run single test: `swift test --filter ChronoTests/testName`
 - Generate Xcode project: `swift package generate-xcodeproj`
 - Debug build with symbols: `swift build -c debug -Xswiftc -g`
 - Release build with optimization: `swift build -c release -Xswiftc -O`

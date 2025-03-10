@@ -4,7 +4,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "Chrono.swift",
+    name: "Chrono",
     platforms: [
         .macOS(.v12),
         .iOS(.v15),
@@ -14,12 +14,8 @@ let package = Package(
     products: [
         // Products define the executables and libraries a package produces, making them visible to other packages.
         .library(
-            name: "Chrono.swift",
-            type: .dynamic,
-            targets: ["Chrono.swift"]),
-        .executable(
-            name: "ChronoSwiftApp",
-            targets: ["ChronoSwiftApp"]),
+            name: "Chrono",
+            targets: ["Chrono"]),
         .executable(
             name: "Benchmark",
             targets: ["Benchmark"]),
@@ -31,24 +27,19 @@ let package = Package(
         // Targets are the basic building blocks of a package, defining a module or a test suite.
         // Targets can depend on other targets in this package and products from dependencies.
         .target(
-            name: "Chrono.swift",
+            name: "Chrono",
             swiftSettings: [
                 .define("CHRONO_VERSION_STRING=\"0.1.0\"")
             ]),
         .executableTarget(
-            name: "ChronoSwiftApp",
-            dependencies: ["Chrono.swift"],
-            path: "Sources",
-            sources: ["App.swift"]),
-        .executableTarget(
             name: "Benchmark",
-            dependencies: ["Chrono.swift"]),
+            dependencies: ["Chrono"]),
         .executableTarget(
             name: "Examples",
-            dependencies: ["Chrono.swift"]),
+            dependencies: ["Chrono"]),
         .testTarget(
-            name: "Chrono.swiftTests",
-            dependencies: ["Chrono.swift"]
+            name: "ChronoTests",
+            dependencies: ["Chrono"]
         ),
     ]
 )

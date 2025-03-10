@@ -1,6 +1,6 @@
 // AdvancedDateRangeExample.swift - Examples of advanced date range parsing with Chrono.swift
 import Foundation
-import Chrono_swift
+import Chrono
 
 /// Example showing advanced date range parsing capabilities of Chrono.swift
 struct AdvancedDateRangeExample {

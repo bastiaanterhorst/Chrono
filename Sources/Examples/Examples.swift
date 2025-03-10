@@ -1,6 +1,6 @@
 // Examples.swift - Main entry point for Chrono.swift examples
 import Foundation
-import Chrono_swift
+import Chrono
 
 /// Main entry point for running examples
 @main

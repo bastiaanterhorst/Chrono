@@ -1,6 +1,6 @@
 // BasicDateParsing.swift - Examples of basic date parsing with Chrono.swift
 import Foundation
-import Chrono_swift
+import Chrono
 
 /// Example showing basic date parsing capabilities of Chrono.swift
 struct BasicDateParsingExample {

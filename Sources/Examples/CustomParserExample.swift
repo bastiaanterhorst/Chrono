@@ -1,6 +1,6 @@
 // CustomParserExample.swift - Example demonstrating custom parsers and refiners in Chrono.swift
 import Foundation
-import Chrono_swift
+import Chrono
 
 /// Example showing how to create and use custom parsers and refiners with Chrono.swift
 struct CustomParserExample {

@@ -1,6 +1,6 @@
 // ParsingOptionsExample.swift - Demonstrating parsing options in Chrono.swift
 import Foundation
-import Chrono_swift
+import Chrono
 
 /// Example showing how to use parsing options with Chrono.swift
 struct ParsingOptionsExample {

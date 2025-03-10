@@ -1,6 +1,6 @@
 // ChronoBenchmark.swift - Performance benchmarking for Chrono.swift
 import Foundation
-import Chrono_swift
+import Chrono
 
 @main
 struct ChronoBenchmark {

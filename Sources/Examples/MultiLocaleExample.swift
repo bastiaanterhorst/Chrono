@@ -1,6 +1,6 @@
 // MultiLocaleExample.swift - Examples of multi-locale date parsing with Chrono.swift
 import Foundation
-import Chrono_swift
+import Chrono
 
 /// Example showing multi-locale date parsing capabilities of Chrono.swift
 struct MultiLocaleExample {
