@@ -12,14 +12,7 @@ A natural language date parser for Swift. This is a port of the JavaScript libra
 - Support for month names like "January 12", "May 5"
 - Support for slash dates like "12/25/2023", "05/15"
 - Extendable architecture with parsers and refiners
-- Multiple language support:
-  - English (EN) - Complete
-  - German (DE) - Complete
-  - Japanese (JA) - Complete
-  - French (FR) - Complete
-  - Spanish (ES) - Coming soon
-  - Portuguese (PT) - Coming soon
-  - Dutch (NL) - Coming soon
+- Multiple language support
 
 ## Installation
 
