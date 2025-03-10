@@ -1,6 +1,7 @@
 # Chrono.swift
 
 A natural language date parser for Swift. This is a port of the JavaScript library [Chrono](https://github.com/wanasit/chrono).
+Ported by Claude Code.
 
 ## Features
 
