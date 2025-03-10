@@ -62,14 +62,30 @@ public final class ParsingComponents: @unchecked Sendable {
     /// - Returns: The component value or nil if not set
     func get(_ component: Component) -> Int? {
         if knownValues.keys.contains(component) {
-            return knownValues[component]
+            // Special handling for null values (marked with -1)
+            let value = knownValues[component]
+            return value == -1 ? nil : value
         }
         
         if impliedValues.keys.contains(component) {
-            return impliedValues[component]
+            // Special handling for null values (marked with -1)
+            let value = impliedValues[component]
+            return value == -1 ? nil : value
         }
         
         return nil
+    }
+    
+    /// Specifically marks a component as "null" to prevent it from being implied
+    /// This is useful for preventing conflicts between parsers (e.g., hour vs. isoWeek)
+    /// - Parameter component: The component to mark as null
+    /// - Returns: Self for chaining
+    @discardableResult
+    func assignNull(_ component: Component) -> ParsingComponents {
+        // We use -1 as a special sentinel value meaning "explicitly not set"
+        knownValues[component] = -1
+        impliedValues.removeValue(forKey: component)
+        return self
     }
     
     /// Sets a known component value

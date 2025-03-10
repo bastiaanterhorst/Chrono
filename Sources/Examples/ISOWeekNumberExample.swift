@@ -6,7 +6,10 @@ import Chrono
 func isoWeekNumberExample() {
     print("\n=== ISO Week Number Parsing Examples ===\n")
     
-    // Create a parser with English configuration
+    // Create a parser with English configuration with debug option
+    let options = ParsingOptions(forwardDate: false, debug: true)
+    
+    // Use the standard casual configuration which now has ISO week parsing
     let chrono = EN.casual
     
     // Example 1: Basic week number - "Week 45"
@@ -23,7 +26,10 @@ func isoWeekNumberExample() {
     ]
     
     for example in examples {
-        printParseResults(chrono: chrono, text: example)
+        print("Testing: \"\(example)\"")
+        let results = chrono.parse(text: example, referenceDate: Date(), options: options)
+        printResults(results)
+        print("-------------------------------------------\n")
     }
     
     // Relative week expressions
@@ -41,7 +47,37 @@ func isoWeekNumberExample() {
     ]
     
     for example in relativeExamples {
-        printParseResults(chrono: chrono, text: example)
+        print("Testing: \"\(example)\"")
+        let results = chrono.parse(text: example, referenceDate: Date(), options: options)
+        printResults(results)
+        print("-------------------------------------------\n")
+    }
+}
+
+// Helper function to print results
+private func printResults(_ results: [ParsedResult]) {
+    if results.isEmpty {
+        print("No date/time information found")
+    } else {
+        for (index, result) in results.enumerated() {
+            print("Result \(index + 1):")
+            print("  Text: \"\(result.text)\"")
+            print("  Date: \(result.start.date)")
+            
+            if let isoWeek = result.start.isoWeek, let isoWeekYear = result.start.isoWeekYear {
+                print("  ISO Week: \(isoWeek) of \(isoWeekYear)")
+                
+                if let weekStart = result.start.isoWeekStart, let weekEnd = result.start.isoWeekEnd {
+                    let dateFormatter = DateFormatter()
+                    dateFormatter.dateStyle = .medium
+                    print("  Week range: \(dateFormatter.string(from: weekStart)) to \(dateFormatter.string(from: weekEnd))")
+                }
+            }
+            
+            print("  Known values: \(result.start.knownValues)")
+            print("  Implied values: \(result.start.impliedValues)")
+            print("")
+        }
     }
 }
 

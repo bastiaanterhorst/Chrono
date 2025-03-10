@@ -5,7 +5,7 @@ final class ISOWeekNumberParsingTests: XCTestCase {
     
     // Test adding ISO week number components
     func testISOWeekComponents() {
-        let referenceDate = ReferenceWithTimezone(instant: Date(), timezone: nil)
+        let referenceDate = ReferenceWithTimezone(instant: Date())
         let components = ParsingComponents(reference: referenceDate)
         
         // Test assigning ISO week number
@@ -39,7 +39,7 @@ final class ISOWeekNumberParsingTests: XCTestCase {
     // Test conversion between ISO week and date
     func testISOWeekToDate() {
         // Create a components object for ISO week 1 of 2023
-        let referenceDate = ReferenceWithTimezone(instant: Date(), timezone: nil)
+        let referenceDate = ReferenceWithTimezone(instant: Date())
         let components = ParsingComponents(reference: referenceDate)
         
         components.assign(.isoWeekYear, value: 2023)
@@ -74,7 +74,7 @@ final class ISOWeekNumberParsingTests: XCTestCase {
             return
         }
         
-        let reference = ReferenceWithTimezone(instant: testDate, timezone: nil)
+        let reference = ReferenceWithTimezone(instant: testDate)
         let components = ParsingComponents(reference: reference)
         
         // The components should correctly imply the ISO week values
@@ -91,7 +91,7 @@ final class ISOWeekNumberParsingTests: XCTestCase {
             return
         }
         
-        let reference2 = ReferenceWithTimezone(instant: testDate2, timezone: nil)
+        let reference2 = ReferenceWithTimezone(instant: testDate2)
         let components2 = ParsingComponents(reference: reference2)
         
         // The components should correctly imply the ISO week values
@@ -113,7 +113,7 @@ final class ISOWeekNumberParsingTests: XCTestCase {
             return
         }
         
-        let reference = ReferenceWithTimezone(instant: testDate, timezone: nil)
+        let reference = ReferenceWithTimezone(instant: testDate)
         let components = ParsingComponents(reference: reference)
         
         // The components should correctly imply the ISO week values

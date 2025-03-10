@@ -6,14 +6,15 @@ public enum EN {
     /// Creates a casual configuration for English parsing
     /// - Returns: A Chrono instance with casual configuration
     static func createCasualConfiguration() -> Chrono {
+        // IMPORTANT: Order of parsers determines priority - first parser to match wins
         let baseParsers: [Parser] = [
+            // ISO Week parsers MUST come first for highest priority
+            ENISOWeekNumberParser(),
+            ENRelativeWeekParser(),
+            
             // Casual date/time parsers
             ENCasualDateParser(),
             ENCasualTimeParser(),
-            
-            // Time-related parsers
-            ENSimpleTimeParser(),
-            ENTimeExpressionParser(),
             
             // Date-related parsers
             ENWeekdayParser(),
@@ -26,8 +27,10 @@ public enum EN {
             ENSlashDateFormatParser(),
             ENSlashMonthFormatParser(),
             ENYearMonthDayParser(),
-            ENISOWeekNumberParser(),
-            ENRelativeWeekParser(),
+            
+            // Time-related parsers come last to avoid conflicts with week numbers
+            ENSimpleTimeParser(),
+            ENTimeExpressionParser(),
             
             // Time unit parsers
             ENTimeUnitAgoFormatParser(),
@@ -49,6 +52,9 @@ public enum EN {
             ENExtractYearSuffixRefiner(),
             ENUnlikelyFormatFilter(),
             
+            // Week number prioritization
+            ENPrioritizeWeekNumberRefiner(),
+            
             // Prioritization should be last
             ENPrioritizeSpecificDateRefiner()
         ]
@@ -66,11 +72,13 @@ public enum EN {
     /// Creates a strict configuration for English parsing
     /// - Returns: A Chrono instance with strict configuration
     static func createStrictConfiguration() -> Chrono {
+        // IMPORTANT: Order matters for parser priority
         let baseParsers: [Parser] = [
-            // Only formal parsers, no casual expressions
-            ENSimpleTimeParser(),
-            ENTimeExpressionParser(),
+            // ISO Week parsers MUST come first for highest priority
+            ENISOWeekNumberParser(),
+            ENRelativeWeekParser(),
             
+            // Date parsers come before time parsers
             ENMonthNameParser(),
             ENMonthNameLittleEndianParser(),
             ENMonthNameMiddleEndianParser(),
@@ -78,8 +86,10 @@ public enum EN {
             ENSlashDateFormatParser(),
             ENSlashMonthFormatParser(),
             ENYearMonthDayParser(),
-            ENISOWeekNumberParser(),
-            ENRelativeWeekParser()
+            
+            // Time parsers last to avoid conflicts with week numbers
+            ENSimpleTimeParser(),
+            ENTimeExpressionParser()
         ]
         
         let baseRefiners: [Refiner] = [
@@ -87,6 +97,7 @@ public enum EN {
             ENMergeDateRangeRefiner(),
             ENExtractYearSuffixRefiner(),
             ENUnlikelyFormatFilter(),
+            ENPrioritizeWeekNumberRefiner(), // Add week number prioritization
             ENPrioritizeSpecificDateRefiner()
         ]
         
