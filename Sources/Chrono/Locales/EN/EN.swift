@@ -27,6 +27,7 @@ public enum EN {
             ENSlashMonthFormatParser(),
             ENYearMonthDayParser(),
             ENISOWeekNumberParser(),
+            ENRelativeWeekParser(),
             
             // Time unit parsers
             ENTimeUnitAgoFormatParser(),
@@ -77,7 +78,8 @@ public enum EN {
             ENSlashDateFormatParser(),
             ENSlashMonthFormatParser(),
             ENYearMonthDayParser(),
-            ENISOWeekNumberParser()
+            ENISOWeekNumberParser(),
+            ENRelativeWeekParser()
         ]
         
         let baseRefiners: [Refiner] = [

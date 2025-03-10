@@ -32,6 +32,33 @@ func isoWeekNumberExample() {
     // Example 6: Conversational format - "the 22nd week"
     let example6 = "Let's meet during the 22nd week"
     printParseResults(chrono: chrono, text: example6)
+    
+    // Example 7: Relative week expressions
+    print("\n=== Relative Week Expressions ===\n")
+    
+    // This week
+    let example7 = "Let's schedule the meeting for this week"
+    printParseResults(chrono: chrono, text: example7)
+    
+    // Next week
+    let example8 = "The project is due next week"
+    printParseResults(chrono: chrono, text: example8)
+    
+    // Last week
+    let example9 = "The report was submitted last week"
+    printParseResults(chrono: chrono, text: example9)
+    
+    // N weeks ago
+    let example10 = "The problem started 3 weeks ago"
+    printParseResults(chrono: chrono, text: example10)
+    
+    // In N weeks
+    let example11 = "The launch is scheduled in 2 weeks"
+    printParseResults(chrono: chrono, text: example11)
+    
+    // Complex relative expressions
+    let example12 = "We need to finish the work the week after next"
+    printParseResults(chrono: chrono, text: example12)
 }
 
 /// Helper function to print parsing results

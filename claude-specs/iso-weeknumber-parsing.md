@@ -24,11 +24,11 @@ This specification outlines the implementation of ISO week number parsing functi
 
 ### 2: English implementation
 - [x] Create a test suite for English week number parsing covering all expected formats (Created ENISOWeekNumberParserTests.swift)
-- [ ] Create a test suite for relative week parsing (next week, last week, in N weeks, etc.)
+- [x] Create a test suite for relative week parsing (next week, last week, in N weeks, etc.) (Created ENRelativeWeekParserTests.swift)
 - [x] Implement `ENISOWeekNumberParser` for parsing formats like "Week 45", "W45 2023" (Created ENISOWeekNumberParser.swift)
-- [ ] Implement or extend `ENRelativeWeekParser` for handling relative expressions
+- [x] Implement or extend `ENRelativeWeekParser` for handling relative expressions (Created ENRelativeWeekParser.swift)
 - [x] Add example code demonstrating ISO week number parsing (Created ISOWeekNumberExample.swift)
-- [x] Update the EN locale configuration to include the new parser
+- [x] Update the EN locale configuration to include the new parsers
 
 ### 3: Dutch implementation
 - [ ] Create a test suite for Dutch week parsing covering all expected formats
