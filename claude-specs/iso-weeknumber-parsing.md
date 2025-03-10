@@ -23,11 +23,12 @@ This specification outlines the implementation of ISO week number parsing functi
     - [x] Create utility functions to convert between dates and ISO week numbers/years (Added dateFromISOWeek method)
 
 ### 2: English implementation
-- [ ] Create a test suite for English week number parsing covering all expected formats
+- [x] Create a test suite for English week number parsing covering all expected formats (Created ENISOWeekNumberParserTests.swift)
 - [ ] Create a test suite for relative week parsing (next week, last week, in N weeks, etc.)
-- [ ] Implement `ENISOWeekNumberParser` for parsing formats like "Week 45", "W45 2023"
+- [x] Implement `ENISOWeekNumberParser` for parsing formats like "Week 45", "W45 2023" (Created ENISOWeekNumberParser.swift)
 - [ ] Implement or extend `ENRelativeWeekParser` for handling relative expressions
-- [ ] Determine the most logical and idiomatic way to structure this new capability in the project, and refine this task into a set of subtasks to implement the required functionality for the English locale
+- [x] Add example code demonstrating ISO week number parsing (Created ISOWeekNumberExample.swift)
+- [x] Update the EN locale configuration to include the new parser
 
 ### 3: Dutch implementation
 - [ ] Create a test suite for Dutch week parsing covering all expected formats
@@ -53,9 +54,9 @@ This specification outlines the implementation of ISO week number parsing functi
     - [ ] Implement parsers
 
 ### 5: Wrapping up
-- [ ] Update documentation and examples
+- [x] Update documentation and examples (Created ISOWeekNumberExample.swift)
 - [ ] Add benchmarks for the new parsers
-- [ ] Create example usage patterns for the new functionality
+- [x] Create example usage patterns for the new functionality
 - [ ] Review and ensure complete test coverage
 
 ## Technical Specifications

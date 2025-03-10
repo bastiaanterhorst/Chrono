@@ -15,10 +15,11 @@ struct ExamplesRunner {
         print("3. Parsing Options")
         print("4. Advanced Date Range Handling")
         print("5. Custom Parsers and Refiners")
-        print("6. Run All Examples")
-        print("7. Exit")
+        print("6. ISO Week Number Parsing")
+        print("7. Run All Examples")
+        print("8. Exit")
         
-        print("\nEnter your choice (1-7): ", terminator: "")
+        print("\nEnter your choice (1-8): ", terminator: "")
         if let choice = readLine() {
             switch choice {
             case "1":
@@ -32,8 +33,10 @@ struct ExamplesRunner {
             case "5":
                 CustomParserExample.run()
             case "6":
-                runAllExamples()
+                isoWeekNumberExample()
             case "7":
+                runAllExamples()
+            case "8":
                 print("Exiting...")
             default:
                 print("Invalid choice. Exiting...")
@@ -71,5 +74,11 @@ struct ExamplesRunner {
         print("Running Custom Parsers and Refiners Examples...")
         print("==============================================")
         CustomParserExample.run()
+        
+        print("\n\n")
+        print("==============================================")
+        print("Running ISO Week Number Parsing Examples...")
+        print("==============================================")
+        isoWeekNumberExample()
     }
 }
