@@ -1,4 +1,4 @@
-// Chrono.swift - A natural language date parser
+// Chrono - A natural language date parser
 // Port of the JavaScript library: https://github.com/wanasit/chrono
 
 import Foundation

@@ -1,4 +1,4 @@
-# Chrono.swift
+# Chrono
 
 A natural language date parser for Swift. This is a port of the JavaScript library [Chrono](https://github.com/wanasit/chrono).
 Ported by Claude Code.
@@ -21,7 +21,7 @@ Ported by Claude Code.
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/your-username/Chrono.swift.git", from: "1.0.0")
+    .package(url: "https://github.com/your-username/Chrono.git", from: "1.0.0")
 ]
 ```
 
@@ -60,7 +60,7 @@ if let jaDate = jaResults.first?.start.date,
 
 ## Architecture
 
-Chrono.swift is built with a modular architecture:
+Chrono is built with a modular architecture:
 
 - **Parsers**: Individual parsers that recognize specific date/time formats
 - **Refiners**: Post-processors that refine and merge parsed results
@@ -68,7 +68,7 @@ Chrono.swift is built with a modular architecture:
 
 ### Customization
 
-You can extend Chrono.swift with your own parsers:
+You can extend Chrono with your own parsers:
 
 ```swift
 // Create a custom parser

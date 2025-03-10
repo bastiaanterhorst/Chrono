@@ -1,4 +1,4 @@
-// Examples.swift - Main entry point for Chrono.swift examples
+// Examples.swift - Main entry point for Chrono examples
 import Foundation
 import Chrono
 
@@ -6,8 +6,8 @@ import Chrono
 @main
 struct ExamplesRunner {
     static func main() {
-        print("Chrono.swift Examples")
-        print("===================\n")
+        print("Chrono Examples")
+        print("===============\n")
         
         print("Select an example to run:")
         print("1. Basic Date Parsing")
