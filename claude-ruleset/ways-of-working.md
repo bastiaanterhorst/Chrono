@@ -2,6 +2,8 @@
 
 This document outlines our standardized approach to development on the Chronos.swift project. Following these guidelines ensures a consistent, high-quality codebase that is maintainable and robust.
 
+> **Note**: For a quick reference of core principles, see the [approach-to-work.md](./approach-to-work.md) document.
+
 ## Git Workflow
 
 1. **Branch-Based Development**
