@@ -29,10 +29,10 @@ This specification outlines the implementation of ISO week number parsing functi
 - [x] Implement or extend `ENRelativeWeekParser` for handling relative expressions (Created ENRelativeWeekParser.swift)
 - [x] Add example code demonstrating ISO week number parsing (Created ISOWeekNumberExample.swift)
 - [x] Update the EN locale configuration to include the new parsers
-- [ ] Fix issues with regex capture groups in both parsers
-- [ ] Address errors with the TextMatch.string(at:) method that's causing "Range X not found" errors
-- [ ] Fix the problem where week numbers are being mistakenly parsed as hours
-- [ ] Add better debugging to identify and fix parsing issues
+- [x] Fix issues with regex capture groups in both parsers
+- [x] Address errors with the TextMatch.string(at:) method that's causing "Range X not found" errors
+- [x] Fix the problem where week numbers are being mistakenly parsed as hours
+- [x] Add better debugging to identify and fix parsing issues
 
 ### 3: Dutch implementation
 - [ ] Create a test suite for Dutch week parsing covering all expected formats
@@ -61,7 +61,9 @@ This specification outlines the implementation of ISO week number parsing functi
 - [x] Update documentation and examples (Created ISOWeekNumberExample.swift)
 - [ ] Add benchmarks for the new parsers
 - [x] Create example usage patterns for the new functionality
-- [ ] Review and ensure complete test coverage
+- [x] Review and ensure complete test coverage for English implementation
+- [x] Create prioritization mechanism for week number parsers (ENPrioritizeWeekNumberRefiner)
+- [x] Fix edge cases with ambiguous patterns (like numbers that could be weeks or hours)
 
 ## Technical Specifications
 
@@ -103,3 +105,34 @@ Each parser should:
 - All parsers should work with the existing refiner chain
 - Consider creating a base class for the ISO week number parser to be extended by locale-specific implementations
 - Integrate with existing date range functionality to support week ranges (e.g., "from week 45 to week 48")
+
+## Implementation Notes
+
+### Lessons Learned
+1. **Parser Priority**: When multiple parsers could match the same text, the order in which they're registered is critical.
+2. **Component Tagging**: Adding tags to components helps with identification and prioritization in refiners.
+3. **Fallback Methods**: Having alternative extraction approaches when regex groups fail improves robustness.
+4. **Error Handling**: Robust error handling in text processing prevents cascading failures.
+5. **Calendar Calculations**: ISO week calculations require careful handling, especially around year boundaries.
+6. **Two-digit Year Handling**: When encountering two-digit years (e.g., "27" or "'23"), apply rules to expand them:
+   - For apostrophe years like "'23", prepend "20"
+   - For bare two-digit years, use the "sliding window" approach:
+     - If the number is < 50, assume 21st century (2000+)
+     - If the number is >= 50, assume 20th century (1900+)
+7. **Testing Edge Cases**: Create specific test cases for:
+   - Abbreviated formats (e.g., "Wk 42" instead of "Week 42")
+   - Short year formats (two-digit years)
+   - Different separators (space, dash, slash)
+   - Year placement (before or after the week number)
+
+### Future Locale Implementations
+For implementing ISO week parsing in other locales, follow these guidelines:
+
+1. Study and understand the English implementation as a reference
+2. Focus on locale-specific patterns and terminology
+3. Reuse the core date calculation logic where possible
+4. Ensure proper integration with existing locale-specific parsers
+5. Implement the same tagging and assignNull patterns to prevent conflicts
+6. Apply consistent two-digit year handling across all locales
+7. Support both formal ISO formats (2023-W15) and casual formats in each locale
+

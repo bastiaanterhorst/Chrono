@@ -43,6 +43,46 @@ final class ENISOWeekNumberParserTests: XCTestCase {
         }
     }
     
+    func testBasicAbbreviatedWeekNumberPatternAndExtract() {
+        let parser = ENISOWeekNumberParser()
+        
+        // Create a test context
+        let referenceDate = Date()
+        let context = ParsingContext(
+            text: "Wk 42",
+            reference: ReferenceWithTimezone(instant: referenceDate),
+            options: ParsingOptions()
+        )
+        
+        // Verify the pattern is valid
+        let pattern = parser.pattern(context: context)
+        XCTAssertFalse(pattern.isEmpty)
+        
+        // Create a regex and find a match
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: []) else {
+            XCTFail("Failed to create regex from pattern")
+            return
+        }
+        
+        let nsString = context.text as NSString
+        let matches = regex.matches(in: context.text, options: [], range: NSRange(location: 0, length: nsString.length))
+        
+        XCTAssertEqual(matches.count, 1)
+        
+        // Test extraction
+        if matches.count > 0 {
+            let match = TextMatch(match: matches[0], text: context.text)
+            guard let result = parser.extract(context: context, match: match) as? ParsedResult else {
+                XCTFail("Extraction failed")
+                return
+            }
+            
+            XCTAssertEqual(result.text, "Wk 42")
+            XCTAssertEqual(result.start.get(.isoWeek), 42)
+            XCTAssertTrue(result.start.isCertain(.isoWeek))
+        }
+    }
+    
     func testWeekNumberWithYearPatternAndExtract() {
         let parser = ENISOWeekNumberParser()
         
@@ -74,6 +114,80 @@ final class ENISOWeekNumberParserTests: XCTestCase {
             }
             
             XCTAssertEqual(result.text, "Week 15 2023")
+            XCTAssertEqual(result.start.get(.isoWeek), 15)
+            XCTAssertEqual(result.start.get(.isoWeekYear), 2023)
+            XCTAssertTrue(result.start.isCertain(.isoWeek))
+            XCTAssertTrue(result.start.isCertain(.isoWeekYear))
+        }
+    }
+    
+    func testWeekNumberWithShortYearPatternAndExtract() {
+        let parser = ENISOWeekNumberParser()
+        
+        // Create a test context
+        let referenceDate = Date()
+        let context = ParsingContext(
+            text: "Week 15 27",
+            reference: ReferenceWithTimezone(instant: referenceDate),
+            options: ParsingOptions()
+        )
+        
+        // Create a regex and find a match
+        guard let regex = try? NSRegularExpression(pattern: parser.pattern(context: context), options: []) else {
+            XCTFail("Failed to create regex from pattern")
+            return
+        }
+        
+        let nsString = context.text as NSString
+        let matches = regex.matches(in: context.text, options: [], range: NSRange(location: 0, length: nsString.length))
+        
+        XCTAssertEqual(matches.count, 1)
+        
+        // Test extraction
+        if matches.count > 0 {
+            let match = TextMatch(match: matches[0], text: context.text)
+            guard let result = parser.extract(context: context, match: match) as? ParsedResult else {
+                XCTFail("Extraction failed")
+                return
+            }
+            
+            XCTAssertEqual(result.start.get(.isoWeek), 15)
+            XCTAssertEqual(result.start.get(.isoWeekYear), 2027)
+            XCTAssertTrue(result.start.isCertain(.isoWeek))
+            XCTAssertTrue(result.start.isCertain(.isoWeekYear))
+        }
+    }
+    
+    func testWeekNumberWithAlternateShortYearPatternAndExtract() {
+        let parser = ENISOWeekNumberParser()
+        
+        // Create a test context
+        let referenceDate = Date()
+        let context = ParsingContext(
+            text: "Wk 15 '23",
+            reference: ReferenceWithTimezone(instant: referenceDate),
+            options: ParsingOptions()
+        )
+        
+        // Create a regex and find a match
+        guard let regex = try? NSRegularExpression(pattern: parser.pattern(context: context), options: []) else {
+            XCTFail("Failed to create regex from pattern")
+            return
+        }
+        
+        let nsString = context.text as NSString
+        let matches = regex.matches(in: context.text, options: [], range: NSRange(location: 0, length: nsString.length))
+        
+        XCTAssertEqual(matches.count, 1)
+        
+        // Test extraction
+        if matches.count > 0 {
+            let match = TextMatch(match: matches[0], text: context.text)
+            guard let result = parser.extract(context: context, match: match) as? ParsedResult else {
+                XCTFail("Extraction failed")
+                return
+            }
+            
             XCTAssertEqual(result.start.get(.isoWeek), 15)
             XCTAssertEqual(result.start.get(.isoWeekYear), 2023)
             XCTAssertTrue(result.start.isCertain(.isoWeek))
