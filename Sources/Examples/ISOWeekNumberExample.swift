@@ -7,58 +7,42 @@ func isoWeekNumberExample() {
     print("\n=== ISO Week Number Parsing Examples ===\n")
     
     // Create a parser with English configuration
-    let chrono = Chrono.english()
+    let chrono = EN.casual
     
     // Example 1: Basic week number - "Week 45"
-    let example1 = "Meeting scheduled for Week 45"
-    printParseResults(chrono: chrono, text: example1)
+    let examples = [
+        "Meeting scheduled for Week 45",
+        "The deadline is in Week 15 of 2023",
+        "Project timeline: 2023-W15",
+        "Another milestone at 2023W22",
+        "Delivery expected in W15-2023",
+        "Schedule the review for Week 30 '23",
+        "Let's meet during the 22nd week",
+        "We'll wrap up in week #37",
+        "Progress check in week number 28"
+    ]
     
-    // Example 2: Week number with year - "Week 15 2023"
-    let example2 = "The deadline is in Week 15 2023"
-    printParseResults(chrono: chrono, text: example2)
+    for example in examples {
+        printParseResults(chrono: chrono, text: example)
+    }
     
-    // Example 3: ISO format - "2023-W15"
-    let example3 = "Project timeline: 2023-W15 to 2023-W22"
-    printParseResults(chrono: chrono, text: example3)
-    
-    // Example 4: Alternative ISO format - "W15-2023"
-    let example4 = "Delivery expected in W15-2023"
-    printParseResults(chrono: chrono, text: example4)
-    
-    // Example 5: Week number with abbreviated year - "Week 30 '23"
-    let example5 = "Schedule the review for Week 30 '23"
-    printParseResults(chrono: chrono, text: example5)
-    
-    // Example 6: Conversational format - "the 22nd week"
-    let example6 = "Let's meet during the 22nd week"
-    printParseResults(chrono: chrono, text: example6)
-    
-    // Example 7: Relative week expressions
+    // Relative week expressions
     print("\n=== Relative Week Expressions ===\n")
     
-    // This week
-    let example7 = "Let's schedule the meeting for this week"
-    printParseResults(chrono: chrono, text: example7)
+    let relativeExamples = [
+        "Let's schedule the meeting for this week",
+        "The project is due next week",
+        "The report was submitted last week",
+        "The problem started 3 weeks ago",
+        "The launch is scheduled in 2 weeks",
+        "We need to finish the work the week after next",
+        "I met him the week before last",
+        "Let's meet 4 weeks from now"
+    ]
     
-    // Next week
-    let example8 = "The project is due next week"
-    printParseResults(chrono: chrono, text: example8)
-    
-    // Last week
-    let example9 = "The report was submitted last week"
-    printParseResults(chrono: chrono, text: example9)
-    
-    // N weeks ago
-    let example10 = "The problem started 3 weeks ago"
-    printParseResults(chrono: chrono, text: example10)
-    
-    // In N weeks
-    let example11 = "The launch is scheduled in 2 weeks"
-    printParseResults(chrono: chrono, text: example11)
-    
-    // Complex relative expressions
-    let example12 = "We need to finish the work the week after next"
-    printParseResults(chrono: chrono, text: example12)
+    for example in relativeExamples {
+        printParseResults(chrono: chrono, text: example)
+    }
 }
 
 /// Helper function to print parsing results

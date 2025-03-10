@@ -2,7 +2,7 @@
 import Foundation
 
 /// Parser for relative week expressions in English text
-public class ENRelativeWeekParser: AbstractParserWithWordBoundaryChecking {
+public class ENRelativeWeekParser: AbstractParserWithWordBoundaryChecking, @unchecked Sendable {
     
     /// Matches relative week expressions in text
     override func innerPattern(context: ParsingContext) -> String {
@@ -76,13 +76,17 @@ public class ENRelativeWeekParser: AbstractParserWithWordBoundaryChecking {
         
         if let weekStart = calendar.date(from: dateComponents) {
             // Extract the components from the date and assign them
+            // These are KNOWN values because they're derived directly from the week
             let dayComponents = calendar.dateComponents([.year, .month, .day], from: weekStart)
             components.assign(.year, value: dayComponents.year!)
             components.assign(.month, value: dayComponents.month!)
             components.assign(.day, value: dayComponents.day!)
+            
+            // Time components are implied
             components.imply(.hour, value: 12)
             components.imply(.minute, value: 0)
             components.imply(.second, value: 0)
+            components.imply(.millisecond, value: 0)
         }
         
         return ParsedResult(

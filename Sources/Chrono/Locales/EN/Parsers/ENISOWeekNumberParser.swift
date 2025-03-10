@@ -2,7 +2,7 @@
 import Foundation
 
 /// Parser for ISO 8601 week numbers in English text
-public class ENISOWeekNumberParser: AbstractParserWithWordBoundaryChecking {
+public class ENISOWeekNumberParser: AbstractParserWithWordBoundaryChecking, @unchecked Sendable {
     
     // MARK: - Pattern definitions
     
@@ -14,82 +14,104 @@ public class ENISOWeekNumberParser: AbstractParserWithWordBoundaryChecking {
     
     /// Matches week number patterns in text
     override func innerPattern(context: ParsingContext) -> String {
-        let weekPattern = "(?:week\\s*(?:number)?\\s*|the\\s*|\\#)?(\\d{1,2})(?:st|nd|rd|th)?(?:\\s*week(?:\\s*of)?)?(?:(?:[,\\s]*(?:in|of))?\\s*(\\d{4}|'\\d{2}|\\d{2}))?\\b"
-        let isoPattern = "(?:(\\d{4})[-W]?(\\d{1,2}))|(?:W(\\d{1,2})[-/]?(\\d{4}|'\\d{2}|\\d{2})?)\\b"
+        // Pattern for "Week XX" or "Week XX of 2023"
+        let weekNumPattern = "(?:(?:week|wk)\\s+(?:number\\s+)?(?:#\\s*)?|the\\s+)(\\d{1,2})(?:st|nd|rd|th)?(?:\\s*(?:week|wk))?(?:\\s*(?:of|,|in)\\s+(\\d{4}|'\\d{2}|\\d{2}))?\\b"
         
-        return "\\b(?:(?:week\\s+#?|week\\s+number\\s+|the\\s+\\d{1,2}(?:st|nd|rd|th)\\s+week\\s+)?(\\d{1,2})(?:st|nd|rd|th)?\\s*(?:week)?(?:\\s*(?:of|,)\\s*(\\d{4}|'\\d{2}))?|(?:(\\d{4})[-W]?(\\d{1,2}))|(?:W(\\d{1,2})(?:[-/](\\d{4}|'\\d{2}))?))\\b"
+        // Pattern for "the XXth week" or "the XXth week of 2023"
+        let ordinalWeekPattern = "the\\s+(\\d{1,2})(?:st|nd|rd|th)\\s+(?:week|wk)(?:\\s+(?:of|in)\\s+(\\d{4}|'\\d{2}|\\d{2}))?\\b"
+        
+        // Pattern for formal ISO format "2023-W15" or "2023W15"
+        let isoFormat1 = "(\\d{4})[-W](\\d{1,2})\\b"
+        let isoFormat2 = "(\\d{4})W(\\d{1,2})\\b"
+        
+        // Pattern for "W15-2023" or "W15/2023"
+        let isoFormat3 = "W(\\d{1,2})[-/](\\d{4}|'\\d{2})\\b"
+        
+        // Pattern for just "W15"
+        let isoFormat4 = "W(\\d{1,2})\\b"
+        
+        // Combine all patterns
+        return "\\b(?:" + 
+               [weekNumPattern, ordinalWeekPattern, isoFormat1, isoFormat2, isoFormat3, isoFormat4].joined(separator: "|") + 
+               ")\\b"
     }
     
     // MARK: - Extraction logic
     
     override func innerExtract(context: ParsingContext, match: TextMatch) -> Any? {
+        // Get the matched text
         let text = match.text
+        let lowercaseText = text.lowercased()
         
         // We'll store the matched week number and year in these variables
         var weekNumber: Int?
         var weekYear: Int?
         
-        // Extract from patterns like "Week 15" or "Week 15 of 2023"
-        if let weekMatch = text.range(of: "\\b(?:week\\s+#?|week\\s+number\\s+|the\\s+\\d{1,2}(?:st|nd|rd|th)\\s+week\\s+)?(\\d{1,2})(?:st|nd|rd|th)?\\s*(?:week)?(?:\\s*(?:of|,)\\s*(\\d{4}|'\\d{2}))?\\b", options: [.regularExpression, .caseInsensitive]) {
-            let matchedText = String(text[weekMatch])
-            let numberRegex = "\\d{1,2}"
-            let yearRegex = "\\d{4}|'\\d{2}"
-            
-            if let weekRange = matchedText.range(of: numberRegex, options: .regularExpression) {
-                weekNumber = Int(matchedText[weekRange])
+        // Used for capturing all digits in the text
+        let digitPattern = "\\d+"
+        let digitRegex = try? NSRegularExpression(pattern: digitPattern, options: [])
+        let nsText = text as NSString
+        let matchRange = NSRange(location: 0, length: nsText.length)
+        
+        // Find all numbers in the text
+        let digitMatches = digitRegex?.matches(in: text, options: [], range: matchRange) ?? []
+        let numbers: [Int] = digitMatches.compactMap {
+            let numberRange = $0.range
+            let numberSubstring = nsText.substring(with: numberRange)
+            return Int(numberSubstring)
+        }
+        
+        // Pattern matching approaches based on text format
+        
+        // Check for ISO format "2023-W15" or "2023W15"
+        if lowercaseText.matches(pattern: "\\d{4}[-w]\\d{1,2}") || lowercaseText.matches(pattern: "\\d{4}w\\d{1,2}") {
+            if numbers.count >= 2 {
+                weekYear = numbers[0]
+                weekNumber = numbers[1]
             }
-            
-            if let yearRange = matchedText.range(of: yearRegex, options: .regularExpression) {
-                let yearText = String(matchedText[yearRange])
-                if yearText.starts(with: "'") {
-                    // Handle abbreviated year format '23
-                    let yearSuffix = String(yearText.dropFirst())
-                    if let year = Int(yearSuffix) {
-                        weekYear = 2000 + year
-                    }
+        }
+        
+        // Check for format "W15-2023" or "W15/2023"
+        else if lowercaseText.matches(pattern: "w\\d{1,2}[-/]\\d{4}") || lowercaseText.matches(pattern: "w\\d{1,2}[-/]'\\d{2}") {
+            if numbers.count >= 2 {
+                weekNumber = numbers[0]
+                
+                // Handle year format
+                if lowercaseText.contains("'") && numbers[1] < 100 {
+                    weekYear = 2000 + numbers[1]  // For '23 format
                 } else {
-                    weekYear = Int(yearText)
+                    weekYear = numbers[1]
                 }
             }
         }
         
-        // Extract from ISO format like "2023-W15" or "W15-2023"
-        else if let isoMatch = text.range(of: "(?:(\\d{4})[-W]?(\\d{1,2}))|(?:W(\\d{1,2})(?:[-/](\\d{4}|'\\d{2}))?)", options: [.regularExpression, .caseInsensitive]) {
-            let matchedText = String(text[isoMatch])
+        // Check for format "W15"
+        else if lowercaseText.matches(pattern: "\\bw\\d{1,2}\\b") {
+            if numbers.count >= 1 {
+                weekNumber = numbers[0]
+            }
+        }
+        
+        // Check for various "Week XX" formats
+        else if lowercaseText.contains("week") || lowercaseText.contains("wk") {
+            // Find week number
+            if numbers.count >= 1 {
+                weekNumber = numbers[0]
+            }
             
-            // Pattern 1: "2023-W15" or "2023W15"
-            if matchedText.matches(pattern: "^\\d{4}[-W]?\\d{1,2}$") {
-                let components = matchedText.components(separatedBy: CharacterSet(charactersIn: "-W"))
-                    .filter { !$0.isEmpty }
-                
-                if components.count >= 2 {
-                    weekYear = Int(components[0])
-                    weekNumber = Int(components[1])
+            // Check for year if present
+            if numbers.count >= 2 && !lowercaseText.matches(pattern: "\\d+\\s*weeks?") { // Avoid "3 weeks" pattern
+                let potentialYear = numbers[1]
+                if potentialYear >= 1000 || (lowercaseText.contains("'") && potentialYear < 100) {
+                    weekYear = potentialYear >= 1000 ? potentialYear : 2000 + potentialYear
                 }
             }
-            // Pattern 2: "W15-2023" or "W15/2023" or "W15"
-            else if matchedText.matches(pattern: "^W\\d{1,2}(?:[-/](?:\\d{4}|'\\d{2}))?$") {
-                let components = matchedText.dropFirst() // Drop the 'W'
-                    .components(separatedBy: CharacterSet(charactersIn: "-/"))
-                    .filter { !$0.isEmpty }
-                
-                if components.count >= 1 {
-                    weekNumber = Int(components[0])
-                    
-                    if components.count >= 2 {
-                        let yearText = components[1]
-                        if yearText.starts(with: "'") {
-                            // Handle abbreviated year format '23
-                            let yearSuffix = String(yearText.dropFirst())
-                            if let year = Int(yearSuffix) {
-                                weekYear = 2000 + year
-                            }
-                        } else {
-                            weekYear = Int(yearText)
-                        }
-                    }
-                }
-            }
+        }
+        
+        // If we couldn't extract a week number, try to just get the first number 
+        // This is for patterns like "Week 15"
+        if weekNumber == nil && numbers.count >= 1 {
+            weekNumber = numbers[0]
         }
         
         // Validate the week number
@@ -97,25 +119,47 @@ public class ENISOWeekNumberParser: AbstractParserWithWordBoundaryChecking {
             return nil
         }
         
-        // Create result
-        let index = match.index
-        let referenceDate = context.reference
+        // Create components and set values properly
+        let components = ParsingComponents(reference: context.reference)
         
-        let components = ParsingComponents(reference: referenceDate)
+        // Week is always a KNOWN value when using this parser, never implied
         components.assign(.isoWeek, value: week)
         
-        // If year was specified, use it; otherwise use the current year
+        // If year was specified, it's a KNOWN value; otherwise imply from reference date
         if let year = weekYear {
             components.assign(.isoWeekYear, value: year)
         } else {
             // Use the reference date's year if no year was specified
             let calendar = Calendar(identifier: .iso8601)
-            let currentYear = calendar.component(.yearForWeekOfYear, from: referenceDate.instant)
+            let currentYear = calendar.component(.yearForWeekOfYear, from: context.reference.instant)
             components.imply(.isoWeekYear, value: currentYear)
         }
         
+        // Calculate the start of the week (Monday)
+        var calendar = Calendar(identifier: .iso8601)
+        calendar.firstWeekday = 2 // Monday is the first day
+        
+        var dateComponents = DateComponents()
+        dateComponents.weekOfYear = week
+        dateComponents.yearForWeekOfYear = weekYear ?? calendar.component(.yearForWeekOfYear, from: context.reference.instant)
+        dateComponents.weekday = 2 // Monday (2 in ISO 8601)
+        
+        if let weekStart = calendar.date(from: dateComponents) {
+            // Set year, month, day as KNOWN values (derived from week)
+            let dayComponents = calendar.dateComponents([.year, .month, .day], from: weekStart)
+            components.assign(.year, value: dayComponents.year!)
+            components.assign(.month, value: dayComponents.month!)
+            components.assign(.day, value: dayComponents.day!)
+            
+            // Time components are implied
+            components.imply(.hour, value: 12)
+            components.imply(.minute, value: 0)
+            components.imply(.second, value: 0)
+            components.imply(.millisecond, value: 0)
+        }
+        
         return ParsedResult(
-            index: index,
+            index: match.index,
             text: text,
             start: components.toPublicDate()
         )

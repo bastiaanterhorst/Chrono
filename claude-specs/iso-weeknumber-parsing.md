@@ -29,6 +29,8 @@ This specification outlines the implementation of ISO week number parsing functi
 - [x] Implement or extend `ENRelativeWeekParser` for handling relative expressions (Created ENRelativeWeekParser.swift)
 - [x] Add example code demonstrating ISO week number parsing (Created ISOWeekNumberExample.swift)
 - [x] Update the EN locale configuration to include the new parsers
+- [ ] Fix regex pattern matching to properly handle all expected formats
+- [ ] Refine parsers to ensure ISO week components are properly set as KNOWN values
 
 ### 3: Dutch implementation
 - [ ] Create a test suite for Dutch week parsing covering all expected formats
