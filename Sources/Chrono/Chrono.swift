@@ -210,6 +210,38 @@ public struct Chrono: Sendable {
                     )
                 } else if let directResult = extractResult as? ParsingResult {
                     parsedResult = directResult
+                } else if let publicResult = extractResult as? ParsedResult {
+                    // Some parsers return public ParsedResult directly.
+                    // Convert it back to internal ParsingResult for the refiner pipeline.
+                    let startComponents = context.createParsingComponents(components: publicResult.start.knownValues)
+                    for (component, value) in publicResult.start.impliedValues {
+                        startComponents.imply(component, value: value)
+                    }
+                    
+                    let endComponents: ParsingComponents?
+                    if let end = publicResult.end {
+                        let internalEnd = context.createParsingComponents(components: end.knownValues)
+                        for (component, value) in end.impliedValues {
+                            internalEnd.imply(component, value: value)
+                        }
+                        endComponents = internalEnd
+                    } else {
+                        endComponents = nil
+                    }
+                    
+                    parsedResult = context.createParsingResult(
+                        index: publicResult.index,
+                        text: publicResult.text,
+                        start: startComponents,
+                        end: endComponents
+                    )
+                    
+                    // Preserve week-priority behavior for English week parsers.
+                    if parser is ENISOWeekNumberParser {
+                        parsedResult.addTag("ENISOWeekParser")
+                    } else if parser is ENRelativeWeekParser {
+                        parsedResult.addTag("ENRelativeWeekParser")
+                    }
                 } else {
                     // Extraction failed, move search range forward
                     searchRange.location = match.range.location + 1

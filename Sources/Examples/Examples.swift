@@ -6,6 +6,11 @@ import Chrono
 @main
 struct ExamplesRunner {
     static func main() {
+        if CommandLine.arguments.contains("--quick-week-check") {
+            QuickWeekCheckExample.run()
+            return
+        }
+
         print("Chrono Examples")
         print("===============\n")
         
@@ -17,9 +22,10 @@ struct ExamplesRunner {
         print("5. Custom Parsers and Refiners")
         print("6. ISO Week Number Parsing")
         print("7. Run All Examples")
-        print("8. Exit")
+        print("8. Quick Week Check")
+        print("9. Exit")
         
-        print("\nEnter your choice (1-8): ", terminator: "")
+        print("\nEnter your choice (1-9): ", terminator: "")
         if let choice = readLine() {
             switch choice {
             case "1":
@@ -37,6 +43,8 @@ struct ExamplesRunner {
             case "7":
                 runAllExamples()
             case "8":
+                QuickWeekCheckExample.run()
+            case "9":
                 print("Exiting...")
             default:
                 print("Invalid choice. Exiting...")
