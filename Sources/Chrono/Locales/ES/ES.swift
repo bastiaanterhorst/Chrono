@@ -9,6 +9,7 @@ public enum ES {
         let baseParsers: [Parser] = [
             ESISOWeekNumberParser(),
             ESRelativeWeekParser(),
+            ESRelativeUnitKeywordParser(),
 
             // Casual date/time parsers
             ESCasualDateParser(),
@@ -19,6 +20,7 @@ public enum ES {
             
             // Date-related parsers
             ESWeekdayParser(),
+            ESMonthNameParser(),
             ESMonthNameLittleEndianParser(),
             
             // Time unit parsers
@@ -48,10 +50,13 @@ public enum ES {
         let baseParsers: [Parser] = [
             ESISOWeekNumberParser(),
             ESRelativeWeekParser(),
+            ESRelativeUnitKeywordParser(),
 
             // Only formal parsers, no casual expressions
             ESTimeExpressionParser(),
-            ESMonthNameLittleEndianParser()
+            ESMonthNameParser(),
+            ESMonthNameLittleEndianParser(),
+            ESTimeUnitWithinFormatParser()
         ]
         
         let baseRefiners: [Refiner] = [

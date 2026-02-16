@@ -9,6 +9,7 @@ public enum DE {
         let baseParsers: [Parser] = [
             DEISOWeekNumberParser(),
             DERelativeWeekParser(),
+            DERelativeUnitKeywordParser(),
 
             // Casual date/time parsers
             DECasualDateParser(),
@@ -20,6 +21,7 @@ public enum DE {
             
             // Date-related parsers
             DEWeekdayParser(),
+            DEMonthNameParser(),
             DEMonthNameLittleEndianParser(),
             DESlashDateFormatParser(),
             
@@ -50,8 +52,10 @@ public enum DE {
         let baseParsers: [Parser] = [
             DEISOWeekNumberParser(),
             DERelativeWeekParser(),
+            DERelativeUnitKeywordParser(),
 
             // Only formal parsers, no casual expressions
+            DEMonthNameParser(),
             DETimeExpressionParser(),
             DESpecificTimeExpressionParser(),
             DEMonthNameLittleEndianParser(),

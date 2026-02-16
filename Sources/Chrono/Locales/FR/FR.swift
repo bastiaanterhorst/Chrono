@@ -6,21 +6,30 @@ public enum FR {
     /// Creates a casual configuration for French parsing
     /// - Returns: A Chrono instance with casual configuration
     static func createCasualConfiguration() -> Chrono {
-        let parsers: [Parser] = [
+        let baseParsers: [Parser] = [
             FRISOWeekNumberParser(),
             FRRelativeWeekParser(),
+            FRRelativeUnitKeywordParser(),
+            FRRelativeTimeUnitParser(),
             FRCasualDateParser(),
             FRCasualTimeParser(),
+            FRMonthNameParser(),
             FRTimeExpressionParser(),
             FRWeekdayParser(),
             FRSpecificTimeExpressionParser()
         ]
         
-        let refiners: [Refiner] = [
+        let baseRefiners: [Refiner] = [
             FRMergeDateTimeRefiner(),
             FRMergeDateRangeRefiner(),
             FRPrioritizeWeekNumberRefiner()
         ]
+
+        let (parsers, refiners) = CommonConfiguration.includeCommonConfiguration(
+            parsers: baseParsers,
+            refiners: baseRefiners,
+            strictMode: false
+        )
         
         return Chrono(parsers: parsers, refiners: refiners)
     }
@@ -28,18 +37,27 @@ public enum FR {
     /// Creates a strict configuration for French parsing
     /// - Returns: A Chrono instance with strict configuration
     static func createStrictConfiguration() -> Chrono {
-        let parsers: [Parser] = [
+        let baseParsers: [Parser] = [
             FRISOWeekNumberParser(),
             FRRelativeWeekParser(),
+            FRRelativeUnitKeywordParser(),
+            FRRelativeTimeUnitParser(),
+            FRMonthNameParser(),
             FRTimeExpressionParser(),
             FRSpecificTimeExpressionParser()
         ]
         
-        let refiners: [Refiner] = [
+        let baseRefiners: [Refiner] = [
             FRMergeDateTimeRefiner(),
             FRMergeDateRangeRefiner(),
             FRPrioritizeWeekNumberRefiner()
         ]
+
+        let (parsers, refiners) = CommonConfiguration.includeCommonConfiguration(
+            parsers: baseParsers,
+            refiners: baseRefiners,
+            strictMode: true
+        )
         
         return Chrono(parsers: parsers, refiners: refiners)
     }

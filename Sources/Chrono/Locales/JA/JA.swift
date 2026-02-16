@@ -6,19 +6,28 @@ public enum JA {
     /// Creates a casual configuration for Japanese parsing
     /// - Returns: A Chrono instance with casual configuration
     static func createCasualConfiguration() -> Chrono {
-        let parsers: [Parser] = [
+        let baseParsers: [Parser] = [
             JAISOWeekNumberParser(),
             JARelativeWeekParser(),
+            JARelativeUnitKeywordParser(),
+            JANumericRelativeUnitParser(),
             JACasualDateParser(),
+            JAMonthNameParser(),
             JAStandardParser(),
             JATimeExpressionParser()
         ]
         
-        let refiners: [Refiner] = [
+        let baseRefiners: [Refiner] = [
             JAMergeDateTimeRefiner(),
             JAMergeDateRangeRefiner(),
             JAPrioritizeWeekNumberRefiner()
         ]
+
+        let (parsers, refiners) = CommonConfiguration.includeCommonConfiguration(
+            parsers: baseParsers,
+            refiners: baseRefiners,
+            strictMode: false
+        )
         
         return Chrono(parsers: parsers, refiners: refiners)
     }
@@ -26,18 +35,27 @@ public enum JA {
     /// Creates a strict configuration for Japanese parsing
     /// - Returns: A Chrono instance with strict configuration
     static func createStrictConfiguration() -> Chrono {
-        let parsers: [Parser] = [
+        let baseParsers: [Parser] = [
             JAISOWeekNumberParser(),
             JARelativeWeekParser(),
+            JARelativeUnitKeywordParser(),
+            JANumericRelativeUnitParser(),
+            JAMonthNameParser(),
             JAStandardParser(),
             JATimeExpressionParser()
         ]
         
-        let refiners: [Refiner] = [
+        let baseRefiners: [Refiner] = [
             JAMergeDateTimeRefiner(),
             JAMergeDateRangeRefiner(),
             JAPrioritizeWeekNumberRefiner()
         ]
+
+        let (parsers, refiners) = CommonConfiguration.includeCommonConfiguration(
+            parsers: baseParsers,
+            refiners: baseRefiners,
+            strictMode: true
+        )
         
         return Chrono(parsers: parsers, refiners: refiners)
     }

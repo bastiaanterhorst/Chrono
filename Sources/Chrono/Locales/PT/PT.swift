@@ -9,12 +9,15 @@ public enum PT {
         let baseParsers: [Parser] = [
             PTISOWeekNumberParser(),
             PTRelativeWeekParser(),
+            PTRelativeUnitKeywordParser(),
+            PTRelativeTimeUnitParser(),
 
             // Casual parsers
             PTCasualDateParser(),
             PTCasualTimeParser(),
             
             // Standard parsers
+            PTMonthNameParser(),
             PTTimeExpressionParser(),
             PTWeekdayParser(),
             PTMonthNameLittleEndianParser()
@@ -42,7 +45,10 @@ public enum PT {
         let baseParsers: [Parser] = [
             PTISOWeekNumberParser(),
             PTRelativeWeekParser(),
+            PTRelativeUnitKeywordParser(),
+            PTRelativeTimeUnitParser(),
 
+            PTMonthNameParser(),
             PTTimeExpressionParser(),
             PTWeekdayParser(),
             PTMonthNameLittleEndianParser()
