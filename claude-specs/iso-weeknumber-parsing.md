@@ -35,27 +35,27 @@ This specification outlines the implementation of ISO week number parsing functi
 - [x] Add better debugging to identify and fix parsing issues
 
 ### 3: Dutch implementation
-- [ ] Create a test suite for Dutch week parsing covering all expected formats
-- [ ] Implement `NLISOWeekNumberParser` for parsing formats like "Week 45", "W45 2023" 
-- [ ] Implement or extend `NLRelativeWeekParser` for handling relative expressions
-- [ ] Implement the required functionality following the conventions established in the English implementation 
+- [x] Create a test suite for Dutch week parsing covering all expected formats
+- [x] Implement `NLISOWeekNumberParser` for parsing formats like "Week 45", "W45 2023" 
+- [x] Implement or extend `NLRelativeWeekParser` for handling relative expressions
+- [x] Implement the required functionality following the conventions established in the English implementation 
 
 ### 4: Other locales
-- [ ] German (DE) implementation
-    - [ ] Create test suite
-    - [ ] Implement parsers
-- [ ] Spanish (ES) implementation
-    - [ ] Create test suite
-    - [ ] Implement parsers
-- [ ] French (FR) implementation
-    - [ ] Create test suite
-    - [ ] Implement parsers
-- [ ] Japanese (JA) implementation
-    - [ ] Create test suite
-    - [ ] Implement parsers
-- [ ] Portuguese (PT) implementation
-    - [ ] Create test suite
-    - [ ] Implement parsers
+- [x] German (DE) implementation
+    - [x] Create test suite
+    - [x] Implement parsers
+- [x] Spanish (ES) implementation
+    - [x] Create test suite
+    - [x] Implement parsers
+- [x] French (FR) implementation
+    - [x] Create test suite
+    - [x] Implement parsers
+- [x] Japanese (JA) implementation
+    - [x] Create test suite
+    - [x] Implement parsers
+- [x] Portuguese (PT) implementation
+    - [x] Create test suite
+    - [x] Implement parsers
 
 ### 5: Wrapping up
 - [x] Update documentation and examples (Created ISOWeekNumberExample.swift)
@@ -135,4 +135,3 @@ For implementing ISO week parsing in other locales, follow these guidelines:
 5. Implement the same tagging and assignNull patterns to prevent conflicts
 6. Apply consistent two-digit year handling across all locales
 7. Support both formal ISO formats (2023-W15) and casual formats in each locale
-

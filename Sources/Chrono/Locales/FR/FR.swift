@@ -7,6 +7,8 @@ public enum FR {
     /// - Returns: A Chrono instance with casual configuration
     static func createCasualConfiguration() -> Chrono {
         let parsers: [Parser] = [
+            FRISOWeekNumberParser(),
+            FRRelativeWeekParser(),
             FRCasualDateParser(),
             FRCasualTimeParser(),
             FRTimeExpressionParser(),
@@ -16,7 +18,8 @@ public enum FR {
         
         let refiners: [Refiner] = [
             FRMergeDateTimeRefiner(),
-            FRMergeDateRangeRefiner()
+            FRMergeDateRangeRefiner(),
+            FRPrioritizeWeekNumberRefiner()
         ]
         
         return Chrono(parsers: parsers, refiners: refiners)
@@ -26,13 +29,16 @@ public enum FR {
     /// - Returns: A Chrono instance with strict configuration
     static func createStrictConfiguration() -> Chrono {
         let parsers: [Parser] = [
+            FRISOWeekNumberParser(),
+            FRRelativeWeekParser(),
             FRTimeExpressionParser(),
             FRSpecificTimeExpressionParser()
         ]
         
         let refiners: [Refiner] = [
             FRMergeDateTimeRefiner(),
-            FRMergeDateRangeRefiner()
+            FRMergeDateRangeRefiner(),
+            FRPrioritizeWeekNumberRefiner()
         ]
         
         return Chrono(parsers: parsers, refiners: refiners)

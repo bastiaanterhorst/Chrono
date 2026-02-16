@@ -7,6 +7,9 @@ public enum ES {
     /// - Returns: A Chrono instance with casual Spanish configuration
     static func createCasualConfiguration() -> Chrono {
         let baseParsers: [Parser] = [
+            ESISOWeekNumberParser(),
+            ESRelativeWeekParser(),
+
             // Casual date/time parsers
             ESCasualDateParser(),
             ESCasualTimeParser(),
@@ -25,7 +28,8 @@ public enum ES {
         let baseRefiners: [Refiner] = [
             // Basic mergers
             ESMergeDateTimeRefiner(),
-            ESMergeDateRangeRefiner()
+            ESMergeDateRangeRefiner(),
+            ESPrioritizeWeekNumberRefiner()
         ]
         
         // Add common configuration (ISO parsers and refiners)
@@ -42,6 +46,9 @@ public enum ES {
     /// - Returns: A Chrono instance with strict Spanish configuration
     static func createStrictConfiguration() -> Chrono {
         let baseParsers: [Parser] = [
+            ESISOWeekNumberParser(),
+            ESRelativeWeekParser(),
+
             // Only formal parsers, no casual expressions
             ESTimeExpressionParser(),
             ESMonthNameLittleEndianParser()
@@ -49,7 +56,8 @@ public enum ES {
         
         let baseRefiners: [Refiner] = [
             ESMergeDateTimeRefiner(),
-            ESMergeDateRangeRefiner()
+            ESMergeDateRangeRefiner(),
+            ESPrioritizeWeekNumberRefiner()
         ]
         
         // Add common configuration (ISO parsers and refiners)

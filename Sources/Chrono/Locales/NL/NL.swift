@@ -24,6 +24,10 @@ public struct NL {
     static private func createConfiguration() -> Chrono {
         // Start with common parsers
         let parsers: [Parser] = [
+            // ISO Week parsers should run first to avoid time parser conflicts
+            NLISOWeekNumberParser(),
+            NLRelativeWeekParser(),
+
             // Make NLCasualDateParser the first parser to ensure it has highest priority
             NLCasualDateParser(),
             
@@ -51,7 +55,8 @@ public struct NL {
             
             // Dutch-specific refiners
             NLMergeDateTimeRefiner(),
-            NLMergeDateRangeRefiner()
+            NLMergeDateRangeRefiner(),
+            NLPrioritizeWeekNumberRefiner()
         ]
         
         return Chrono(parsers: parsers, refiners: refiners)

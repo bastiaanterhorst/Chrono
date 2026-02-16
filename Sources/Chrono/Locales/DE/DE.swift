@@ -7,6 +7,9 @@ public enum DE {
     /// - Returns: A Chrono instance with casual configuration
     static func createCasualConfiguration() -> Chrono {
         let baseParsers: [Parser] = [
+            DEISOWeekNumberParser(),
+            DERelativeWeekParser(),
+
             // Casual date/time parsers
             DECasualDateParser(),
             DECasualTimeParser(),
@@ -27,7 +30,8 @@ public enum DE {
         
         let baseRefiners: [Refiner] = [
             DEMergeDateTimeRefiner(),
-            DEMergeDateRangeRefiner()
+            DEMergeDateRangeRefiner(),
+            DEPrioritizeWeekNumberRefiner()
         ]
         
         // Add common configuration (ISO parsers and refiners)
@@ -44,6 +48,9 @@ public enum DE {
     /// - Returns: A Chrono instance with strict configuration
     static func createStrictConfiguration() -> Chrono {
         let baseParsers: [Parser] = [
+            DEISOWeekNumberParser(),
+            DERelativeWeekParser(),
+
             // Only formal parsers, no casual expressions
             DETimeExpressionParser(),
             DESpecificTimeExpressionParser(),
@@ -53,7 +60,8 @@ public enum DE {
         
         let baseRefiners: [Refiner] = [
             DEMergeDateTimeRefiner(),
-            DEMergeDateRangeRefiner()
+            DEMergeDateRangeRefiner(),
+            DEPrioritizeWeekNumberRefiner()
         ]
         
         // Add common configuration (ISO parsers and refiners)

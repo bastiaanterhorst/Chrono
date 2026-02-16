@@ -7,6 +7,9 @@ public enum PT {
     public static var casual: Chrono {
         // Create base configuration
         let baseParsers: [Parser] = [
+            PTISOWeekNumberParser(),
+            PTRelativeWeekParser(),
+
             // Casual parsers
             PTCasualDateParser(),
             PTCasualTimeParser(),
@@ -19,7 +22,8 @@ public enum PT {
         
         let baseRefiners: [Refiner] = [
             PTMergeDateTimeRefiner(),
-            PTMergeDateRangeRefiner()
+            PTMergeDateRangeRefiner(),
+            PTPrioritizeWeekNumberRefiner()
         ]
         
         // Add common configuration (ISO parsers and refiners)
@@ -36,6 +40,9 @@ public enum PT {
     public static var strict: Chrono {
         // Create base configuration - no casual parsers
         let baseParsers: [Parser] = [
+            PTISOWeekNumberParser(),
+            PTRelativeWeekParser(),
+
             PTTimeExpressionParser(),
             PTWeekdayParser(),
             PTMonthNameLittleEndianParser()
@@ -43,7 +50,8 @@ public enum PT {
         
         let baseRefiners: [Refiner] = [
             PTMergeDateTimeRefiner(),
-            PTMergeDateRangeRefiner()
+            PTMergeDateRangeRefiner(),
+            PTPrioritizeWeekNumberRefiner()
         ]
         
         // Add common configuration (ISO parsers and refiners)

@@ -7,6 +7,8 @@ public enum JA {
     /// - Returns: A Chrono instance with casual configuration
     static func createCasualConfiguration() -> Chrono {
         let parsers: [Parser] = [
+            JAISOWeekNumberParser(),
+            JARelativeWeekParser(),
             JACasualDateParser(),
             JAStandardParser(),
             JATimeExpressionParser()
@@ -14,7 +16,8 @@ public enum JA {
         
         let refiners: [Refiner] = [
             JAMergeDateTimeRefiner(),
-            JAMergeDateRangeRefiner()
+            JAMergeDateRangeRefiner(),
+            JAPrioritizeWeekNumberRefiner()
         ]
         
         return Chrono(parsers: parsers, refiners: refiners)
@@ -24,13 +27,16 @@ public enum JA {
     /// - Returns: A Chrono instance with strict configuration
     static func createStrictConfiguration() -> Chrono {
         let parsers: [Parser] = [
+            JAISOWeekNumberParser(),
+            JARelativeWeekParser(),
             JAStandardParser(),
             JATimeExpressionParser()
         ]
         
         let refiners: [Refiner] = [
             JAMergeDateTimeRefiner(),
-            JAMergeDateRangeRefiner()
+            JAMergeDateRangeRefiner(),
+            JAPrioritizeWeekNumberRefiner()
         ]
         
         return Chrono(parsers: parsers, refiners: refiners)
