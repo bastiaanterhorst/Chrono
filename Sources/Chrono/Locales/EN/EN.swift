@@ -11,6 +11,7 @@ public enum EN {
             // ISO Week parsers MUST come first for highest priority
             ENISOWeekNumberParser(),
             ENRelativeWeekParser(),
+            ENRelativeUnitKeywordParser(),
             
             // Casual date/time parsers
             ENCasualDateParser(),
@@ -77,6 +78,7 @@ public enum EN {
             // ISO Week parsers MUST come first for highest priority
             ENISOWeekNumberParser(),
             ENRelativeWeekParser(),
+            ENRelativeUnitKeywordParser(),
             
             // Date parsers come before time parsers
             ENMonthNameParser(),

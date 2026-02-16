@@ -3,7 +3,7 @@ import Foundation
 
 /// Parser for weekday mentions like "Monday", "Tuesday", etc.
 public final class ENWeekdayParser: Parser {
-    private static let PATTERN = "(this|last|next|past|previous)\\s*" +
+    private static let PATTERN = "(?:(this|last|next|past|previous)\\s+)?" +
                                  "(sunday|sun|monday|mon|tuesday|tues|tue|wednesday|wed|thursday|thur|thu|friday|fri|saturday|sat)" +
                                  "(?=\\W|$)"
     

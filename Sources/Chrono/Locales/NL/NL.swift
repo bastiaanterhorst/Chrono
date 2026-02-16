@@ -27,6 +27,7 @@ public struct NL {
             // ISO Week parsers should run first to avoid time parser conflicts
             NLISOWeekNumberParser(),
             NLRelativeWeekParser(),
+            NLRelativeUnitKeywordParser(),
 
             // Make NLCasualDateParser the first parser to ensure it has highest priority
             NLCasualDateParser(),
@@ -39,6 +40,7 @@ public struct NL {
             
             // Other Dutch-specific parsers
             NLCasualTimeParser(),
+            NLMonthNameParser(),
             NLTimeExpressionParser(),
             NLMonthNameLittleEndianParser(),
             NLWeekdayParser(),

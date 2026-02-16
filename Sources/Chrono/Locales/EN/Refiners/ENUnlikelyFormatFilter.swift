@@ -69,14 +69,7 @@ public struct ENUnlikelyFormatFilter: Refiner {
     }
     
     /// Checks if the date components are likely to be a false match based on specific patterns
-    private func isUnlikelyDate(components: ParsingComponents, text: String) -> Bool {
-        // Check for dates with suspiciously small values
-        if let month = components.get(.month), let day = components.get(.day),
-           month <= 1 && day <= 1 {
-            // E.g., "1/1" is more likely to be a fraction or a version number than a date
-            return true
-        }
-        
+    private func isUnlikelyDate(components _: ParsingComponents, text: String) -> Bool {
         // Check for ranges of numbers that look like scores or ratios
         if text.contains("/") && !text.contains(":") {
             let numbers = text.components(separatedBy: CharacterSet(charactersIn: "/.-"))

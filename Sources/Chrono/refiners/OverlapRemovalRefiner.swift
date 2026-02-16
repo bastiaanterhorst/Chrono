@@ -10,38 +10,117 @@ public final class OverlapRemovalRefiner: Refiner {
             return results
         }
         
-        let sortedResults = results.sorted { (a, b) -> Bool in
-            if a.index != b.index {
-                return a.index < b.index
+        let sortedResults = results.sorted { lhs, rhs in
+            if lhs.index != rhs.index {
+                return lhs.index < rhs.index
             }
-            
-            return a.text.count > b.text.count
+            if endIndex(of: lhs) != endIndex(of: rhs) {
+                return endIndex(of: lhs) > endIndex(of: rhs)
+            }
+            return lhs.text.count > rhs.text.count
         }
-        
-        let filteredResults = sortedResults.filter { (result) -> Bool in
-            // Check for any longer results that fully contain this one
-            for otherResult in sortedResults {
-                if otherResult === result {
+
+        var selected: [ParsingResult] = []
+
+        for candidate in sortedResults {
+            var shouldAdd = true
+            var toRemove: [Int] = []
+
+            for (idx, existing) in selected.enumerated() {
+                if strictlyContains(existing, candidate) {
+                    shouldAdd = false
+                    break
+                }
+
+                if strictlyContains(candidate, existing) {
+                    toRemove.append(idx)
                     continue
                 }
-                
-                if isContained(result, in: otherResult) {
-                    return false
+
+                if hasSameRange(existing, candidate) {
+                    if isPreferred(candidate, over: existing) {
+                        toRemove.append(idx)
+                    } else {
+                        shouldAdd = false
+                    }
                 }
             }
-            
-            return true
+
+            if !shouldAdd {
+                continue
+            }
+
+            for idx in toRemove.sorted(by: >) {
+                selected.remove(at: idx)
+            }
+
+            selected.append(candidate)
         }
-        
-        return filteredResults
+
+        return selected.sorted { lhs, rhs in
+            if lhs.index != rhs.index {
+                return lhs.index < rhs.index
+            }
+            return endIndex(of: lhs) < endIndex(of: rhs)
+        }
     }
-    
-    private func isContained(_ result: ParsingResult, in otherResult: ParsingResult) -> Bool {
-        if result.index >= otherResult.index && 
-           result.index + result.text.count <= otherResult.index + otherResult.text.count {
-            return true
+
+    private func endIndex(of result: ParsingResult) -> Int {
+        return result.index + result.text.count
+    }
+
+    private func hasSameRange(_ lhs: ParsingResult, _ rhs: ParsingResult) -> Bool {
+        return lhs.index == rhs.index && endIndex(of: lhs) == endIndex(of: rhs)
+    }
+
+    private func strictlyContains(_ outer: ParsingResult, _ inner: ParsingResult) -> Bool {
+        let outerStart = outer.index
+        let outerEnd = endIndex(of: outer)
+        let innerStart = inner.index
+        let innerEnd = endIndex(of: inner)
+
+        guard innerStart >= outerStart, innerEnd <= outerEnd else {
+            return false
         }
-        
-        return false
+
+        // Equal-span matches are not strict containment.
+        return innerStart > outerStart || innerEnd < outerEnd
+    }
+
+    private func certaintyScore(_ result: ParsingResult) -> Int {
+        let startScore = result.start.getCertainComponents().count
+        let endScore = result.end?.getCertainComponents().count ?? 0
+        return startScore + endScore
+    }
+
+    private func hasCertainISOWeek(_ result: ParsingResult) -> Bool {
+        return result.start.isCertain(.isoWeek) || result.start.isCertain(.isoWeekYear)
+    }
+
+    private func isPreferred(_ lhs: ParsingResult, over rhs: ParsingResult) -> Bool {
+        let lhsISOWeek = hasCertainISOWeek(lhs)
+        let rhsISOWeek = hasCertainISOWeek(rhs)
+        if lhsISOWeek != rhsISOWeek {
+            return lhsISOWeek
+        }
+
+        let lhsCertainty = certaintyScore(lhs)
+        let rhsCertainty = certaintyScore(rhs)
+        if lhsCertainty != rhsCertainty {
+            return lhsCertainty > rhsCertainty
+        }
+
+        let lhsHasRange = lhs.end != nil
+        let rhsHasRange = rhs.end != nil
+        if lhsHasRange != rhsHasRange {
+            return lhsHasRange
+        }
+
+        if lhs.text.count != rhs.text.count {
+            return lhs.text.count > rhs.text.count
+        }
+
+        // Stable final tie-breaker.
+        return lhs.index <= rhs.index
     }
 }
