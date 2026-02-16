@@ -48,6 +48,13 @@ public final class ParsingComponents: @unchecked Sendable {
         imply(.minute, value: 0)
         imply(.second, value: 0)
         imply(.millisecond, value: 0)
+        
+        // Set default implied values for ISO week
+        let isoCalendar = Calendar(identifier: .iso8601)
+        let isoComponents = isoCalendar.dateComponents([.weekOfYear, .yearForWeekOfYear], from: reference.instant)
+        
+        imply(.isoWeek, value: isoComponents.weekOfYear ?? 1)
+        imply(.isoWeekYear, value: isoComponents.yearForWeekOfYear ?? components.year ?? calendar.component(.year, from: Date()))
     }
     
     /// Gets a component value
@@ -55,14 +62,30 @@ public final class ParsingComponents: @unchecked Sendable {
     /// - Returns: The component value or nil if not set
     func get(_ component: Component) -> Int? {
         if knownValues.keys.contains(component) {
-            return knownValues[component]
+            // Special handling for null values (marked with -1)
+            let value = knownValues[component]
+            return value == -1 ? nil : value
         }
         
         if impliedValues.keys.contains(component) {
-            return impliedValues[component]
+            // Special handling for null values (marked with -1)
+            let value = impliedValues[component]
+            return value == -1 ? nil : value
         }
         
         return nil
+    }
+    
+    /// Specifically marks a component as "null" to prevent it from being implied
+    /// This is useful for preventing conflicts between parsers (e.g., hour vs. isoWeek)
+    /// - Parameter component: The component to mark as null
+    /// - Returns: Self for chaining
+    @discardableResult
+    func assignNull(_ component: Component) -> ParsingComponents {
+        // We use -1 as a special sentinel value meaning "explicitly not set"
+        knownValues[component] = -1
+        impliedValues.removeValue(forKey: component)
+        return self
     }
     
     /// Sets a known component value
@@ -130,6 +153,15 @@ public final class ParsingComponents: @unchecked Sendable {
     /// Calculate and return the date represented by these components
     /// - Returns: A Date object
     func date() -> Date? {
+        // Check if we have ISO week values and should use those for date calculation
+        if let isoWeek = get(.isoWeek), let isoWeekYear = get(.isoWeekYear),
+           (isCertain(.isoWeek) || isCertain(.isoWeekYear)) {
+            // When ISO week components are certain (explicitly set), we prioritize them
+            // for date calculation over regular date components
+            return dateFromISOWeek(week: isoWeek, year: isoWeekYear)
+        }
+        
+        // Otherwise use regular date components
         var dateComponents = DateComponents()
         
         if let year = get(.year) {
@@ -163,6 +195,46 @@ public final class ParsingComponents: @unchecked Sendable {
         // TODO: Handle timezone offset
         
         return Calendar.current.date(from: dateComponents)
+    }
+    
+    /// Convert ISO week number and year to a date (Monday of that week)
+    /// - Parameters:
+    ///   - week: The ISO week number (1-53)
+    ///   - year: The ISO week year
+    /// - Returns: Date representing the Monday of that week
+    private func dateFromISOWeek(week: Int, year: Int) -> Date? {
+        var calendar = Calendar(identifier: .iso8601)
+        calendar.firstWeekday = 2 // Monday is the first day
+        
+        var components = DateComponents()
+        components.weekOfYear = week
+        components.yearForWeekOfYear = year
+        components.weekday = 2 // Monday (2 in ISO 8601)
+        
+        // Add time components if available
+        if let hour = get(.hour) {
+            components.hour = hour
+        } else {
+            components.hour = 12 // Default to noon
+        }
+        
+        if let minute = get(.minute) {
+            components.minute = minute
+        } else {
+            components.minute = 0
+        }
+        
+        if let second = get(.second) {
+            components.second = second
+        } else {
+            components.second = 0
+        }
+        
+        if let millisecond = get(.millisecond) {
+            components.nanosecond = millisecond * 1_000_000
+        }
+        
+        return calendar.date(from: components)
     }
     
     /// Creates a copy of this components object

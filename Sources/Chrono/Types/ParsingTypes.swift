@@ -16,9 +16,7 @@ public struct TextMatch {
     public func string(at index: Int) -> String? {
         // Basic validation first
         guard index >= 0, index < match.numberOfRanges else { 
-            #if DEBUG
-            print("Invalid index: \(index), range count: \(match.numberOfRanges)")
-            #endif
+            // Out of bounds index - silent failure in production
             return nil 
         }
         
@@ -27,14 +25,24 @@ public struct TextMatch {
         
         // Additional validation
         guard range.location != NSNotFound else {
-            #if DEBUG
-            print("Range \(index) not found")
-            #endif
+            // This range wasn't captured - silent failure in production
             return nil
         }
         
-        // Use our ultra-safe substring method for maximum safety
-        return String.ultraSafeSubstring(from: text, with: range)
+        // Handle potential range issues with additional guards
+        let nsText = text as NSString
+        
+        // Ensure the range is valid within the text bounds
+        guard range.location >= 0 && 
+              range.length >= 0 && 
+              range.location < nsText.length &&
+              range.location + range.length <= nsText.length else {
+            // Range is out of bounds - silent failure
+            return nil
+        }
+        
+        // Now it's safe to extract the substring
+        return nsText.substring(with: range)
     }
     
     /// The full matched string (index 0)

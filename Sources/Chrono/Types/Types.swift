@@ -13,6 +13,8 @@ public enum Component: String, CaseIterable, Sendable {
     case millisecond
     case meridiem // AM/PM
     case timezoneOffset
+    case isoWeek    // ISO 8601 week number (1-53)
+    case isoWeekYear // Year for ISO week (can differ from calendar year)
 }
 
 /// Time of day (AM/PM)
@@ -138,5 +140,49 @@ public struct ParsedResultDate {
     /// - Returns: True if the component was explicitly found
     public func isCertain(_ component: Component) -> Bool {
         return knownValues.keys.contains(component)
+    }
+    
+    /// Gets the ISO week number for this date
+    /// - Returns: The ISO week number (1-53) or nil if not available
+    public var isoWeek: Int? {
+        return get(.isoWeek)
+    }
+    
+    /// Gets the ISO week year for this date (can differ from calendar year)
+    /// - Returns: The ISO week year or nil if not available
+    public var isoWeekYear: Int? {
+        return get(.isoWeekYear)
+    }
+    
+    /// Gets the start date of the ISO week (Monday)
+    /// - Returns: Date representing the start of the ISO week (Monday)
+    public var isoWeekStart: Date? {
+        guard let week = isoWeek, let year = isoWeekYear else {
+            return nil
+        }
+        
+        var calendar = Calendar(identifier: .iso8601)
+        calendar.firstWeekday = 2 // Monday is the first day
+        
+        var components = DateComponents()
+        components.weekOfYear = week
+        components.yearForWeekOfYear = year
+        components.weekday = 2 // Monday (2 in ISO 8601)
+        components.hour = 0
+        components.minute = 0
+        components.second = 0
+        
+        return calendar.date(from: components)
+    }
+    
+    /// Gets the end date of the ISO week (Sunday)
+    /// - Returns: Date representing the end of the ISO week (Sunday)
+    public var isoWeekEnd: Date? {
+        guard let weekStart = isoWeekStart else {
+            return nil
+        }
+        
+        // Add 6 days to get to Sunday (end of ISO week)
+        return Calendar(identifier: .iso8601).date(byAdding: .day, value: 6, to: weekStart)
     }
 }
