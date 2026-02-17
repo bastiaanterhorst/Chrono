@@ -19,6 +19,54 @@ public final class ForwardDateRefiner: Refiner {
         let refDate = context.reference.instant
         
         return results.map { result in
+            // Handle ISO week shorthand with implied year (e.g. "w10").
+            // If that inferred week is already behind the reference date, move it to next year.
+            if result.start.isCertain(.isoWeek),
+               !result.start.isCertain(.isoWeekYear),
+               let parsedDate = result.start.date(),
+               parsedDate < refDate,
+               let week = result.start.get(.isoWeek),
+               let inferredWeekYear = result.start.get(.isoWeekYear) {
+                let targetWeekYear = inferredWeekYear + 1
+
+                var isoCalendar = Calendar(identifier: .iso8601)
+                isoCalendar.firstWeekday = 2
+
+                var weekComponents = DateComponents()
+                weekComponents.weekOfYear = week
+                weekComponents.yearForWeekOfYear = targetWeekYear
+                weekComponents.weekday = 2
+                weekComponents.hour = result.start.get(.hour) ?? 12
+                weekComponents.minute = result.start.get(.minute) ?? 0
+                weekComponents.second = result.start.get(.second) ?? 0
+
+                if let weekStart = isoCalendar.date(from: weekComponents) {
+                    let updatedComponents = result.start.clone()
+                    updatedComponents.assign(.isoWeekYear, value: targetWeekYear)
+                    updatedComponents.setCertain(.isoWeekYear)
+
+                    let values = isoCalendar.dateComponents([.year, .month, .day], from: weekStart)
+                    if let year = values.year {
+                        updatedComponents.assign(.year, value: year)
+                        updatedComponents.setCertain(.year)
+                    }
+                    if let month = values.month {
+                        updatedComponents.assign(.month, value: month)
+                    }
+                    if let day = values.day {
+                        updatedComponents.assign(.day, value: day)
+                    }
+
+                    return ParsingResult(
+                        reference: result.reference,
+                        index: result.index,
+                        text: result.text,
+                        start: updatedComponents,
+                        end: result.end
+                    )
+                }
+            }
+
             // Skip if already has year
             if result.start.isCertain(.year) {
                 return result

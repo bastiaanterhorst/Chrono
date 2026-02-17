@@ -22,12 +22,14 @@ public struct ENTimeUnitWithinFormatParser: Parser {
         
         let referenceDate = context.reference.instant
         
-        // Default to past
-        var modifier = -1
-        
+        // Default to future for phrases like "in 2 days"
+        var modifier = 1
+
         // Get the direction (past/last vs next/coming)
         if let directionStr = match.string(at: 2)?.lowercased() {
-            if directionStr == "next" || directionStr == "coming" {
+            if directionStr == "past" || directionStr == "last" {
+                modifier = -1
+            } else if directionStr == "next" || directionStr == "coming" {
                 modifier = 1
             }
         }
