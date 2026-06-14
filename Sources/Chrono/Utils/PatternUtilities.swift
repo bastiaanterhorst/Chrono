@@ -52,13 +52,36 @@ public enum PatternUtils {
         // Sort terms by length (longest first) to ensure longer matches take precedence
         let sortedTerms = dictionary.terms()
             .sorted { $0.count > $1.count }
-        
-        // Join terms with OR operator and escape dots
+
+        // Join terms with OR operator, expanding accented letters into character
+        // classes so unaccented input matches too (e.g. "próxima" -> "pr[oó]xima").
         let joinedTerms = sortedTerms
-            .map { $0.replacingOccurrences(of: ".", with: "\\.") }
+            .map { accentInsensitiveTerm($0) }
             .joined(separator: "|")
-        
+
         return "(?:\(joinedTerms))"
+    }
+
+    /// Renders a single dictionary term as a regex fragment in which every
+    /// accented Latin letter becomes a character class matching both the
+    /// accented original and its diacritic-folded form. Dots are escaped
+    /// (preserving the previous behavior); every other character is emitted
+    /// verbatim. Letters with multi-character folds (e.g. ligatures) are left
+    /// as-is and rely on the diacritic-insensitive dictionary lookup instead.
+    private static func accentInsensitiveTerm(_ term: String) -> String {
+        var result = ""
+        for char in term {
+            let lower = String(char).lowercased()
+            let folded = String(char).foldedForMatching()
+            if folded.count == 1, folded != lower {
+                result += "[\(lower)\(folded)]"
+            } else if char == "." {
+                result += "\\."
+            } else {
+                result.append(char)
+            }
+        }
+        return result
     }
     
     /// Creates a word-bounded regex pattern that matches any term in the dictionary

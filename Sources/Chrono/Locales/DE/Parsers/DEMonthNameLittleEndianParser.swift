@@ -10,7 +10,7 @@ public struct DEMonthNameLittleEndianParser: Parser {
                "(?:a[nm]\\s*?)?" +
                "([0-9]{1,2})(?:te|\\.)?" +
                "(?:\\s*(?:bis|\\-|\\–|\\s)\\s*([0-9]{1,2})(?:te|\\.)?)?\\s*" +
-               "(" + DEConstants.MONTH_DICTIONARY.keys.joined(separator: "|") + ")" +
+               "(" + PatternUtils.matchAnyPattern(DEConstants.MONTH_DICTIONARY) + ")" +
                "(?:(?:-|\\/)([0-9]{1,2})(?:te|\\.)?)?" +
                "(?:\\s*,?\\s*([0-9]{1,4})(\\s*(?:v\\.\\s*(?:Chr|c)|n\\.\\s*(?:Chr|c))))?" +
                "(?=\\W|$)"
@@ -21,7 +21,7 @@ public struct DEMonthNameLittleEndianParser: Parser {
         let result = ParsingComponents(reference: context.reference)
         
         guard let monthStr = match.string(at: 4)?.lowercased(),
-              let month = DEConstants.MONTH_DICTIONARY[monthStr] else {
+              let month = DEConstants.MONTH_DICTIONARY.matchValue(for: monthStr) else {
             return nil
         }
         

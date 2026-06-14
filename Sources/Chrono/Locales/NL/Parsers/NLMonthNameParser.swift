@@ -15,7 +15,7 @@ final class NLMonthNameParser: Parser {
 
     func extract(context: ParsingContext, match: TextMatch) -> Any? {
         guard let monthText = match.string(at: 1)?.lowercased(),
-              let month = NLConstants.MONTH_DICTIONARY[monthText] else {
+              let month = NLConstants.MONTH_DICTIONARY.matchValue(for: monthText) else {
             return nil
         }
 

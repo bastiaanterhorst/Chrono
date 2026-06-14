@@ -10,7 +10,7 @@ public final class PTCasualDateParser: Parser {
     
     /// Extracts date components from a matched casual date reference
     public func extract(context: ParsingContext, match: TextMatch) -> Any? {
-        guard let matchText = match.string(at: 1)?.lowercased() else { return nil }
+        guard let matchText = match.string(at: 1)?.foldedForMatching() else { return nil }
         
         let component = context.createParsingComponents()
         let calendar = Calendar.current
@@ -35,7 +35,7 @@ public final class PTCasualDateParser: Parser {
             component.imply(.month, value: calendar.component(.month, from: refDate))
             component.imply(.year, value: calendar.component(.year, from: refDate))
             
-        case "amanha", "amanhã": // tomorrow
+        case "amanha": // tomorrow
             if let tomorrow = calendar.date(byAdding: .day, value: 1, to: refDate) {
                 component.imply(.day, value: calendar.component(.day, from: tomorrow))
                 component.imply(.month, value: calendar.component(.month, from: tomorrow))

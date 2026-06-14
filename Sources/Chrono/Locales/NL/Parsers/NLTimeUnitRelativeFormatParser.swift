@@ -46,7 +46,7 @@ final class NLTimeUnitRelativeFormatParser: Parser {
             timeText = match.string(at: 1)?.lowercased()
             unitText = match.string(at: 2)?.lowercased()
             num = extractNumber(from: timeText ?? "")
-            modifier = NLConstants.TIME_UNIT_DICTIONARY[unitText ?? ""]
+            modifier = NLConstants.TIME_UNIT_DICTIONARY.matchValue(for: unitText ?? "")
             
             // Negative for past
             num *= -1
@@ -55,12 +55,12 @@ final class NLTimeUnitRelativeFormatParser: Parser {
             timeText = match.string(at: 4)?.lowercased()
             unitText = match.string(at: 5)?.lowercased()
             num = extractNumber(from: timeText ?? "")
-            modifier = NLConstants.TIME_UNIT_DICTIONARY[unitText ?? ""]
+            modifier = NLConstants.TIME_UNIT_DICTIONARY.matchValue(for: unitText ?? "")
         } else if match.hasValue(at: 7) && match.hasValue(at: 8) {
             // relative - "volgende week", "vorige maand"
             let relativeModifier = match.string(at: 7)?.lowercased() ?? ""
             unitText = match.string(at: 8)?.lowercased()
-            modifier = NLConstants.TIME_UNIT_DICTIONARY[unitText ?? ""]
+            modifier = NLConstants.TIME_UNIT_DICTIONARY.matchValue(for: unitText ?? "")
             
             // Set the number based on the modifier
             switch relativeModifier {
@@ -192,7 +192,7 @@ final class NLTimeUnitRelativeFormatParser: Parser {
             return num
         }
         
-        if let word = NLConstants.INTEGER_WORD_DICTIONARY[cleanText] {
+        if let word = NLConstants.INTEGER_WORD_DICTIONARY.matchValue(for: cleanText) {
             return word
         }
         

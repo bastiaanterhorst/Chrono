@@ -24,7 +24,7 @@ final class PTRelativeWeekParser: AbstractParserWithWordBoundaryChecking, @unche
     }
 
     override func innerExtract(context: ParsingContext, match: TextMatch) -> Any? {
-        let text = match.text.lowercased()
+        let text = match.text.foldedForMatching()
         let referenceDate = context.reference.instant
         let calendar = Calendar(identifier: .iso8601)
         let allNumbers = extractAllNumbers(from: text)
@@ -38,9 +38,9 @@ final class PTRelativeWeekParser: AbstractParserWithWordBoundaryChecking, @unche
             weekOffset = 2
         } else if text.contains("semana passada") {
             weekOffset = -1
-        } else if text.contains("próxima semana") || text.contains("proxima semana") {
+        } else if text.contains("proxima semana") {
             weekOffset = 1
-        } else if text.contains("há ") || text.contains("ha ") || text.contains("faz ") {
+        } else if text.contains("ha ") || text.contains("faz ") {
             if let weeksAgo = extractCapturedNumber(match: match) ?? allNumbers.first {
                 weekOffset = -weeksAgo
             }

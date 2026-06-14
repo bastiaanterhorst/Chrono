@@ -4,11 +4,11 @@ import Foundation
 /// Parser for casual date expressions in Spanish (e.g., "hoy", "mañana", "ayer")
 public final class ESCasualDateParser: Parser {
     public func pattern(context: ParsingContext) -> String {
-        return "(ahora|hoy|mañana|ayer)(?=\\W|$)"
+        return "(ahora|hoy|ma[ñn]ana|ayer)(?=\\W|$)"
     }
     
     public func extract(context: ParsingContext, match: TextMatch) -> Any? {
-        guard let matchText = match.string(at: 1)?.lowercased() else { return nil }
+        guard let matchText = match.string(at: 1)?.foldedForMatching() else { return nil }
         
         let component = context.createParsingComponents()
         
@@ -43,7 +43,7 @@ public final class ESCasualDateParser: Parser {
                 component.assign(.day, value: components.day ?? 0)
             }
             
-        case "mañana":
+        case "manana":
             if let tomorrow = calendar.date(byAdding: .day, value: 1, to: refDate) {
                 let components = calendar.dateComponents([.year, .month, .day], from: tomorrow)
                 component.assign(.year, value: components.year ?? 0)

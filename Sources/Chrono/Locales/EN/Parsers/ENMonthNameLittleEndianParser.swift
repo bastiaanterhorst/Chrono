@@ -28,8 +28,8 @@ public struct ENMonthNameLittleEndianParser: Parser {
     }
     
     public func extract(context: ParsingContext, match: TextMatch) -> Any? {
-        guard let monthStr = match.string(at: 3)?.lowercased(), 
-              let month = monthDictionary[monthStr] else {
+        guard let monthStr = match.string(at: 3)?.lowercased(),
+              let month = monthDictionary.matchValue(for: monthStr) else {
             return nil
         }
         

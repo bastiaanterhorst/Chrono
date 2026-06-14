@@ -15,7 +15,7 @@ public struct PTRelativeTimeUnitParser: Parser {
     public func extract(context: ParsingContext, match: TextMatch) -> Any? {
         let futureToken = match.string(at: 1)
         let numberText = match.string(at: 2) ?? match.string(at: 5)
-        let unitText = (match.string(at: 3) ?? match.string(at: 6) ?? "").lowercased()
+        let unitText = (match.string(at: 3) ?? match.string(at: 6) ?? "").foldedForMatching()
 
         guard let numberText, let value = Int(numberText), !unitText.isEmpty else {
             return nil
@@ -30,7 +30,7 @@ public struct PTRelativeTimeUnitParser: Parser {
         let calendarUnit: Calendar.Component
         if unitText.hasPrefix("dia") {
             calendarUnit = .day
-        } else if unitText.hasPrefix("mês") || unitText.hasPrefix("mes") {
+        } else if unitText.hasPrefix("mes") {
             calendarUnit = .month
         } else if unitText.hasPrefix("ano") {
             calendarUnit = .year

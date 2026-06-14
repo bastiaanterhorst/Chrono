@@ -40,7 +40,7 @@ public final class ESMergeDateTimeRefiner: Refiner {
             }
             
             // Get the weekday number
-            if let weekdayNumber = ESConstants.WEEKDAY_DICTIONARY[weekdayText] {
+            if let weekdayNumber = ESConstants.WEEKDAY_DICTIONARY.matchValue(for: weekdayText) {
                 // Create components for the date
                 let components = ParsingComponents(reference: context.reference)
                 

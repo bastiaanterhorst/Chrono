@@ -19,7 +19,7 @@ final class NLTimeUnitWithinFormatParser: Parser {
         // Extract the time amount and unit
         guard let timeText = match.string(at: 1)?.lowercased(),
               let unitText = match.string(at: 2)?.lowercased(),
-              let unit = NLConstants.TIME_UNIT_DICTIONARY[unitText] else {
+              let unit = NLConstants.TIME_UNIT_DICTIONARY.matchValue(for: unitText) else {
             return nil
         }
         
@@ -101,7 +101,7 @@ final class NLTimeUnitWithinFormatParser: Parser {
             return num
         }
         
-        if let word = NLConstants.INTEGER_WORD_DICTIONARY[cleanText] {
+        if let word = NLConstants.INTEGER_WORD_DICTIONARY.matchValue(for: cleanText) {
             return word
         }
         

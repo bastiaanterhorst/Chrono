@@ -29,8 +29,8 @@ public struct ENMonthNameMiddleEndianParser: Parser {
     }
     
     public func extract(context: ParsingContext, match: TextMatch) -> Any? {
-        guard let monthStr = match.string(at: 2)?.lowercased(), 
-              let month = monthDictionary[monthStr] else {
+        guard let monthStr = match.string(at: 2)?.lowercased(),
+              let month = monthDictionary.matchValue(for: monthStr) else {
             return nil
         }
         

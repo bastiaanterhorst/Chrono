@@ -5,33 +5,33 @@ import Foundation
 public final class PTWeekdayParser: Parser {
     /// Returns the pattern for matching Portuguese weekday names
     public func pattern(context: ParsingContext) -> String {
-        let weekdayNames = PTConstants.WEEKDAY_DICTIONARY.keys.joined(separator: "|")
-        return "(?:(?:\\,|\\(|\\（)\\s*)?(?:na\\s*)?(" + weekdayNames + ")(?:(?:\\,|\\)|\\）)\\s*)?(?:\\s*(passada|passado|última|ultimo|próxima|próximo))?(?=\\W|$)"
+        let weekdayNames = PatternUtils.matchAnyPattern(PTConstants.WEEKDAY_DICTIONARY)
+        return "(?:(?:\\,|\\(|\\（)\\s*)?(?:na\\s*)?(" + weekdayNames + ")(?:(?:\\,|\\)|\\）)\\s*)?(?:\\s*(passada|passado|[uú]ltim[ao]|pr[oó]xim[ao]))?(?=\\W|$)"
     }
     
     /// Extracts weekday information from matched text
     public func extract(context: ParsingContext, match: TextMatch) -> Any? {
         guard let dayOfWeekText = match.string(at: 1)?.lowercased() else { return nil }
         
-        guard let dayOfWeek = PTConstants.WEEKDAY_DICTIONARY[dayOfWeekText] else { return nil }
+        guard let dayOfWeek = PTConstants.WEEKDAY_DICTIONARY.matchValue(for: dayOfWeekText) else { return nil }
         
         let component = context.createParsingComponents()
         let refDate = context.refDate
         let calendar = Calendar.current
         
-        let modifier = match.string(at: 2)?.lowercased()
+        let modifier = match.string(at: 2)?.foldedForMatching()
         
         let startDate = createDateWithExactWeekday(calendar, refDate, dayOfWeek)
         
         // Handle modifiers like "próxima" (next), "última" (last)
         if let modifier = modifier {
-            if ["passada", "passado", "última", "ultimo"].contains(modifier) {
+            if ["passada", "passado", "ultima", "ultimo"].contains(modifier) {
                 // Use the previous occurrence
                 let date = calendar.date(byAdding: .day, value: -7, to: startDate) ?? startDate
                 component.assign(.day, value: calendar.component(.day, from: date))
                 component.assign(.month, value: calendar.component(.month, from: date))
                 component.assign(.year, value: calendar.component(.year, from: date))
-            } else if ["próxima", "próximo"].contains(modifier) {
+            } else if ["proxima", "proximo"].contains(modifier) {
                 // Use the next occurrence
                 let date = calendar.date(byAdding: .day, value: 7, to: startDate) ?? startDate
                 component.assign(.day, value: calendar.component(.day, from: date))

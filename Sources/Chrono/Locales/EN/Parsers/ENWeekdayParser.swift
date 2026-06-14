@@ -31,7 +31,7 @@ public final class ENWeekdayParser: Parser {
         let modifier = match.string(at: 1)?.lowercased()
         // Get the weekday text
         guard let weekdayText = match.string(at: 2)?.lowercased(),
-              let weekday = ENWeekdayParser.WEEKDAY_DICTIONARY[weekdayText] else {
+              let weekday = ENWeekdayParser.WEEKDAY_DICTIONARY.matchValue(for: weekdayText) else {
             return nil
         }
         

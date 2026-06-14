@@ -31,7 +31,7 @@ public struct FRMonthNameParser: Parser {
 
     public func extract(context: ParsingContext, match: TextMatch) -> Any? {
         guard let monthText = match.string(at: 1)?.lowercased(),
-              let month = FRMonthNameParser.monthDictionary[monthText] else {
+              let month = FRMonthNameParser.monthDictionary.matchValue(for: monthText) else {
             return nil
         }
 

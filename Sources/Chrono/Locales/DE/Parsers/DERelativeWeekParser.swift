@@ -24,7 +24,7 @@ final class DERelativeWeekParser: AbstractParserWithWordBoundaryChecking, @unche
     }
 
     override func innerExtract(context: ParsingContext, match: TextMatch) -> Any? {
-        let text = match.text.lowercased()
+        let text = match.text.foldedForMatching()
         let referenceDate = context.reference.instant
         let calendar = Calendar(identifier: .iso8601)
         let allNumbers = extractAllNumbers(from: text)
@@ -34,13 +34,13 @@ final class DERelativeWeekParser: AbstractParserWithWordBoundaryChecking, @unche
             weekOffset = 0
         } else if text.contains("vorletzte woche") {
             weekOffset = -2
-        } else if text.contains("übernächste woche") || text.contains("uebernaechste woche") || text.contains("ubernachste woche") {
+        } else if text.contains("ubernachste woche") {
             weekOffset = 2
         } else if text.contains("letzte woche") {
             weekOffset = -1
-        } else if text.contains("nächste woche") || text.contains("naechste woche") || text.contains("nachste woche") {
+        } else if text.contains("nachste woche") {
             weekOffset = 1
-        } else if text.contains("vor ") || text.contains("zuvor") || text.contains("her") || text.contains("zurück") || text.contains("zuruck") {
+        } else if text.contains("vor ") || text.contains("zuvor") || text.contains("her") || text.contains("zuruck") {
             if let weeksAgo = extractCapturedNumber(match: match) ?? allNumbers.first {
                 weekOffset = -weeksAgo
             }

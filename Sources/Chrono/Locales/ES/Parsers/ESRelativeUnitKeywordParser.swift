@@ -14,8 +14,8 @@ public struct ESRelativeUnitKeywordParser: Parser {
     }
 
     public func extract(context: ParsingContext, match: TextMatch) -> Any? {
-        let modifierText = (match.string(at: 1) ?? match.string(at: 4) ?? "").lowercased()
-        let unitText = (match.string(at: 2) ?? match.string(at: 3) ?? "").lowercased()
+        let modifierText = (match.string(at: 1) ?? match.string(at: 4) ?? "").foldedForMatching()
+        let unitText = (match.string(at: 2) ?? match.string(at: 3) ?? "").foldedForMatching()
 
         guard !modifierText.isEmpty, !unitText.isEmpty else {
             return nil
@@ -24,7 +24,7 @@ public struct ESRelativeUnitKeywordParser: Parser {
         let offset: Int
         if modifierText == "este" || modifierText == "esta" {
             offset = 0
-        } else if modifierText.contains("próximo") || modifierText.contains("proximo") {
+        } else if modifierText.contains("proximo") {
             offset = 1
         } else if modifierText == "pasado" || modifierText == "pasada" || modifierText == "anterior" {
             offset = -1
@@ -37,11 +37,11 @@ public struct ESRelativeUnitKeywordParser: Parser {
         }
 
         let calendarUnit: Calendar.Component
-        if unitText.contains("día") || unitText.contains("dia") {
+        if unitText.contains("dia") {
             calendarUnit = .day
         } else if unitText.contains("mes") {
             calendarUnit = .month
-        } else if unitText.contains("año") || unitText.contains("ano") {
+        } else if unitText.contains("ano") {
             calendarUnit = .year
         } else {
             return nil

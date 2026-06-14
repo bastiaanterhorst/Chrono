@@ -5,14 +5,14 @@ import Foundation
 public final class FRCasualDateParser: Parser {
     /// The pattern to match French casual date references
     public func pattern(context: ParsingContext) -> String {
-        return "maintenant|aujourd'hui|auj|hier|avant[ -]hier|demain|apres[ -]demain|cette nuit|ce matin|cet après-midi|ce soir|soir"
+        return "maintenant|aujourd'hui|auj|hier|avant[ -]hier|demain|apres[ -]demain|cette nuit|ce matin|cet après-midi|cet apres-midi|ce soir|soir"
     }
     
     /// Extracts date components from a French casual date reference
     public func extract(context: ParsingContext, match: TextMatch) -> Any? {
         let component = context.createParsingComponents()
         
-        let matchText = match.matchedText.lowercased()
+        let matchText = match.matchedText.foldedForMatching()
         let refDate = context.refDate
         let calendar = Calendar.current
         
@@ -103,7 +103,7 @@ public final class FRCasualDateParser: Parser {
             component.assign(.second, value: 0)
             component.assign(.meridiem, value: Meridiem.am.rawValue)
             
-        case "cet après-midi":
+        case "cet apres-midi":
             // This afternoon
             let components = calendar.dateComponents([.year, .month, .day], from: refDate)
             component.assign(.year, value: components.year ?? 0)

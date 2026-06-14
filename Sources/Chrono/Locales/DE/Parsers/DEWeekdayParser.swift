@@ -31,7 +31,7 @@ public struct DEWeekdayParser: Parser {
         var weekday: Int?
         
         // Try exact match first
-        if let exactMatch = DEConstants.WEEKDAY_DICTIONARY[weekdayStr] {
+        if let exactMatch = DEConstants.WEEKDAY_DICTIONARY.matchValue(for: weekdayStr) {
             weekday = exactMatch
         } else {
             // Try to match by prefix

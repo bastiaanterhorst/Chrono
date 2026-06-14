@@ -16,7 +16,7 @@ public struct DEMonthNameParser: Parser {
 
     public func extract(context: ParsingContext, match: TextMatch) -> Any? {
         guard let monthText = match.string(at: 1)?.lowercased(),
-              let month = DEConstants.MONTH_DICTIONARY[monthText] else {
+              let month = DEConstants.MONTH_DICTIONARY.matchValue(for: monthText) else {
             return nil
         }
 

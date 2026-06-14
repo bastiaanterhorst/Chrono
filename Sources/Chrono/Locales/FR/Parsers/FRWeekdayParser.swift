@@ -13,7 +13,7 @@ public final class FRWeekdayParser: Parser {
                                 "vendredi|ven|" +
                                 "samedi|sam" +
                            ")" +
-                           "(?:\\s*(?:prochain|dernier|suivant|passe|précédent|precedent))?" +
+                           "(?:\\s*(?:prochain|dernier|suivant|passe|pr[ée]c[ée]dent|precedent))?" +
                            "\\b"
     
     /// Maps French weekday names to their numeric values (1 = Sunday, 2 = Monday, ..., 7 = Saturday)
@@ -37,15 +37,15 @@ public final class FRWeekdayParser: Parser {
         let component = context.createParsingComponents()
         
         let dayOfWeekText = match.string(at: 1)?.lowercased() ?? ""
-        guard let dayOfWeek = WEEKDAY_DICTIONARY[dayOfWeekText] else {
+        guard let dayOfWeek = WEEKDAY_DICTIONARY.matchValue(for: dayOfWeekText) else {
             return nil
         }
         
         // Check for modifiers like "prochain", "dernier", etc.
-        let remainingText = match.matchedText.lowercased()
+        let remainingText = match.matchedText.foldedForMatching()
         let isNextWeek = remainingText.contains("prochain") || remainingText.contains("suivant")
-        let isLastWeek = remainingText.contains("dernier") || remainingText.contains("passe") || 
-                          remainingText.contains("précédent") || remainingText.contains("precedent")
+        let isLastWeek = remainingText.contains("dernier") || remainingText.contains("passe") ||
+                          remainingText.contains("precedent")
         
         // Get the current date
         let calendar = Calendar.current

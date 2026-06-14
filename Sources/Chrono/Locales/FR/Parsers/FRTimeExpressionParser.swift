@@ -134,9 +134,10 @@ public final class FRTimeExpressionParser: Parser {
         }
         
         // Check for morning/afternoon/evening modifiers
-        let isMorning = fullText.contains("matin")
-        let isAfternoon = fullText.contains("après-midi") || fullText.contains("après midi") || fullText.contains("apres-midi") || fullText.contains("apres midi")
-        let isEvening = fullText.contains("soir")
+        let foldedText = fullText.foldedForMatching()
+        let isMorning = foldedText.contains("matin")
+        let isAfternoon = foldedText.contains("apres-midi") || foldedText.contains("apres midi")
+        let isEvening = foldedText.contains("soir")
         
         // Meridiem (AM/PM)
         let meridiemText = meridiem1 ?? meridiem2

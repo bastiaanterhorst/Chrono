@@ -130,7 +130,7 @@ public enum ESConstants {
     public static func parseNumberPattern(_ match: String) -> Double {
         let lowercaseMatch = match.lowercased()
         
-        if let value = INTEGER_WORD_DICTIONARY[lowercaseMatch] {
+        if let value = INTEGER_WORD_DICTIONARY.matchValue(for: lowercaseMatch) {
             return Double(value)
         } else if lowercaseMatch == "un" || lowercaseMatch == "una" || lowercaseMatch == "uno" {
             return 1

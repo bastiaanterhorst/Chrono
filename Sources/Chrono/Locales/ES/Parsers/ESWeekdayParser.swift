@@ -14,19 +14,19 @@ public final class ESWeekdayParser: Parser {
     }
     
     public func extract(context: ParsingContext, match: TextMatch) -> Any? {
-        guard let weekdayText = match.string(at: ESWeekdayParser.WEEKDAY_GROUP)?.lowercased(),
-              let weekday = ESConstants.WEEKDAY_DICTIONARY[weekdayText] else {
+        guard let weekdayText = match.string(at: ESWeekdayParser.WEEKDAY_GROUP),
+              let weekday = ESConstants.WEEKDAY_DICTIONARY.matchValue(for: weekdayText) else {
             return nil
         }
         
         let prefix = match.string(at: ESWeekdayParser.PREFIX_GROUP) ?? ""
         let postfix = match.string(at: ESWeekdayParser.POSTFIX_GROUP) ?? ""
-        let norm = (prefix + postfix).lowercased()
-        
+        let norm = (prefix + postfix).foldedForMatching()
+
         var modifier: String? = nil
         if norm.contains("pasado") {
             modifier = "last"
-        } else if norm.contains("próximo") || norm.contains("proximo") {
+        } else if norm.contains("proximo") {
             modifier = "next"
         } else if norm.contains("este") || norm.contains("esta") {
             modifier = "this"

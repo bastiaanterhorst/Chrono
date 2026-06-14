@@ -24,7 +24,7 @@ final class FRRelativeWeekParser: AbstractParserWithWordBoundaryChecking, @unche
     }
 
     override func innerExtract(context: ParsingContext, match: TextMatch) -> Any? {
-        let text = match.text.lowercased()
+        let text = match.text.foldedForMatching()
         let referenceDate = context.reference.instant
         let calendar = Calendar(identifier: .iso8601)
         let allNumbers = extractAllNumbers(from: text)
@@ -32,11 +32,11 @@ final class FRRelativeWeekParser: AbstractParserWithWordBoundaryChecking, @unche
 
         if text.contains("cette semaine") {
             weekOffset = 0
-        } else if text.contains("semaine avant dernière") || text.contains("semaine avant derniere") {
+        } else if text.contains("semaine avant derniere") {
             weekOffset = -2
-        } else if text.contains("semaine après prochaine") || text.contains("semaine apres prochaine") {
+        } else if text.contains("semaine apres prochaine") {
             weekOffset = 2
-        } else if text.contains("semaine dernière") || text.contains("semaine derniere") {
+        } else if text.contains("semaine derniere") {
             weekOffset = -1
         } else if text.contains("semaine prochaine") {
             weekOffset = 1

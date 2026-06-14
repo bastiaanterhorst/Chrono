@@ -21,8 +21,8 @@ public struct ESMonthNameParser: Parser {
             return nil
         }
 
-        guard let monthText = match.string(at: 1)?.lowercased(),
-              let month = ESConstants.MONTH_DICTIONARY[monthText] else {
+        guard let monthText = match.string(at: 1),
+              let month = ESConstants.MONTH_DICTIONARY.matchValue(for: monthText) else {
             return nil
         }
 

@@ -105,7 +105,7 @@ public final class ESMergeDateRangeRefiner: Refiner {
             let monthStr = nsText.substring(with: match.range(at: 3)).lowercased()
             
             // Get month number
-            if let monthNumber = ESConstants.MONTH_DICTIONARY[monthStr], startDay > 0, endDay > 0 {
+            if let monthNumber = ESConstants.MONTH_DICTIONARY.matchValue(for: monthStr), startDay > 0, endDay > 0 {
                 var year = 0
                 
                 // Get year if present

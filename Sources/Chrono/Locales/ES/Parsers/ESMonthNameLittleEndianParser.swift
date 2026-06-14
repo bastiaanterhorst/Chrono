@@ -28,7 +28,7 @@ public struct ESMonthNameLittleEndianParser: Parser {
         
         // Month
         if let month = match.string(at: ESMonthNameLittleEndianParser.MONTH_GROUP)?.lowercased() {
-            if let monthNumber = ESConstants.MONTH_DICTIONARY[month] {
+            if let monthNumber = ESConstants.MONTH_DICTIONARY.matchValue(for: month) {
                 result.assign(.month, value: monthNumber)
             } else {
                 // Try to match partial month names

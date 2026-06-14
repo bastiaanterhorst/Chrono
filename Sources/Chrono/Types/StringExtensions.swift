@@ -6,6 +6,14 @@ extension String {
     func nilIfEmpty() -> String? {
         return self.isEmpty ? nil : self
     }
+
+    /// Case- and diacritic-insensitive normalized form for keyword matching.
+    /// Used so that unaccented user input (e.g. "proxima", "sabado", "ano")
+    /// matches accented dictionary keys (e.g. "próxima", "sábado", "año").
+    func foldedForMatching() -> String {
+        return self.folding(options: [.diacriticInsensitive, .caseInsensitive],
+                            locale: Locale(identifier: "en_US_POSIX"))
+    }
     
     /// Ensures a string has a minimum length of one, or returns nil
     func nilIfTooShort() -> String? {
@@ -136,5 +144,17 @@ extension String {
         // Last resort: Just return an empty string rather than nil
         // This ensures callers don't have to constantly deal with optionals
         return ""
+    }
+}
+
+extension Dictionary where Key == String {
+    /// Diacritic/case-insensitive value lookup for keyword dictionaries.
+    /// The exact subscript is the fast path; the folded scan (n is small —
+    /// at most a few dozen keys) only runs on a miss, so unaccented matched
+    /// text still resolves to its accented dictionary key.
+    func matchValue(for query: String) -> Value? {
+        if let exact = self[query] { return exact }
+        let folded = query.foldedForMatching()
+        return first { $0.key.foldedForMatching() == folded }?.value
     }
 }

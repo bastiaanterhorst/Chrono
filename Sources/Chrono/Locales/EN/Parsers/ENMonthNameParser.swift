@@ -31,7 +31,7 @@ public final class ENMonthNameParser: Parser {
         
         // Get the month name
         guard let monthName = match.string(at: 1)?.lowercased(),
-              let month = ENMonthNameParser.MONTH_NAME_DICTIONARY[monthName] else {
+              let month = ENMonthNameParser.MONTH_NAME_DICTIONARY.matchValue(for: monthName) else {
             return nil
         }
         
@@ -70,7 +70,7 @@ public final class ENMonthNameParser: Parser {
         
         // Check for date range (e.g., "January to February")
         if let endMonthName = match.string(at: 4)?.lowercased(),
-           let endMonth = ENMonthNameParser.MONTH_NAME_DICTIONARY[endMonthName] {
+           let endMonth = ENMonthNameParser.MONTH_NAME_DICTIONARY.matchValue(for: endMonthName) {
             // Create an end date component
             let endComponent = context.createParsingComponents()
             endComponent.assign(.month, value: endMonth)

@@ -6,7 +6,7 @@ import Foundation
 public final class PTMonthNameLittleEndianParser: Parser {
     /// Returns the pattern for matching Portuguese dates with month names
     public func pattern(context: ParsingContext) -> String {
-        let monthNames = PTConstants.MONTH_DICTIONARY.keys.joined(separator: "|")
+        let monthNames = PatternUtils.matchAnyPattern(PTConstants.MONTH_DICTIONARY)
         
         return "(?:em\\s*)?([0-9]{1,2})(?:º|°|\\.)?" +
               "(?:\\s*(?:de|\\/)\\s*)" +
@@ -27,7 +27,7 @@ public final class PTMonthNameLittleEndianParser: Parser {
         }
         
         // Month component
-        guard let month = PTConstants.MONTH_DICTIONARY[monthText] else {
+        guard let month = PTConstants.MONTH_DICTIONARY.matchValue(for: monthText) else {
             return nil
         }
         

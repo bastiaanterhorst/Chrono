@@ -58,8 +58,8 @@ public final class PTTimeExpressionParser: Parser {
         
         // Apply AM/PM meridiem from period mentions
         var meridiem: Int? = nil
-        if let period = match.string(at: 3)?.lowercased() {
-            if period.contains("manhã") || period.contains("manha") {
+        if let period = match.string(at: 3)?.foldedForMatching() {
+            if period.contains("manha") {
                 meridiem = Meridiem.am.rawValue
             } else if period.contains("tarde") || period.contains("noite") {
                 meridiem = Meridiem.pm.rawValue

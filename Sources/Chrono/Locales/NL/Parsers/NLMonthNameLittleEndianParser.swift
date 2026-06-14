@@ -30,7 +30,7 @@ final class NLMonthNameLittleEndianParser: Parser {
         
         // Get month
         guard let monthName = match.string(at: 2)?.lowercased(),
-              let month = NLConstants.MONTH_DICTIONARY[monthName] else {
+              let month = NLConstants.MONTH_DICTIONARY.matchValue(for: monthName) else {
             return nil
         }
         

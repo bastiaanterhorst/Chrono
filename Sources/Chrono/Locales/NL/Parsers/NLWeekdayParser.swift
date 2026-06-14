@@ -18,7 +18,7 @@ final class NLWeekdayParser: Parser {
     
     func extract(context: ParsingContext, match: TextMatch) -> Any? {
         let dayOfWeekText = match.string(at: 2)?.lowercased()
-        guard let dayOfWeek = dayOfWeekText, let offset = NLConstants.WEEKDAY_DICTIONARY[dayOfWeek] else {
+        guard let dayOfWeek = dayOfWeekText, let offset = NLConstants.WEEKDAY_DICTIONARY.matchValue(for: dayOfWeek) else {
             return nil
         }
         

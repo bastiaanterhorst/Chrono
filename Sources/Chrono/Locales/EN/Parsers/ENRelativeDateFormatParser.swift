@@ -31,7 +31,7 @@ public final class ENRelativeDateFormatParser: Parser {
         guard let numberText = match.string(at: 1)?.lowercased() else { return nil }
         
         var number: Double
-        if let num = ENRelativeDateFormatParser.NUMBER_DICTIONARY[numberText] {
+        if let num = ENRelativeDateFormatParser.NUMBER_DICTIONARY.matchValue(for: numberText) {
             number = Double(num)
         } else if let num = Double(numberText) {
             number = num

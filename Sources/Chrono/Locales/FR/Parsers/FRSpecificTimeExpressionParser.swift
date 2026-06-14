@@ -7,7 +7,7 @@ public final class FRSpecificTimeExpressionParser: Parser {
     public func pattern(context: ParsingContext) -> String {
         return "(?:(?:\\à|a|vers|de)?\\s*)" +
                "(\\d{1,2})(?:h|:)(?:(\\d{1,2})(?:min|\\'|m)?)?" +
-               "(?:\\s*(?:du|dans|le|la|l'|au|en|à|a)\\s*(matin|matinée|après-midi|apres-midi|soir|soirée|nuit))?"
+               "(?:\\s*(?:du|dans|le|la|l'|au|en|à|a)\\s*(matin|matinée|matinee|après-midi|apres-midi|soir|soirée|soiree|nuit))?"
     }
     
     /// Extracts time components from a specific French time expression
@@ -30,26 +30,26 @@ public final class FRSpecificTimeExpressionParser: Parser {
         }
         
         // Determine meridiem based on time period
-        let period = match.string(at: 3)?.lowercased()
+        let period = match.string(at: 3)?.foldedForMatching()
         
         var meridiem = hour >= 12 ? Meridiem.pm : Meridiem.am
         var adjustedHour = hour
         
         if let period = period {
             switch period {
-            case "matin", "matinée":
+            case "matin", "matinee":
                 // Morning
                 meridiem = .am
                 if hour == 12 {
                     adjustedHour = 0
                 }
-            case "après-midi", "apres-midi":
+            case "apres-midi":
                 // Afternoon
                 meridiem = .pm
                 if hour < 12 {
                     adjustedHour = hour + 12
                 }
-            case "soir", "soirée", "nuit":
+            case "soir", "soiree", "nuit":
                 // Evening/night
                 meridiem = .pm
                 if hour < 12 {

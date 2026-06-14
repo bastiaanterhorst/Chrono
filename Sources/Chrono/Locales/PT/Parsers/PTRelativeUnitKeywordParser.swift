@@ -14,8 +14,8 @@ public struct PTRelativeUnitKeywordParser: Parser {
     }
 
     public func extract(context: ParsingContext, match: TextMatch) -> Any? {
-        let modifierText = (match.string(at: 1) ?? match.string(at: 4) ?? "").lowercased()
-        let unitText = (match.string(at: 2) ?? match.string(at: 3) ?? "").lowercased()
+        let modifierText = (match.string(at: 1) ?? match.string(at: 4) ?? "").foldedForMatching()
+        let unitText = (match.string(at: 2) ?? match.string(at: 3) ?? "").foldedForMatching()
 
         guard !modifierText.isEmpty, !unitText.isEmpty else {
             return nil
@@ -24,7 +24,7 @@ public struct PTRelativeUnitKeywordParser: Parser {
         let offset: Int
         if modifierText == "este" || modifierText == "esta" {
             offset = 0
-        } else if modifierText.contains("próximo") || modifierText.contains("proximo") {
+        } else if modifierText.contains("proximo") {
             offset = 1
         } else if modifierText == "passado" || modifierText == "passada" || modifierText == "anterior" {
             offset = -1
@@ -39,7 +39,7 @@ public struct PTRelativeUnitKeywordParser: Parser {
         let calendarUnit: Calendar.Component
         if unitText.hasPrefix("dia") {
             calendarUnit = .day
-        } else if unitText.hasPrefix("mês") || unitText.hasPrefix("mes") {
+        } else if unitText.hasPrefix("mes") {
             calendarUnit = .month
         } else if unitText.hasPrefix("ano") {
             calendarUnit = .year

@@ -40,10 +40,10 @@ public struct ESTimeUnitWithinFormatParser: Parser {
                 if valueRange.location != NSNotFound, unitRange.location != NSNotFound {
                     let valueText = nsString.substring(with: valueRange)
                     let unitText = nsString.substring(with: unitRange).lowercased()
-                    
+
                     let value = ESConstants.parseNumberPattern(valueText)
-                    
-                    if let unit = ESConstants.TIME_UNIT_DICTIONARY[unitText] {
+
+                    if let unit = ESConstants.TIME_UNIT_DICTIONARY.matchValue(for: unitText) {
                         // This is a future date - within the next time period
                         let date = context.refDate
                         let calendar = Calendar.current

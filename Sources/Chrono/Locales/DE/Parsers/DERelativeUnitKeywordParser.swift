@@ -12,7 +12,7 @@ public struct DERelativeUnitKeywordParser: Parser {
     }
 
     public func extract(context: ParsingContext, match: TextMatch) -> Any? {
-        guard let modifierText = match.string(at: 1)?.lowercased(),
+        guard let modifierText = match.string(at: 1)?.foldedForMatching(),
               let unitText = match.string(at: 2)?.lowercased() else {
             return nil
         }
@@ -20,7 +20,7 @@ public struct DERelativeUnitKeywordParser: Parser {
         let offset: Int
         if modifierText.hasPrefix("dies") {
             offset = 0
-        } else if modifierText.hasPrefix("nächst") || modifierText.hasPrefix("naechst") || modifierText.hasPrefix("kommend") {
+        } else if modifierText.hasPrefix("nachst") || modifierText.hasPrefix("kommend") {
             offset = 1
         } else if modifierText.hasPrefix("letzt") || modifierText.hasPrefix("vorig") || modifierText.hasPrefix("vorherig") {
             offset = -1

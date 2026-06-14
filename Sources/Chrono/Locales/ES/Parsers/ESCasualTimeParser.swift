@@ -8,7 +8,7 @@ public final class ESCasualTimeParser: Parser {
     }
     
     public func extract(context: ParsingContext, match: TextMatch) -> Any? {
-        guard let text = match.string(at: 1)?.lowercased() else { return nil }
+        guard let text = match.string(at: 1)?.foldedForMatching() else { return nil }
         let components = ParsingComponents(reference: context.reference)
         
         switch text {
@@ -19,7 +19,7 @@ public final class ESCasualTimeParser: Parser {
             components.assign(.meridiem, value: Meridiem.am.rawValue)
             return components
             
-        case "mediodía", "medio día", "mediodia", "medio dia":
+        case "mediodia", "medio dia":
             components.assign(.hour, value: 12)
             components.assign(.minute, value: 0)
             components.assign(.second, value: 0)
