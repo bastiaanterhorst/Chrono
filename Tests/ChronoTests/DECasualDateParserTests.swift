@@ -24,7 +24,16 @@ let dateFormatter: DateFormatter = {
         #expect(results2.count == 1)
         #expect(results2[0].text.contains("morgen"))
         #expect(dateFormatter.string(from: results2[0].start.date) == "01/11/2023")
-        
+
+        // Bare "morgen" must resolve to tomorrow, not "this morning" (today).
+        let bareMorgen = Chrono.de.casual.parse(text: "morgen", referenceDate: refDate)
+        #expect(bareMorgen.count == 1)
+        #expect(dateFormatter.string(from: bareMorgen[0].start.date) == "01/11/2023")
+        // Capitalized + trailing-punctuation variants exercise the same path.
+        let capMorgen = Chrono.de.casual.parse(text: "Morgen", referenceDate: refDate)
+        #expect(capMorgen.count == 1)
+        #expect(dateFormatter.string(from: capMorgen[0].start.date) == "01/11/2023")
+
         // Test "übermorgen" (day after tomorrow)
         let results3 = Chrono.de.casual.parse(text: "Übermorgen ist das Meeting", referenceDate: refDate)
         #expect(results3.count == 1)

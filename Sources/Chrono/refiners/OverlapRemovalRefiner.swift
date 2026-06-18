@@ -97,11 +97,24 @@ public final class OverlapRemovalRefiner: Refiner {
         return result.start.isCertain(.isoWeek) || result.start.isCertain(.isoWeekYear)
     }
 
+    private func hasDateComponent(_ result: ParsingResult) -> Bool {
+        let dateComponents: Set<Component> = [.year, .month, .day, .weekday, .isoWeek, .isoWeekYear]
+        return result.start.getCertainComponents().contains { dateComponents.contains($0) }
+    }
+
     private func isPreferred(_ lhs: ParsingResult, over rhs: ParsingResult) -> Bool {
         let lhsISOWeek = hasCertainISOWeek(lhs)
         let rhsISOWeek = hasCertainISOWeek(rhs)
         if lhsISOWeek != rhsISOWeek {
             return lhsISOWeek
+        }
+
+        // Prefer a result anchored to a date (day/month/year/weekday) over a
+        // pure time-of-day result when they occupy the same span.
+        let lhsHasDate = hasDateComponent(lhs)
+        let rhsHasDate = hasDateComponent(rhs)
+        if lhsHasDate != rhsHasDate {
+            return lhsHasDate
         }
 
         let lhsCertainty = certaintyScore(lhs)
