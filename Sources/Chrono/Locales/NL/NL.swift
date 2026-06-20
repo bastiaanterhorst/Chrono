@@ -58,7 +58,10 @@ public struct NL {
             // Dutch-specific refiners
             NLMergeDateTimeRefiner(),
             NLMergeDateRangeRefiner(),
-            NLPrioritizeWeekNumberRefiner()
+            NLPrioritizeWeekNumberRefiner(),
+
+            // Bare month → 1st of month (NL builds its own config, so add it explicitly).
+            MonthOnlyDayRefiner()
         ]
         
         return Chrono(parsers: parsers, refiners: refiners)

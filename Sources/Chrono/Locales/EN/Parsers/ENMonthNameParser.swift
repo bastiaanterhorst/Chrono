@@ -37,14 +37,11 @@ public final class ENMonthNameParser: Parser {
         
         component.assign(.month, value: month)
         
-        // Handle day. A bare month name (no day) means the 1st of that month — not the reference
-        // date's day-of-month, which is rarely what "october" means when scheduling.
-        var hasExplicitDay = false
-        if let dayStr = match.string(at: 3), let day = Int(dayStr), day >= 1 && day <= 31 {
-            component.assign(.day, value: day)
-            hasExplicitDay = true
-        } else {
-            component.imply(.day, value: 1)
+        // Handle day
+        if let dayStr = match.string(at: 3), let day = Int(dayStr) {
+            if day >= 1 && day <= 31 {
+                component.assign(.day, value: day)
+            }
         }
 
         // Handle year
@@ -55,31 +52,19 @@ public final class ENMonthNameParser: Parser {
                 component.assign(.year, value: year)
             }
         } else {
-            // No explicit year — infer it, forward-dating to the future when requested.
+            // If no year is specified, use the year from reference date
+            // But apply forward/backward adjustment if needed
             let refDate = context.refDate
             let calendar = Calendar.current
             let currentYear = calendar.component(.year, from: refDate)
             let currentMonth = calendar.component(.month, from: refDate)
 
-            if hasExplicitDay {
-                // Keep the existing month-granularity rule for "month day".
-                if context.options.forwardDate && month < currentMonth {
-                    component.imply(.year, value: currentYear + 1)
-                } else {
-                    component.imply(.year, value: currentYear)
-                }
+            // If the specified month is earlier than the current month,
+            // we likely refer to the next year
+            if context.options.forwardDate && month < currentMonth {
+                component.imply(.year, value: currentYear + 1)
             } else {
-                // Bare month → the 1st; bump a year if that 1st is already past.
-                var comps = DateComponents()
-                comps.year = currentYear
-                comps.month = month
-                comps.day = 1
-                let firstOfMonth = calendar.date(from: comps) ?? refDate
-                if context.options.forwardDate && calendar.startOfDay(for: firstOfMonth) < calendar.startOfDay(for: refDate) {
-                    component.imply(.year, value: currentYear + 1)
-                } else {
-                    component.imply(.year, value: currentYear)
-                }
+                component.imply(.year, value: currentYear)
             }
         }
         

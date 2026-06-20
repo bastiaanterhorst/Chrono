@@ -17,6 +17,7 @@ public enum CommonConfiguration {
         
         // Add common refiners
         updatedRefiners.insert(OverlapRemovalRefiner(), at: 0)
+        updatedRefiners.append(MonthOnlyDayRefiner()) // bare month → 1st of month (all locales)
         updatedRefiners.append(ForwardDateRefiner())
         
         // Add additional refiners for timezone handling

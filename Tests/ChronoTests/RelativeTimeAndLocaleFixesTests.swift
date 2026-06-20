@@ -85,6 +85,19 @@ struct RelativeTimeAndLocaleFixesTests {
         } else { #expect(Bool(false)) }
     }
 
+    /// The bare-month → 1st rule applies across locales (not just English).
+    @Test func bareMonthFirstAcrossLocales() {
+        let cal = Calendar.current
+        func day(_ s: String, _ chrono: Chrono) -> Int? {
+            chrono.parse(text: s, referenceDate: ref, options: opts).first.map { cal.component(.day, from: $0.start.date) }
+        }
+        #expect(day("oktober", Chrono.nl.casual) == 1)
+        #expect(day("octobre", Chrono.fr.casual) == 1)
+        #expect(day("octubre", Chrono.es.casual) == 1)
+        #expect(day("outubro", Chrono.pt.casual) == 1)
+        #expect(day("oktober", Chrono.de.casual) == 1)
+    }
+
     /// Dutch "over N <unit>" (a common future-relative form) must parse.
     @Test func dutchOverPrefixParses() {
         let r = firstResult("over 3 dagen", Chrono.nl.casual)
