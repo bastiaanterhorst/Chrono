@@ -71,29 +71,11 @@ public struct ENTimeUnitLaterFormatParser: Parser {
             return nil
         }
         
-        // Extract components from the calculated date
-        let components = calendar.dateComponents([.year, .month, .day, .hour, .minute, .second], from: date)
-        
-        // Assign the components to the ParsingComponents
-        if let year = components.year {
-            result.assign(.year, value: year)
-        }
-        if let month = components.month {
-            result.assign(.month, value: month)
-        }
-        if let day = components.day {
-            result.assign(.day, value: day)
-        }
-        if let hour = components.hour {
-            result.assign(.hour, value: hour)
-        }
-        if let minute = components.minute {
-            result.assign(.minute, value: minute)
-        }
-        if let second = components.second {
-            result.assign(.second, value: second)
-        }
-        
+        // The date portion is known; the time-of-day is only known when the unit itself is a
+        // time unit (e.g. "in 5 hours"), otherwise it is merely implied (e.g. "5 days later").
+        let isTimeUnit = (timeUnit == .second || timeUnit == .minute || timeUnit == .hour)
+        result.assignRelativeDate(from: date, unitIsTime: isTimeUnit, calendar: calendar)
+
         return result
     }
 }

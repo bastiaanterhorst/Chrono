@@ -21,6 +21,18 @@ public final class ParsingComponents: @unchecked Sendable {
     public var impliedValuesDictionary: [Component: Int] {
         return impliedValues
     }
+
+    /// Public-facing known values, with the internal "null" sentinel (-1) removed.
+    ///
+    /// `assignNull(_:)` stores -1 in `knownValues` to block a component from being implied
+    /// or re-interpreted (e.g. preventing a week number from being read as an hour). That is
+    /// an internal mechanism — a nulled component is explicitly *not* set, so it must never
+    /// appear as a certain/known value in the public result. Without this filter, callers see
+    /// `isCertain(.hour) == true` (and `get(.hour) == -1`) for "next week", "in 2 weeks",
+    /// "week 23", etc., which is incorrect.
+    var publicKnownValues: [Component: Int] {
+        return knownValues.filter { $0.value != -1 }
+    }
     
     /// Tags for this component set
     private var tags: Set<String> = []
@@ -112,6 +124,33 @@ public final class ParsingComponents: @unchecked Sendable {
         return self
     }
     
+    /// Assigns a relative date computed by offsetting the reference date.
+    ///
+    /// The date portion (year/month/day) is always *known*. The time-of-day portion is only
+    /// *known* when the matched unit is itself a time unit (e.g. "in 5 hours"); for day/week/
+    /// month/year units (e.g. "in 3 days") no clock time was specified, so the carried-over
+    /// reference time is merely *implied*. This keeps `isCertain(.hour)` an accurate signal of
+    /// whether the user actually stated a time.
+    /// - Parameters:
+    ///   - date: The computed target date.
+    ///   - unitIsTime: True if the matched unit was seconds/minutes/hours.
+    ///   - calendar: Calendar used to decompose the date (defaults to current).
+    @discardableResult
+    func assignRelativeDate(from date: Date, unitIsTime: Bool, calendar: Calendar = .current) -> ParsingComponents {
+        let c = calendar.dateComponents([.year, .month, .day, .hour, .minute, .second], from: date)
+        if let year = c.year { assign(.year, value: year) }
+        if let month = c.month { assign(.month, value: month) }
+        if let day = c.day { assign(.day, value: day) }
+        func setTime(_ component: Component, _ value: Int?) {
+            guard let value else { return }
+            if unitIsTime { assign(component, value: value) } else { imply(component, value: value) }
+        }
+        setTime(.hour, c.hour)
+        setTime(.minute, c.minute)
+        setTime(.second, c.second)
+        return self
+    }
+
     /// Checks if a component is certain (explicitly set)
     /// - Parameter component: The component to check
     /// - Returns: True if the component has a known value
@@ -274,7 +313,7 @@ public final class ParsingComponents: @unchecked Sendable {
         
         return ParsedResultDate(
             date: finalDate,
-            knownValues: knownValuesDictionary,
+            knownValues: publicKnownValues,
             impliedValues: impliedValuesDictionary
         )
     }

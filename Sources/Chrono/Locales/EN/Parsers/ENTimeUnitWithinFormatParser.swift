@@ -85,29 +85,12 @@ public struct ENTimeUnitWithinFormatParser: Parser {
             return nil
         }
         
-        // This represents a date range from the reference date to the calculated date
-        // Because Chrono doesn't natively support ranges in the API, we'll return the furthest date
-        let components = calendar.dateComponents([.year, .month, .day, .hour, .minute, .second], from: date)
-        
-        if let year = components.year {
-            result.assign(.year, value: year)
-        }
-        if let month = components.month {
-            result.assign(.month, value: month)
-        }
-        if let day = components.day {
-            result.assign(.day, value: day)
-        }
-        if let hour = components.hour {
-            result.assign(.hour, value: hour)
-        }
-        if let minute = components.minute {
-            result.assign(.minute, value: minute)
-        }
-        if let second = components.second {
-            result.assign(.second, value: second)
-        }
-        
+        // This represents a date range from the reference date to the calculated date.
+        // The date portion is known; the time-of-day is only known when the unit itself is a
+        // time unit (e.g. "in 5 hours"), otherwise it is merely implied (e.g. "in 3 days").
+        let isTimeUnit = (timeUnit == .second || timeUnit == .minute || timeUnit == .hour)
+        result.assignRelativeDate(from: date, unitIsTime: isTimeUnit, calendar: calendar)
+
         return result
     }
 }

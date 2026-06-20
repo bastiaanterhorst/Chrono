@@ -71,27 +71,10 @@ public struct ESTimeUnitWithinFormatParser: Parser {
                         }
                         
                         if let futureDate = calendar.date(byAdding: dateComponents, to: date) {
-                            let components = calendar.dateComponents([.year, .month, .day, .hour, .minute, .second], from: futureDate)
-                            
-                            if let year = components.year {
-                                result.assign(.year, value: year)
-                            }
-                            if let month = components.month {
-                                result.assign(.month, value: month)
-                            }
-                            if let day = components.day {
-                                result.assign(.day, value: day)
-                            }
-                            if let hour = components.hour {
-                                result.assign(.hour, value: hour)
-                            }
-                            if let minute = components.minute {
-                                result.assign(.minute, value: minute)
-                            }
-                            if let second = components.second {
-                                result.assign(.second, value: second)
-                            }
-                            
+                            // The date portion is known; the time-of-day is only known for time
+                            // units (e.g. "en 5 horas"), otherwise implied (e.g. "en 3 días").
+                            let isTimeUnit = (unit == .second || unit == .minute || unit == .hour)
+                            result.assignRelativeDate(from: futureDate, unitIsTime: isTimeUnit, calendar: calendar)
                             return result
                         }
                     }

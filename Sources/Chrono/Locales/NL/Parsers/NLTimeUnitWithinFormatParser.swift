@@ -7,7 +7,7 @@ final class NLTimeUnitWithinFormatParser: Parser {
         let timeUnits = PatternUtils.matchAnyPattern(NLConstants.TIME_UNIT_DICTIONARY)
         
         let start = "(?:(?:\\s|^)(?:"
-        let prefix = "(?:binnen|in)\\s*"
+        let prefix = "(?:binnen|in|over)\\s*"
         let number = "((?:een|[0-9]+)(?:\\s+(?:paar|aantal))?(?:\\s*[,.])?)\\s*"
         let unit = "(" + timeUnits + ")"
         let end = ")(?=\\W|$))"

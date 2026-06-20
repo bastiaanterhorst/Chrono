@@ -18,8 +18,8 @@ public final class JATimeExpressionParser: Parser {
         // First pattern: Match with AM/PM markers ("午後3時", "午前10時30分")
         let patternWithMeridiem = "(午前|午後|AM|PM)\\s*([0-9０-９]{1,2})\\s*時(\\s*([0-9０-９]{1,2})\\s*分)?"
         
-        // Second pattern: Match 24-hour format ("14時30分")
-        let pattern24Hour = "([0-9０-９]{1,2})\\s*時\\s*([0-9０-９]{1,2})\\s*分"
+        // Second pattern: Match 24-hour format with optional minutes ("14時30分", "15時")
+        let pattern24Hour = "([0-9０-９]{1,2})\\s*時(?:\\s*([0-9０-９]{1,2})\\s*分)?"
         
         return patternWithMeridiem + "|" + pattern24Hour
     }

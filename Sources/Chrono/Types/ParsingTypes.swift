@@ -245,19 +245,19 @@ public final class ParsingResult: @unchecked Sendable {
         // Get the start date first to validate it
         guard let startDate = start.date() else { return nil }
         
-        // Create public result
+        // Create public result (strip internal -1 null sentinels from known values)
         let publicStart = ParsedResultDate(
             date: startDate,
-            knownValues: start.knownValuesDictionary,
+            knownValues: start.publicKnownValues,
             impliedValues: start.impliedValuesDictionary
         )
-        
+
         // Handle end date
         let publicEnd: ParsedResultDate?
         if let endComponent = end, let endDate = endComponent.date() {
             publicEnd = ParsedResultDate(
                 date: endDate,
-                knownValues: endComponent.knownValuesDictionary,
+                knownValues: endComponent.publicKnownValues,
                 impliedValues: endComponent.impliedValuesDictionary
             )
         } else {

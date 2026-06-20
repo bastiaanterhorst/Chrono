@@ -82,28 +82,11 @@ public struct DETimeUnitRelativeFormatParser: Parser {
             return nil
         }
         
-        // Extract components from the calculated date
-        let dateComponents = calendar.dateComponents([.year, .month, .day, .hour, .minute, .second], from: targetDate)
-        
-        if let year = dateComponents.year {
-            result.assign(.year, value: year)
-        }
-        if let month = dateComponents.month {
-            result.assign(.month, value: month)
-        }
-        if let day = dateComponents.day {
-            result.assign(.day, value: day)
-        }
-        if let hour = dateComponents.hour {
-            result.assign(.hour, value: hour)
-        }
-        if let minute = dateComponents.minute {
-            result.assign(.minute, value: minute)
-        }
-        if let second = dateComponents.second {
-            result.assign(.second, value: second)
-        }
-        
+        // The date portion is known; the time-of-day is only known for time units
+        // (e.g. "in 5 Stunden"), otherwise it is merely implied (e.g. "in 3 Tagen").
+        let isTimeUnit = (unit == .second || unit == .minute || unit == .hour)
+        result.assignRelativeDate(from: targetDate, unitIsTime: isTimeUnit, calendar: calendar)
+
         return result
     }
 }

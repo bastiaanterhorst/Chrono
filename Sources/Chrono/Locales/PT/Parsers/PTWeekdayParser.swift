@@ -52,8 +52,10 @@ public final class PTWeekdayParser: Parser {
     
     /// Creates a date with the next occurrence of the given weekday
     private func createDateWithExactWeekday(_ calendar: Calendar, _ refDate: Date, _ dayOfWeek: Int) -> Date {
-        let currentWeekday = calendar.component(.weekday, from: refDate)
-        
+        // WEEKDAY_DICTIONARY is 0-based (domingo=0…sabado=6); Calendar's .weekday is 1-based
+        // (Sunday=1). Convert to 0-based so the difference is correct (was off by one).
+        let currentWeekday = calendar.component(.weekday, from: refDate) - 1
+
         // Calculate days to add to reach target weekday
         var daysToAdd = dayOfWeek - currentWeekday
         
