@@ -65,6 +65,26 @@ struct RelativeTimeAndLocaleFixesTests {
         #expect(r?.start.get(.hour) == 15)
     }
 
+    /// A bare month → the 1st of that month, forward-dated (not the reference day-of-month).
+    @Test func bareMonthIsFirstOfMonthForwardDated() {
+        let cal = Calendar.current
+        func parsed(_ s: String) -> Date? {
+            firstResult(s)?.start.date
+        }
+        // ref is 2025-06-15. October is future this year → Oct 1, 2025.
+        if let d = parsed("october") {
+            #expect(cal.component(.day, from: d) == 1)
+            #expect(cal.component(.month, from: d) == 10)
+            #expect(cal.component(.year, from: d) == 2025)
+        } else { #expect(Bool(false)) }
+        // June 1 is already past → June 1 of next year.
+        if let d = parsed("june") {
+            #expect(cal.component(.day, from: d) == 1)
+            #expect(cal.component(.month, from: d) == 6)
+            #expect(cal.component(.year, from: d) == 2026)
+        } else { #expect(Bool(false)) }
+    }
+
     /// Dutch "over N <unit>" (a common future-relative form) must parse.
     @Test func dutchOverPrefixParses() {
         let r = firstResult("over 3 dagen", Chrono.nl.casual)
