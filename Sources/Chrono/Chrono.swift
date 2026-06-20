@@ -101,9 +101,14 @@ public struct Chrono: Sendable {
         for refiner in refiners {
             results = refiner.refine(context: context, results: results)
         }
-        
+
+        // Re-sort by text index after refiners. Some refiners (merge/overlap) reorder results via
+        // sets keyed on reference identity, so their output order is process-dependent. Restoring a
+        // stable index order here makes parse() deterministic for every locale and consumer.
+        results.sort { $0.index < $1.index }
+
         // Convert to public results with additional safety
-        return results.compactMap { 
+        return results.compactMap {
             // toPublicResult now returns an optional, so this will filter out nils
             return $0.toPublicResult()
         }

@@ -107,4 +107,27 @@ struct RelativeTimeAndLocaleFixesTests {
             #expect(Calendar.current.component(.day, from: d) == 18) // Jun 15 + 3
         }
     }
+
+    /// Multi-date strings must come back in stable ascending text order on every parse. Some
+    /// refiners reorder results via sets keyed on reference identity, so without the final
+    /// re-sort in `parse()` the order was process-dependent — which made last-wins selection in
+    /// downstream consumers (SpaceNLI/NLDatePlanner) nondeterministic. Holds across locales.
+    @Test func multiDateResultsStayOrderedByIndex() {
+        let cases: [(String, Chrono)] = [
+            ("water plants tomorrow call dentist friday", Chrono.casual),
+            ("review pr next friday and ship monday", Chrono.casual),
+            ("morgen bellen en vrijdag mailen", Chrono.nl.casual),
+        ]
+        for (text, chrono) in cases {
+            var serialized = Set<String>()
+            for _ in 0..<24 {
+                let results = chrono.parse(text: text, referenceDate: ref, options: opts)
+                // Output is always sorted ascending by text index.
+                #expect(results.map(\.index) == results.map(\.index).sorted())
+                serialized.insert(results.map { "\($0.index):\($0.text)" }.joined(separator: "|"))
+            }
+            // Identical result sequence on every one of the 24 parses.
+            #expect(serialized.count == 1, "nondeterministic results for «\(text)»: \(serialized)")
+        }
+    }
 }
