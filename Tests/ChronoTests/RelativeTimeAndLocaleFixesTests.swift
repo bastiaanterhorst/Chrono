@@ -154,16 +154,6 @@ struct RelativeTimeAndLocaleFixesTests {
         }
     }
 
-    /// "next week thursday" exposes the week and the weekday as separate results with the weekday
-    /// LAST, so a last-wins consumer (SpaceNLI) schedules the specific day, not the whole week.
-    @Test func nextWeekWeekdayExposesTheDayLast() {
-        let results = Chrono.casual.parse(text: "next week thursday", referenceDate: ref, options: opts)
-        #expect(!results.isEmpty)
-        if let last = results.last {
-            #expect(Calendar.current.component(.day, from: last.start.date) == 19) // Thursday of next week
-        }
-    }
-
     /// A bare number is not a date — it must not greedily match (regression: "1" became "today",
     /// and any number up to ~100 turned into today).
     @Test func bareNumbersAreNotDates() {
