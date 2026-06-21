@@ -51,6 +51,9 @@ public struct NL {
         
         // Refiners
         let refiners: [Refiner] = [
+            // Must precede OverlapRemovalRefiner so the weekday survives "volgende week donderdag".
+            CombineRelativeWeekAndWeekdayRefiner(),
+
             // Standard refiners
             OverlapRemovalRefiner(),
             ForwardDateRefiner(),

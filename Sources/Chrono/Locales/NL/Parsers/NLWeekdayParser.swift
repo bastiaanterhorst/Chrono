@@ -96,7 +96,9 @@ final class NLWeekdayParser: Parser {
             if let day = targetComponents.day {
                 result[.day] = day
             }
-            
+            // Expose weekday (Sun=0…Sat=6) so cross-locale refiners recognise this as a weekday.
+            result[.weekday] = offset
+
             return result
         } else if modifier.contains("deze") || modifier.contains("dit") {
             // If it's "deze/dit" (this), keep it in the current week
@@ -128,7 +130,9 @@ final class NLWeekdayParser: Parser {
         if let day = targetComponents.day {
             result[.day] = day
         }
-        
+        // Expose weekday (Sun=0…Sat=6) so cross-locale refiners recognise this as a weekday.
+        result[.weekday] = offset
+
         return result
     }
 }

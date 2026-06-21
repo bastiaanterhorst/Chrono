@@ -45,6 +45,8 @@ public final class PTWeekdayParser: Parser {
             component.assign(.year, value: calendar.component(.year, from: startDate))
         }
         
+        // Expose the weekday (Sun=0…Sat=6) so cross-locale refiners can recognise this as a weekday.
+        component.assign(.weekday, value: dayOfWeek)
         component.imply(.hour, value: 12)
         component.addTag("PTWeekdayParser")
         return component

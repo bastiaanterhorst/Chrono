@@ -18,7 +18,13 @@ final class NLMergeDateTimeRefiner: Refiner {
         while i < currentResults.count {
             // Get the date component
             let currentResult = currentResults[i]
-            let currentText = (context.text as NSString).substring(with: NSRange(location: currentResult.index, length: currentResult.text.count))
+            // Clamp to the string's bounds: a result's index + text length can exceed the input
+            // (e.g. a relative-week parser that reports the whole input as its text), which would
+            // otherwise crash with an out-of-range NSString.substring.
+            let ns = context.text as NSString
+            let loc = min(max(0, currentResult.index), ns.length)
+            let len = max(0, min(currentResult.text.count, ns.length - loc))
+            let currentText = ns.substring(with: NSRange(location: loc, length: len))
             let hasDate = isDateOnlyComponent(currentResult)
             
             // If this is not a date-only component, consider it standalone

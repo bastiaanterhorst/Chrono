@@ -17,6 +17,8 @@ public enum CommonConfiguration {
         
         // Add common refiners
         updatedRefiners.insert(OverlapRemovalRefiner(), at: 0)
+        // Must precede OverlapRemovalRefiner so the weekday survives the "<week> <weekday>" order.
+        updatedRefiners.insert(CombineRelativeWeekAndWeekdayRefiner(), at: 0)
         updatedRefiners.append(MonthOnlyDayRefiner()) // bare month → 1st of month (all locales)
         updatedRefiners.append(ForwardDateRefiner())
         

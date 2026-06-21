@@ -14,6 +14,7 @@ public enum JA {
             JACasualDateParser(),
             JAMonthNameParser(),
             JAStandardParser(),
+            JAWeekdayParser(),
             JATimeExpressionParser()
         ]
         
@@ -42,6 +43,7 @@ public enum JA {
             JANumericRelativeUnitParser(),
             JAMonthNameParser(),
             JAStandardParser(),
+            JAWeekdayParser(),
             JATimeExpressionParser()
         ]
         

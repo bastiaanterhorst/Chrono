@@ -117,7 +117,10 @@ public struct DEWeekdayParser: Parser {
         if let day = components.day {
             result.assign(.day, value: day)
         }
-        
+        // Expose the weekday (Sun=0…Sat=6) so cross-locale refiners can recognise this as a weekday.
+        result.assign(.weekday, value: weekday)
+        result.addTag("DEWeekdayParser")
+
         return result
     }
 }
