@@ -9,8 +9,9 @@ public struct DEMonthNameParser: Parser {
         let months = PatternUtils.matchAnyPattern(DEConstants.MONTH_DICTIONARY)
         let prefix = "(?:(?:im|in|am|ab)\\s+)?"
         let month = "(" + months + ")"
-        let day = "(?:\\s+([0-9]{1,2})(?:\\.|te|ten)?)?"
-        let year = "(?:\\s*[,-]?\\s*([0-9]{2,4}))?"
+        // (?!:) so the hour of a clock time isn't taken as the day/year (e.g. "Juli 14:00" ≠ July 14).
+        let day = "(?:\\s+([0-9]{1,2})(?:\\.|te|ten)?(?!:))?"
+        let year = "(?:\\s*[,-]?\\s*([0-9]{2,4})(?!:))?"
         return "(?i)" + prefix + month + day + year + "(?=\\W|$)"
     }
 

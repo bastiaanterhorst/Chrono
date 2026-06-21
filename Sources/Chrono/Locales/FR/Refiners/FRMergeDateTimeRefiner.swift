@@ -131,34 +131,25 @@ public final class FRMergeDateTimeRefiner: Refiner {
             return false
         }
         
-        // Check if they're close enough in the text
-        let firstIndex = min(currentResult.index, nextResult.index)
-        let secondIndex = max(currentResult.index, nextResult.index)
-        let endOfFirst = firstIndex + (firstIndex == currentResult.index ? currentResult.text.count : nextResult.text.count)
-        
-        // Allow up to 10 characters between date and time for connecting phrases
-        let maxDistance = 10
-        if secondIndex > endOfFirst + maxDistance {
-            return false
-        }
-        
-        // Simplified approach for checking connectors
-        if endOfFirst < secondIndex {
-            // Just check the distance between parts
-            let distance = secondIndex - endOfFirst
-            
-            // If it's too far apart, don't merge
-            if distance > 5 {
-                return false
-            }
-            
-            // Check if the text contains French connectors
-            if text.contains("Rendez-vous lundi à 15h30") {
-                return true
-            }
-        }
-        
-        return true
+        // Merge only when nothing but whitespace or a small connector ("à"/"vers"/",") separates
+        // them — never across other content like a duration ("2 juillet 30m 14:00"), which both
+        // mangles the span and hides the time.
+        return gapIsConnective(currentResult, nextResult, text: text)
+    }
+
+    /// True when only whitespace, punctuation, or a short connector word lies between the two results.
+    private func gapIsConnective(_ a: ParsingResult, _ b: ParsingResult, text: String) -> Bool {
+        let ns = text as NSString
+        let earlier = a.index <= b.index ? a : b
+        let later = a.index <= b.index ? b : a
+        let firstEnd = min(earlier.index + (earlier.text as NSString).length, ns.length)
+        let secondStart = min(later.index, ns.length)
+        guard secondStart > firstEnd else { return true }
+        let between = ns.substring(with: NSRange(location: firstEnd, length: secondStart - firstEnd))
+        let trimmed = between.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty { return true }
+        let connectors: Set<String> = ["à", "a", "vers", "@", ",", "-", "–"]
+        return connectors.contains(trimmed.lowercased())
     }
     
     /// Merges date and time components

@@ -10,8 +10,10 @@ public struct DETimeExpressionParser: Parser {
                "(?:(um|von|nach|vor)\\s*)?" +
                "([0-9]|0[0-9]|1[0-9]|2[0-4])(?:[.,]([0-9]{1,2}))?" +
                "(?:\\s*(?:uhr|h))?" +
-               "(?:\\s*(?:([0-9]{1,2})\\s*(?:m(?:in(?:uten)?)?|Min)|\\.([0-9]{1,2})))?" +
-               "(?:\\s*(?:([0-9]{1,2})\\s*(?:s(?:ek(?:unden)?)?|Sek)|\\.([0-9]{1,2})))?" +
+               // The suffix "min"/"sec" forms need a separating space so a bare duration like "30m"
+               // ("3" + "0m") is NOT read as 3:00 — real times use ":"/"."/"Uhr" (e.g. "3 30min").
+               "(?:(?:\\s+([0-9]{1,2})\\s*(?:m(?:in(?:uten)?)?|Min))|(?:\\s*\\.([0-9]{1,2})))?" +
+               "(?:(?:\\s+([0-9]{1,2})\\s*(?:s(?:ek(?:unden)?)?|Sek))|(?:\\s*\\.([0-9]{1,2})))?" +
                "(?:\\s*(morgens?|vormittags?|mittags?|nachmittags?|abends?|nachts?))?" +
                "(?=\\W|$)"
     }

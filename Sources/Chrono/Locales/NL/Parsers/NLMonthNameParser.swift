@@ -7,8 +7,9 @@ final class NLMonthNameParser: Parser {
         let monthNames = PatternUtils.matchAnyPattern(NLConstants.MONTH_DICTIONARY)
         let prefix = "(?:(?:in|op)\\s+)?"
         let month = "(" + monthNames + ")"
-        let day = "(?:\\s+([0-9]{1,2})(?:ste|de|e)?)?"
-        let year = "(?:\\s*[,-]?\\s*([0-9]{2,4}))?"
+        // (?!:) so the hour of a clock time isn't taken as the day/year (e.g. "juli 14:00" ≠ July 14).
+        let day = "(?:\\s+([0-9]{1,2})(?:ste|de|e)?(?!:))?"
+        let year = "(?:\\s*[,-]?\\s*([0-9]{2,4})(?!:))?"
         let end = "(?=\\W|$)"
         return prefix + month + day + year + end
     }

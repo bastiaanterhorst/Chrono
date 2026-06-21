@@ -24,8 +24,9 @@ public struct FRMonthNameParser: Parser {
         let months = PatternUtils.matchAnyPattern(FRMonthNameParser.monthDictionary)
         let prefix = "(?:(?:en|le|au)\\s+)?"
         let month = "(" + months + ")"
-        let day = "(?:\\s+([0-9]{1,2})(?:er)?)?"
-        let year = "(?:\\s*(?:de)?\\s*[,-]?\\s*([0-9]{2,4}))?"
+        // (?!:) so the hour of a clock time isn't taken as the day/year (e.g. "juillet 14:00" ≠ July 14).
+        let day = "(?:\\s+([0-9]{1,2})(?:er)?(?!:))?"
+        let year = "(?:\\s*(?:de)?\\s*[,-]?\\s*([0-9]{2,4})(?!:))?"
         return "(?i)" + prefix + month + day + year + "(?=\\W|$)"
     }
 

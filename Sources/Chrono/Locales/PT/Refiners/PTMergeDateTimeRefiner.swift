@@ -50,7 +50,16 @@ public final class PTMergeDateTimeRefiner: Refiner {
             
             // Check if we should merge these results
             let shouldMerge = isDateThenTime || isTimeThenDate
-            let abutting = result2.index - (result1.index + result1.text.count) <= 5
+            // "abutting" = only whitespace between them (not arbitrary content like a duration
+            // "30m", which would merge date+time across it and mangle the span / hide the time).
+            let abutting: Bool = {
+                let ns = context.text as NSString
+                let startIndex = min(result1.index + (result1.text as NSString).length, ns.length)
+                let endIndex = min(result2.index, ns.length)
+                guard endIndex > startIndex else { return true }
+                let between = ns.substring(with: NSRange(location: startIndex, length: endIndex - startIndex))
+                return between.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            }()
             
             // Check for connecting text "às", "a", "de", etc.
             let hasConnectingText = {
