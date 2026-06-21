@@ -154,6 +154,26 @@ struct RelativeTimeAndLocaleFixesTests {
         }
     }
 
+    /// "next week thursday" exposes the week and the weekday as separate results with the weekday
+    /// LAST, so a last-wins consumer (SpaceNLI) schedules the specific day, not the whole week.
+    @Test func nextWeekWeekdayExposesTheDayLast() {
+        let results = Chrono.casual.parse(text: "next week thursday", referenceDate: ref, options: opts)
+        #expect(results.count >= 2)
+        if let last = results.last {
+            #expect(Calendar.current.component(.day, from: last.start.date) == 19) // Thursday of next week
+        }
+    }
+
+    /// A relative week with a preceding word ("plan in 2 weeks") still classifies as a week, and a
+    /// trailing word ("do it next week") doesn't get swallowed into the week's span.
+    @Test func relativeWeekWithSurroundingWordsStaysAWeek() {
+        #expect(firstResult("plan in 2 weeks")?.start.isCertain(.isoWeek) == true)
+        #expect(firstResult("in 2 weeks")?.start.isCertain(.isoWeek) == true)
+        #expect(firstResult("do it next week")?.start.isCertain(.isoWeek) == true)
+        // "this weekend" matches as a unit (not "this week" + stray "end").
+        #expect(firstResult("offsite this weekend")?.text.lowercased() == "this weekend")
+    }
+
     /// A bare number is not a date — it must not greedily match (regression: "1" became "today",
     /// and any number up to ~100 turned into today).
     @Test func bareNumbersAreNotDates() {

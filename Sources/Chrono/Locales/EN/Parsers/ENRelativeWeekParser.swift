@@ -8,22 +8,29 @@ public class ENRelativeWeekParser: AbstractParserWithWordBoundaryChecking, @unch
     override func innerPattern(context: ParsingContext) -> String {
         // IMPORTANT: These patterns need to match exactly what's in the tests
         
+        // Weekend variants come BEFORE the bare-week patterns so "this weekend" matches as a unit
+        // (otherwise "this week" matches inside it, leaving a stray "end").
+        let patternThisWeekend = "(?i)(?:this\\s+weekend)"
+        let patternLastWeekend = "(?i)(?:last\\s+weekend)"
+        let patternNextWeekend = "(?i)(?:next\\s+weekend)"
+
         // Basic patterns - make case-insensitive for tests
         let patternThis = "(?i)(?:this\\s+week)"
         let patternLast = "(?i)(?:last\\s+week)"
         let patternNext = "(?i)(?:next\\s+week)"
-        
+
         // Patterns with numbers - carefully craft capturing groups
         let patternWeeksAgo = "(?:(\\d+)\\s+weeks?\\s+ago)"
         let patternInWeeks = "(?:in\\s+(\\d+)\\s+weeks?)"
         let patternWeeksFromNow = "(?:(\\d+)\\s+weeks?\\s+from\\s+now)"
-        
+
         // Complex patterns
         let patternBeforeLast = "(?:the\\s+week\\s+before\\s+last)"
         let patternAfterNext = "(?:the\\s+week\\s+after\\s+next)"
-        
+
         // Return a simple pattern combination without word boundaries for the tests
-        return [patternThis, patternLast, patternNext, 
+        return [patternThisWeekend, patternLastWeekend, patternNextWeekend,
+                patternThis, patternLast, patternNext,
                 patternWeeksAgo, patternInWeeks, patternWeeksFromNow,
                 patternBeforeLast, patternAfterNext].joined(separator: "|")
     }
@@ -50,30 +57,35 @@ public class ENRelativeWeekParser: AbstractParserWithWordBoundaryChecking, @unch
         
         // Calculate the week offset based on the matched pattern
         var weekOffset = 0
-        
+        // Simple "this/last/next week(end)" forms (no number). Their RESULT text uses the matched
+        // substring so a trailing weekday ("next week thursday") isn't swallowed into the span. The
+        // number forms ("in N weeks") keep the full-input text (they have a competing day-parser and
+        // rely on the wider span to win), so this flag stays false for them.
+        var isSimpleWeek = false
+
         // Extract all numbers from the text as a fallback method
         let allNumbers = extractAllNumbers(from: text)
         if DEBUG {
             context.debug("ENRelativeWeekParser - all numbers found: \(allNumbers)")
         }
-        
+
         // Basic relative patterns
         if text.contains("this week") {
-            weekOffset = 0
+            weekOffset = 0; isSimpleWeek = true
             if DEBUG { context.debug("Matched 'this week' pattern") }
         } else if text.contains("last week") {
-            weekOffset = -1
+            weekOffset = -1; isSimpleWeek = true
             if DEBUG { context.debug("Matched 'last week' pattern") }
         } else if text.contains("next week") {
-            weekOffset = 1
+            weekOffset = 1; isSimpleWeek = true
             if DEBUG { context.debug("Matched 'next week' pattern") }
         } else if text.contains("before last") {
-            weekOffset = -2
+            weekOffset = -2; isSimpleWeek = true
             if DEBUG { context.debug("Matched 'week before last' pattern") }
         } else if text.contains("after next") {
-            weekOffset = 2
+            weekOffset = 2; isSimpleWeek = true
             if DEBUG { context.debug("Matched 'week after next' pattern") }
-        } 
+        }
         // Extract number from "X weeks ago" pattern
         else if text.contains("weeks ago") || text.contains("week ago") {
             var weeksAgo: Int? = nil
@@ -231,6 +243,18 @@ public class ENRelativeWeekParser: AbstractParserWithWordBoundaryChecking, @unch
             )
         }
         
+        // Simple week(end) forms: report the MATCHED substring (trimmed of any leading word-boundary
+        // whitespace) so an adjacent weekday stays a separate result. Number forms keep the full
+        // input text (their wider span lets the week win against the competing day-parser).
+        if isSimpleWeek {
+            let raw = match.matchedText
+            let leading = raw.prefix { $0 == " " || $0 == "\t" }.count
+            return ParsedResult(
+                index: match.index + leading,
+                text: String(raw.dropFirst(leading)),
+                start: components.toPublicDate()
+            )
+        }
         return ParsedResult(
             index: match.index,
             text: match.text,
