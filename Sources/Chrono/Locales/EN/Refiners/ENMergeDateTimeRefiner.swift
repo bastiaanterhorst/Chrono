@@ -16,8 +16,8 @@ public final class ENMergeDateTimeRefiner: Refiner {
             let nextResult = results[i]
             
             // Check if we should merge these results
-            if shouldMerge(currentResult: currentResult, nextResult: nextResult) {
-                currentResult = mergeResults(dateResult: currentResult, timeResult: nextResult)
+            if shouldMerge(context: context, currentResult: currentResult, nextResult: nextResult) {
+                currentResult = mergeResults(context: context, dateResult: currentResult, timeResult: nextResult)
             } else {
                 mergedResults.append(currentResult)
                 currentResult = nextResult
@@ -33,24 +33,35 @@ public final class ENMergeDateTimeRefiner: Refiner {
     ///   - currentResult: The first result
     ///   - nextResult: The next result
     /// - Returns: True if the results should be merged
-    private func shouldMerge(currentResult: ParsingResult, nextResult: ParsingResult) -> Bool {
-        // Only merge if they're sequential in the text
-        let endOfFirst = currentResult.index + currentResult.text.count
-        let maxDistance = 5 // Allow up to 5 characters between date and time
-        
-        if nextResult.index > endOfFirst + maxDistance {
-            return false
-        }
-        
+    private func shouldMerge(context: ParsingContext, currentResult: ParsingResult, nextResult: ParsingResult) -> Bool {
         // Check if one has date components and the other has time components
         let firstHasDate = currentResult.start.isCertain(.day) || currentResult.start.isCertain(.month) || currentResult.start.isCertain(.year)
         let firstHasTime = currentResult.start.isCertain(.hour)
-        
+
         let secondHasDate = nextResult.start.isCertain(.day) || nextResult.start.isCertain(.month) || nextResult.start.isCertain(.year)
         let secondHasTime = nextResult.start.isCertain(.hour)
-        
-        return (firstHasDate && !firstHasTime && secondHasTime && !secondHasDate) ||
-               (firstHasTime && !firstHasDate && secondHasDate && !secondHasTime)
+
+        let complementary = (firstHasDate && !firstHasTime && secondHasTime && !secondHasDate) ||
+                            (firstHasTime && !firstHasDate && secondHasDate && !secondHasTime)
+        guard complementary else { return false }
+
+        // Only merge when nothing but whitespace or a tiny connector ("at"/"on"/",") separates them.
+        // Never merge across other content like a duration ("2 jul 30m 2pm") — that both mangles the
+        // span and hides the time, since the two are not really one "date at time" phrase.
+        return gapIsConnective(context: context, first: currentResult, second: nextResult)
+    }
+
+    /// True when only whitespace, punctuation, or a short connector word lies between the two results.
+    private func gapIsConnective(context: ParsingContext, first: ParsingResult, second: ParsingResult) -> Bool {
+        let ns = context.text as NSString
+        let firstEnd = min(first.index + (first.text as NSString).length, ns.length)
+        let secondStart = min(second.index, ns.length)
+        guard secondStart > firstEnd else { return true } // adjacent or overlapping
+        let between = ns.substring(with: NSRange(location: firstEnd, length: secondStart - firstEnd))
+        let trimmed = between.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty { return true }
+        let connectors: Set<String> = ["at", "on", "by", "around", "@", ",", "-", "–"]
+        return connectors.contains(trimmed.lowercased())
     }
     
     /// Merges date and time components
@@ -58,14 +69,18 @@ public final class ENMergeDateTimeRefiner: Refiner {
     ///   - dateResult: The result with date information
     ///   - timeResult: The result with time information
     /// - Returns: A merged result
-    private func mergeResults(dateResult: ParsingResult, timeResult: ParsingResult) -> ParsingResult {
+    private func mergeResults(context: ParsingContext, dateResult: ParsingResult, timeResult: ParsingResult) -> ParsingResult {
         let dateIsFirst = dateResult.index < timeResult.index
-        
+
         let firstResult = dateIsFirst ? dateResult : timeResult
         let secondResult = dateIsFirst ? timeResult : dateResult
-        
-        let mergedText = getTextBetween(first: firstResult, second: secondResult)
-        let mergedIndex = firstResult.index
+
+        // The real contiguous substring spanning both (we only merge across a trivial gap), so the
+        // span is correct rather than a fabricated concatenation.
+        let ns = context.text as NSString
+        let mergedIndex = min(firstResult.index, ns.length)
+        let mergedEnd = min(secondResult.index + (secondResult.text as NSString).length, ns.length)
+        let mergedText = ns.substring(with: NSRange(location: mergedIndex, length: max(0, mergedEnd - mergedIndex)))
         
         // Determine which result has date and which has time
         let dateComponents: ParsingComponents
@@ -133,30 +148,5 @@ public final class ENMergeDateTimeRefiner: Refiner {
         
         result.addTag("ENMergeDateTimeRefiner")
         return result
-    }
-    
-    /// Gets the text between two results
-    /// - Parameters:
-    ///   - first: The first result
-    ///   - second: The second result
-    /// - Returns: The merged text
-    private func getTextBetween(first: ParsingResult, second: ParsingResult) -> String {
-        let distance = second.index - (first.index + first.text.count)
-        let startIndex = first.text.startIndex
-        
-        if distance < 0 {
-            return first.text
-        }
-        
-        if distance <= 5 {
-            let firstEndIndex = first.index + first.text.count
-            let secondEndIndex = second.index + second.text.count
-            
-            if secondEndIndex > firstEndIndex {
-                return String(first.text[startIndex...]) + " " + second.text
-            }
-        }
-        
-        return first.text
     }
 }
