@@ -22,7 +22,7 @@ public enum DE {
             // Date-related parsers
             DEWeekdayParser(),
             DEMonthNameParser(),
-            DEMonthNameLittleEndianParser(),
+            MonthNameDayParser(months: DEConstants.MONTH_DICTIONARY, tag: "DEMonthNameDayParser"),
             DESlashDateFormatParser(),
             
             // Time unit parsers
@@ -58,7 +58,7 @@ public enum DE {
             DEMonthNameParser(),
             DETimeExpressionParser(),
             DESpecificTimeExpressionParser(),
-            DEMonthNameLittleEndianParser(),
+            MonthNameDayParser(months: DEConstants.MONTH_DICTIONARY, tag: "DEMonthNameDayParser"),
             DESlashDateFormatParser()
         ]
         

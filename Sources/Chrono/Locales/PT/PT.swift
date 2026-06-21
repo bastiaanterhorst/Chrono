@@ -20,7 +20,7 @@ public enum PT {
             PTMonthNameParser(),
             PTTimeExpressionParser(),
             PTWeekdayParser(),
-            PTMonthNameLittleEndianParser()
+            MonthNameDayParser(months: PTConstants.MONTH_DICTIONARY, connectors: ["de"], tag: "PTMonthNameDayParser")
         ]
         
         let baseRefiners: [Refiner] = [
@@ -51,7 +51,7 @@ public enum PT {
             PTMonthNameParser(),
             PTTimeExpressionParser(),
             PTWeekdayParser(),
-            PTMonthNameLittleEndianParser()
+            MonthNameDayParser(months: PTConstants.MONTH_DICTIONARY, connectors: ["de"], tag: "PTMonthNameDayParser")
         ]
         
         let baseRefiners: [Refiner] = [

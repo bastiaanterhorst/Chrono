@@ -3,7 +3,7 @@ import Foundation
 
 /// Parser for French month expressions like "juin", "juin 9", and "juin 9 2025".
 public struct FRMonthNameParser: Parser {
-    private static let monthDictionary: [String: Int] = [
+    static let monthDictionary: [String: Int] = [
         "janvier": 1, "janv": 1, "janv.": 1,
         "février": 2, "fevrier": 2, "févr": 2, "fevr": 2, "févr.": 2, "fevr.": 2,
         "mars": 3,

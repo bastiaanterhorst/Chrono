@@ -21,7 +21,7 @@ public enum EN {
             ENWeekdayParser(),
             ENRelativeDateFormatParser(),
             ENMonthNameParser(),
-            ENMonthNameLittleEndianParser(),
+            MonthNameDayParser(months: ENMonthNameMiddleEndianParser.monthDictionary, connectors: ["of"], tag: "ENMonthNameDayParser"),
             ENMonthNameMiddleEndianParser(),
             
             // Format-specific parsers
@@ -82,7 +82,7 @@ public enum EN {
             
             // Date parsers come before time parsers
             ENMonthNameParser(),
-            ENMonthNameLittleEndianParser(),
+            MonthNameDayParser(months: ENMonthNameMiddleEndianParser.monthDictionary, connectors: ["of"], tag: "ENMonthNameDayParser"),
             ENMonthNameMiddleEndianParser(),
             
             ENSlashDateFormatParser(),

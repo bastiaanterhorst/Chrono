@@ -3,7 +3,7 @@ import Foundation
 
 /// Parser for dates with the format "month day, year" in English (e.g., "January 31, 2020", "Jan 31st, 2020")
 public struct ENMonthNameMiddleEndianParser: Parser {
-    private let monthDictionary: [String: Int] = [
+    static let monthDictionary: [String: Int] = [
         "january": 1, "jan": 1, "jan.": 1,
         "february": 2, "feb": 2, "feb.": 2,
         "march": 3, "mar": 3, "mar.": 3,
@@ -21,7 +21,7 @@ public struct ENMonthNameMiddleEndianParser: Parser {
     public init() {}
     
     public func pattern(context: ParsingContext) -> String {
-        return "(\\W|^)(?:on\\s*)?(" + monthDictionary.keys.joined(separator: "|") + ")" +
+        return "(\\W|^)(?:on\\s*)?(" + Self.monthDictionary.keys.joined(separator: "|") + ")" +
                "\\s*" +
                "([0-9]{1,2})(?:st|nd|rd|th)?" +
                "(?:,?\\s*([0-9]{1,4}))?" +
@@ -30,7 +30,7 @@ public struct ENMonthNameMiddleEndianParser: Parser {
     
     public func extract(context: ParsingContext, match: TextMatch) -> Any? {
         guard let monthStr = match.string(at: 2)?.lowercased(),
-              let month = monthDictionary.matchValue(for: monthStr) else {
+              let month = Self.monthDictionary.matchValue(for: monthStr) else {
             return nil
         }
         

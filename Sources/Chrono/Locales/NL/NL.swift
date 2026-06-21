@@ -42,7 +42,7 @@ public struct NL {
             NLCasualTimeParser(),
             NLMonthNameParser(),
             NLTimeExpressionParser(),
-            NLMonthNameLittleEndianParser(),
+            MonthNameDayParser(months: NLConstants.MONTH_DICTIONARY, tag: "NLMonthNameDayParser"),
             NLWeekdayParser(),
             NLSlashDateFormatParser(),
             NLTimeUnitRelativeFormatParser(),
