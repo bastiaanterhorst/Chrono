@@ -154,14 +154,19 @@ struct RelativeTimeAndLocaleFixesTests {
         }
     }
 
-    /// "next week thursday" exposes the week and the weekday as separate results with the weekday
-    /// LAST, so a last-wins consumer (SpaceNLI) schedules the specific day, not the whole week.
-    @Test func nextWeekWeekdayExposesTheDayLast() {
-        let results = Chrono.casual.parse(text: "next week thursday", referenceDate: ref, options: opts)
-        #expect(results.count >= 2)
-        if let last = results.last {
-            #expect(Calendar.current.component(.day, from: last.start.date) == 19) // Thursday of next week
+    /// "next week thursday" (week-FIRST) merges to that weekday WITHIN next week — computed from the
+    /// week anchor, NOT the standalone weekday (which would be the current week's). ref Sun 2025-06-15
+    /// → next week Mon 06-16 … Sun 06-22, so Thursday is 06-19.
+    @Test func nextWeekWeekdayResolvesToThatDay() {
+        let cal = Calendar.current
+        func dayOf(_ s: String) -> Int? {
+            guard let d = firstResult(s)?.start.date else { return nil }
+            return cal.component(.day, from: d)
         }
+        #expect(dayOf("next week thursday") == 19)
+        #expect(dayOf("next week monday") == 16)
+        #expect(dayOf("next week sunday") == 22)
+        #expect(firstResult("next week thursday")?.start.isCertain(.isoWeek) == false) // a day, not a week
     }
 
     /// A relative week with a preceding word ("plan in 2 weeks") still classifies as a week, and a

@@ -30,13 +30,26 @@ public struct ENMergeRelativeFollowByDateRefiner: Refiner {
             // Look ahead for a date that can be merged with this relative expression
             if i + 1 < resultsCopy.count {
                 let nextResult = resultsCopy[i + 1]
-                
+
                 // Check if the next result follows right after the current one
                 let gapBetweenResults = nextResult.index - (currentResult.index + currentResult.text.count)
-                
+
+                // A relative WEEK directly followed by a WEEKDAY ("next week thursday") → that weekday
+                // WITHIN the week. No preposition needed. (The standalone weekday result would be the
+                // weekday of the CURRENT week, so compute it from the week anchor instead.)
+                if currentResult.start.isCertain(.isoWeek),
+                   let weekday = nextResult.start.get(.weekday), !nextResult.start.isCertain(.isoWeek),
+                   gapBetweenResults >= 0, gapBetweenResults <= 3 {
+                    let mergedResult = mergeWeekWithWeekday(week: currentResult, weekdayResult: nextResult,
+                                                            weekday: weekday, context: context)
+                    mergedResults.append(mergedResult)
+                    i += 2
+                    continue
+                }
+
                 // Check if there's a preposition "at", "on", etc. in the gap
                 let hasFollowingPreposition = hasPrepositionInGap(text: context.text, currentResult: currentResult, nextResult: nextResult)
-                
+
                 // If the next result is close enough and there's a preposition, merge them
                 if gapBetweenResults <= 5 && hasFollowingPreposition {
                     let mergedResult = mergeResults(currentResult, nextResult, context: context)
@@ -140,5 +153,38 @@ public struct ENMergeRelativeFollowByDateRefiner: Refiner {
             start: mergedComponents,
             end: timeResult.end
         )
+    }
+
+    /// Merges "next/this/last week" + a weekday into that weekday WITHIN the week (e.g.
+    /// "next week thursday" → Thursday of next week). The weekday is computed from the week's anchor
+    /// (its Monday), NOT from the standalone weekday result — which would be the weekday of the
+    /// CURRENT week. The result is a specific day (isoWeek cleared), not a week.
+    private func mergeWeekWithWeekday(week: ParsingResult, weekdayResult: ParsingResult,
+                                      weekday: Int, context: ParsingContext) -> ParsingResult {
+        let merged = week.start.clone()
+        if let anchor = week.start.date() {
+            let calendar = Calendar(identifier: .gregorian)
+            let daysFromMonday = (weekday == 0) ? 6 : (weekday - 1) // parser weekdays: Sun=0…Sat=6
+            if let target = calendar.date(byAdding: .day, value: daysFromMonday, to: anchor) {
+                let dc = calendar.dateComponents([.year, .month, .day], from: target)
+                if let y = dc.year { merged.assign(.year, value: y) }
+                if let m = dc.month { merged.assign(.month, value: m) }
+                if let d = dc.day { merged.assign(.day, value: d) }
+                merged.assign(.weekday, value: weekday)
+                // It's now a specific day, not a whole week.
+                merged.assignNull(.isoWeek)
+                merged.assignNull(.isoWeekYear)
+            }
+        }
+
+        // Combined text, clamped to the input bounds.
+        let n = context.text.count
+        let startOffset = max(0, min(week.index, n))
+        let endOffset = max(startOffset, min(weekdayResult.index + weekdayResult.text.count, n))
+        let start = context.text.index(context.text.startIndex, offsetBy: startOffset)
+        let end = context.text.index(context.text.startIndex, offsetBy: endOffset)
+        let combinedText = String(context.text[start..<end])
+
+        return context.createParsingResult(index: week.index, text: combinedText, start: merged, end: nil)
     }
 }
