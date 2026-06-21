@@ -60,7 +60,11 @@ final class NLRelativeUnitKeywordParser: Parser {
         if let month = values.month {
             component.assign(.month, value: month)
         }
-        if let day = values.day {
+        // A relative MONTH means the 1st of that month (start of the unit), not the reference
+        // day-of-month — matching how a relative week anchors to its Monday.
+        if calendarUnit == .month {
+            component.assign(.day, value: 1)
+        } else if let day = values.day {
             component.assign(.day, value: day)
         }
 
