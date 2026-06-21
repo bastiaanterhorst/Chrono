@@ -88,18 +88,33 @@ public struct ENMergeRelativeAfterDateRefiner: Refiner {
         // Create a new component set that combines both
         let mergedComponents = timeComponents.clone()
         
-        // Merge date components from the relative result
-        if let year = relativeDateComponents.get(.year) {
-            mergedComponents.assign(.year, value: year)
-        }
-        if let month = relativeDateComponents.get(.month) {
-            mergedComponents.assign(.month, value: month)
-        }
-        if let day = relativeDateComponents.get(.day) {
-            mergedComponents.assign(.day, value: day)
-        }
-        if let weekday = relativeDateComponents.get(.weekday) {
-            mergedComponents.assign(.weekday, value: weekday)
+        // Special case: a weekday combined with a relative WEEK (e.g. "thursday next week") resolves
+        // to that weekday WITHIN that week — the more precise day overrides the week's default Monday.
+        if let weekday = timeComponents.get(.weekday), relativeDateComponents.isCertain(.isoWeek),
+           let weekAnchor = relativeResult.start.date() { // Monday (start) of the relative week
+            let calendar = Calendar(identifier: .gregorian)
+            let daysFromMonday = (weekday == 0) ? 6 : (weekday - 1) // parser weekdays: Sun=0…Sat=6
+            if let target = calendar.date(byAdding: .day, value: daysFromMonday, to: weekAnchor) {
+                let dc = calendar.dateComponents([.year, .month, .day], from: target)
+                if let y = dc.year { mergedComponents.assign(.year, value: y) }
+                if let m = dc.month { mergedComponents.assign(.month, value: m) }
+                if let d = dc.day { mergedComponents.assign(.day, value: d) }
+                mergedComponents.assign(.weekday, value: weekday)
+            }
+        } else {
+            // Merge date components from the relative result
+            if let year = relativeDateComponents.get(.year) {
+                mergedComponents.assign(.year, value: year)
+            }
+            if let month = relativeDateComponents.get(.month) {
+                mergedComponents.assign(.month, value: month)
+            }
+            if let day = relativeDateComponents.get(.day) {
+                mergedComponents.assign(.day, value: day)
+            }
+            if let weekday = relativeDateComponents.get(.weekday) {
+                mergedComponents.assign(.weekday, value: weekday)
+            }
         }
         
         // If relative result has time components that aren't overridden by the first result, merge those too
@@ -116,9 +131,13 @@ public struct ENMergeRelativeAfterDateRefiner: Refiner {
             mergedComponents.assign(.meridiem, value: meridiem)
         }
         
-        // Combine the text of both results
-        let startPos = context.text.index(context.text.startIndex, offsetBy: timeResult.index)
-        let endPos = context.text.index(context.text.startIndex, offsetBy: relativeResult.index + relativeResult.text.count)
+        // Combine the text of both results. Clamp offsets to the string's bounds so a malformed
+        // result (index/text length disagreeing) can never overrun and crash.
+        let n = context.text.count
+        let startOffset = max(0, min(timeResult.index, n))
+        let endOffset = max(startOffset, min(relativeResult.index + relativeResult.text.count, n))
+        let startPos = context.text.index(context.text.startIndex, offsetBy: startOffset)
+        let endPos = context.text.index(context.text.startIndex, offsetBy: endOffset)
         let combinedText = String(context.text[startPos..<endPos])
         
         // Create a new result that spans both parts

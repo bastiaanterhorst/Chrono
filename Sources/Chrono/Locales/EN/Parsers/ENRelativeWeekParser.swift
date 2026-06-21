@@ -29,7 +29,10 @@ public class ENRelativeWeekParser: AbstractParserWithWordBoundaryChecking, @unch
     }
     
     override func innerExtract(context: ParsingContext, match: TextMatch) -> Any? {
-        let text = match.text.lowercased()
+        // Use the matched substring, NOT `match.text` (which is the ENTIRE input string). Using the
+        // full input here produced a result whose `text` spanned the whole input while `index` was
+        // the match location — an inconsistency that overran string bounds in downstream refiners.
+        let text = match.matchedText.lowercased()
         let referenceDate = context.reference.instant
         let calendar = Calendar(identifier: .iso8601)
         
@@ -233,7 +236,7 @@ public class ENRelativeWeekParser: AbstractParserWithWordBoundaryChecking, @unch
         
         return ParsedResult(
             index: match.index,
-            text: match.text,
+            text: match.matchedText,
             start: components.toPublicDate()
         )
     }

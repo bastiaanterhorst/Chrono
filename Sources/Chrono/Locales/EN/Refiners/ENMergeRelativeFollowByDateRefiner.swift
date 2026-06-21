@@ -14,7 +14,7 @@ public struct ENMergeRelativeFollowByDateRefiner: Refiner {
         
         var resultsCopy = results
         var mergedResults: [ParsingResult] = []
-        
+
         var i = 0
         while i < resultsCopy.count {
             let currentResult = resultsCopy[i]

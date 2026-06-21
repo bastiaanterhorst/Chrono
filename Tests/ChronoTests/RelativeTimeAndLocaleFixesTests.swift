@@ -130,4 +130,60 @@ struct RelativeTimeAndLocaleFixesTests {
             #expect(serialized.count == 1, "nondeterministic results for «\(text)»: \(serialized)")
         }
     }
+
+    // MARK: - Weekday + relative week, greedy matching, crash regressions
+
+    /// "<weekday> next week" resolves to that weekday WITHIN next week — the precise day wins over
+    /// the week's default Monday. (ref Sun 2025-06-15 → next week is Mon 06-16 … Sun 06-22.)
+    @Test func weekdayWithinRelativeWeekResolvesToThatDay() {
+        let cal = Calendar.current
+        func dayOf(_ s: String) -> Int? {
+            guard let d = firstResult(s)?.start.date else { return nil }
+            return cal.component(.day, from: d)
+        }
+        #expect(dayOf("monday next week") == 16)
+        #expect(dayOf("tuesday next week") == 17)
+        #expect(dayOf("wednesday next week") == 18)
+        #expect(dayOf("thursday next week") == 19)
+        #expect(dayOf("friday next week") == 20)
+        #expect(dayOf("saturday next week") == 21)
+        #expect(dayOf("sunday next week") == 22)
+        // The resolved day really is a Thursday (weekday 5: 1=Sun … 7=Sat).
+        if let d = firstResult("thursday next week")?.start.date {
+            #expect(cal.component(.weekday, from: d) == 5)
+        }
+    }
+
+    /// "next week thursday" exposes the week and the weekday as separate results with the weekday
+    /// LAST, so a last-wins consumer (SpaceNLI) schedules the specific day, not the whole week.
+    @Test func nextWeekWeekdayExposesTheDayLast() {
+        let results = Chrono.casual.parse(text: "next week thursday", referenceDate: ref, options: opts)
+        #expect(!results.isEmpty)
+        if let last = results.last {
+            #expect(Calendar.current.component(.day, from: last.start.date) == 19) // Thursday of next week
+        }
+    }
+
+    /// A bare number is not a date — it must not greedily match (regression: "1" became "today",
+    /// and any number up to ~100 turned into today).
+    @Test func bareNumbersAreNotDates() {
+        for n in ["0", "1", "2", "7", "12", "21", "31", "50", "99", "100", "365"] {
+            #expect(firstResult(n) == nil, "bare number «\(n)» should not parse as a date")
+        }
+    }
+
+    /// Combining a weekday with a relative week in EITHER order (and assorted nearby phrasings) must
+    /// never crash — "thursday next week" previously overran a string index in a merge refiner.
+    @Test func weekdayAndRelativeWeekNeverCrash() {
+        let phrases = [
+            "thursday next week", "next week thursday", "tuesday next week", "next week on tuesday",
+            "thu next week", "next week fri", "sunday next week", "saturday last week",
+            "wednesday this week", "next week wednesday at 3pm", "mon next week tue next week",
+            "next week", "last week monday", "this week friday", "friday the week after next",
+        ]
+        for p in phrases {
+            // Parsing must not crash; specific results aren't asserted here.
+            _ = Chrono.casual.parse(text: p, referenceDate: ref, options: opts)
+        }
+    }
 }

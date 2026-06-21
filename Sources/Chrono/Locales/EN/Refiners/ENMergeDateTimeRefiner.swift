@@ -8,7 +8,7 @@ public final class ENMergeDateTimeRefiner: Refiner {
         if results.count < 2 {
             return results
         }
-        
+
         var mergedResults: [ParsingResult] = []
         var currentResult = results[0]
         
