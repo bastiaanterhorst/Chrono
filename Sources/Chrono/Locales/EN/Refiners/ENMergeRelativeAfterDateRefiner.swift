@@ -34,12 +34,13 @@ public struct ENMergeRelativeAfterDateRefiner: Refiner {
                 // Check if the results are close enough to be merged
                 let gapBetweenResults = nextResult.index - (currentResult.index + currentResult.text.count)
 
-                // Only merge a date with a following relative WEEK ("thursday next week"). Merging a
-                // date with another full relative date ("today yesterday") is wrong — those are two
-                // independent dates and must stay separate so last-wins / past-skip can choose.
+                // Only merge when a relative WEEK is involved ("thursday next week", "next week
+                // next month"). Merging two plain relative dates ("today yesterday") is wrong — those
+                // are independent and must stay separate so last-wins / past-skip can choose.
                 // (The relative-week+weekday case is also handled earlier by
                 // CombineRelativeWeekAndWeekdayRefiner; this remains as a safety net.)
-                if gapBetweenResults <= 3, nextResult.start.isCertain(.isoWeek) {
+                let weekInvolved = currentResult.start.isCertain(.isoWeek) || nextResult.start.isCertain(.isoWeek)
+                if gapBetweenResults <= 3, weekInvolved {
                     let mergedResult = mergeResults(currentResult, nextResult, context: context)
                     mergedResults.append(mergedResult)
                     i += 2 // Skip the next result since we've merged it
