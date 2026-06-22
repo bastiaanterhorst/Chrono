@@ -78,8 +78,9 @@ public final class PTMergeDateTimeRefiner: Refiner {
                 let endStringIndex = context.text.index(context.text.startIndex, offsetBy: endIndex)
                 let textBetween = String(context.text[startStringIndex..<endStringIndex])
                 
-                // Look for connecting words
-                return textBetween.range(of: "\\s*(às|as|a|de|,)\\s*", options: [.regularExpression]) != nil
+                // The whole gap must BE a connector (anchored), else "a" matches inside a word like
+                // "bla" and wrongly merges "amanhã bla 15:00".
+                return textBetween.range(of: "^\\s*(às|as|a|de|,)\\s*$", options: [.regularExpression]) != nil
             }()
             
             if shouldMerge && (abutting || hasConnectingText) {

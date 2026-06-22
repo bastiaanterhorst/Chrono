@@ -50,30 +50,15 @@ public final class ENMergeDateRangeRefiner: Refiner {
         return mergedResults
     }
     
-    /// Gets text between two results
+    /// Gets the text actually between two results (so a connector check can't false-positive on a
+    /// substring of the input — e.g. the "to" inside "tomorrow" must not turn "tomorrow bla 3pm"
+    /// into a "tomorrow → 3pm" range that drops the time).
     private func getTextBetween(_ text: String, result1: ParsingResult, result2: ParsingResult) -> String {
-        let startIndex = result1.index + result1.text.count
-        let endIndex = result2.index
-        
-        // Simple check if there is no text between
-        if startIndex >= endIndex || startIndex >= text.count || endIndex > text.count {
-            return ""
-        }
-        
-        // If we're looking for common connectors, check some specific ones
-        if endIndex - startIndex <= 12 { // Maximum connector length
-            // Common connectors
-            let connectors = ["to", "-", "–", "~", "through", "until", "til", "till"]
-            
-            // If any of these appear in the input text, treat them as connectors
-            for connector in connectors {
-                if text.contains(connector) {
-                    return connector
-                }
-            }
-        }
-        
-        return ""
+        let ns = text as NSString
+        let startIndex = min(result1.index + (result1.text as NSString).length, ns.length)
+        let endIndex = min(result2.index, ns.length)
+        guard endIndex > startIndex else { return "" }
+        return ns.substring(with: NSRange(location: startIndex, length: endIndex - startIndex))
     }
     
     /// Checks if the text connects two dates as a range

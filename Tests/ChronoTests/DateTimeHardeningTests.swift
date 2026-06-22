@@ -50,4 +50,20 @@ struct DateTimeHardeningTests {
             #expect(hasDayOnly && hasTime, "'\(text)' should yield separate date + time, got \(rs.map { "\($0.text)" })")
         }
     }
+
+    /// A (relative) date and a time separated by a plain word must stay as separate date + time
+    /// results — never collapse into a bogus range that drops the time ("tomorrow bla 3pm" used to
+    /// become a "tomorrow → 3pm" range because "tomorrow" contains "to").
+    @Test func dateAndSeparatedTimeStaySeparate() {
+        let cases: [(Chrono, String)] = [
+            (EN.casual, "tomorrow bla 3pm"), (EN.casual, "2 jul bla 3pm"),
+            (NL.casual, "morgen bla 15:00"), (DE.casual, "morgen bla 15:00"),
+            (FR.casual, "demain bla 15:00"), (PT.casual, "amanhã bla 15:00"),
+        ]
+        for (c, text) in cases {
+            let rs = c.parse(text: text, referenceDate: ref, options: opts)
+            #expect(rs.contains { $0.start.isCertain(.hour) }, "'\(text)': the time must survive, got \(rs.map { "\($0.text)" })")
+            #expect(rs.allSatisfy { $0.end == nil }, "'\(text)': must not form a range, got \(rs.map { "\($0.text)" })")
+        }
+    }
 }
