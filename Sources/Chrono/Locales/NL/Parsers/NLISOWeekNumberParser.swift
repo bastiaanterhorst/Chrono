@@ -4,16 +4,19 @@ import Foundation
 /// Parser for ISO 8601 week numbers in Dutch text
 final class NLISOWeekNumberParser: AbstractParserWithWordBoundaryChecking, @unchecked Sendable {
     override func innerPattern(context: ParsingContext) -> String {
-        let weekPattern = "(?i)(?:\\b(?:week(?:nummer)?|wk)\\b\\s*(?:nr\\.?\\s*)?(?:#\\s*)?\\d{1,2}(?:e|ste|de)?(?:\\s*(?:van|,|in)?\\s*(?:'\\d{2}|\\d{2}|\\d{4}))?)"
-        let ordinalWeekPattern = "(?i)(?:\\bde\\s+\\d{1,2}(?:e|ste)\\s+week(?:\\s+van\\s+(?:'\\d{2}|\\d{2}|\\d{4}))?)"
+        let weekPattern = "(?i)(?:\\b(?:week(?:nummer)?|wk)\\b\\s*(?:nr\\.?\\s*)?(?:#\\s*)?\\d{1,2}(?:e|ste|de)?(?:\\s*(?:van|,|in)?\\s*(?:\\d{4}|'\\d{2}|\\d{2}))?)"
+        let ordinalWeekPattern = "(?i)(?:\\bde\\s+\\d{1,2}(?:e|ste)\\s+week(?:\\s+van\\s+(?:\\d{4}|'\\d{2}|\\d{2}))?)"
         let isoYearWeekPattern = "(?i)(?:\\b\\d{4}-?w\\d{1,2}\\b)"
-        let isoWeekYearPattern = "(?i)(?:\\bw\\d{1,2}(?:[-/](?:'\\d{2}|\\d{2}|\\d{4}))?\\b)"
+        let isoWeekYearPattern = "(?i)(?:\\bw\\d{1,2}(?:[-/](?:\\d{4}|'\\d{2}|\\d{2}))?\\b)"
 
         return [weekPattern, ordinalWeekPattern, isoYearWeekPattern, isoWeekYearPattern].joined(separator: "|")
     }
 
     override func innerExtract(context: ParsingContext, match: TextMatch) -> Any? {
-        let matchedText = match.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        // Use the matched substring (not the whole input) so the ^…$ extraction anchors correctly
+        // and the result span doesn't swallow trailing text.
+        let matchedText = (match.string(at: 0) ?? match.text).trimmingCharacters(in: .whitespacesAndNewlines)
+        let matchIndex = match.startIndex(at: 0) ?? match.index
 
         guard let weekNumber = extractWeekNumber(from: matchedText) else {
             return nil
@@ -62,7 +65,7 @@ final class NLISOWeekNumberParser: AbstractParserWithWordBoundaryChecking, @unch
             }
         }
 
-        let result = context.createParsingResult(index: match.index, text: match.text, start: components)
+        let result = context.createParsingResult(index: matchIndex, text: matchedText, start: components)
         result.addTag("NLISOWeekParser")
         return result
     }
@@ -74,21 +77,21 @@ final class NLISOWeekNumberParser: AbstractParserWithWordBoundaryChecking, @unch
             return week
         }
 
-        if let groups = captureGroups(pattern: "(?i)^w(\\d{1,2})(?:[-/](?:'\\d{2}|\\d{2}|\\d{4}))?$", text: text),
+        if let groups = captureGroups(pattern: "(?i)^w(\\d{1,2})(?:[-/](?:\\d{4}|'\\d{2}|\\d{2}))?$", text: text),
            groups.count >= 2,
            let week = Int(groups[1]) {
             return week
         }
 
         if let groups = captureGroups(
-            pattern: "(?i)^(?:week(?:nummer)?|wk)\\s*(?:nr\\.?\\s*)?(?:#\\s*)?(\\d{1,2})(?:e|ste|de)?(?:\\s*(?:van|,|in)?\\s*(?:'\\d{2}|\\d{2}|\\d{4}))?$",
+            pattern: "(?i)^(?:week(?:nummer)?|wk)\\s*(?:nr\\.?\\s*)?(?:#\\s*)?(\\d{1,2})(?:e|ste|de)?(?:\\s*(?:van|,|in)?\\s*(?:\\d{4}|'\\d{2}|\\d{2}))?$",
             text: text
         ), groups.count >= 2, let week = Int(groups[1]) {
             return week
         }
 
         if let groups = captureGroups(
-            pattern: "(?i)^de\\s+(\\d{1,2})(?:e|ste)\\s+week(?:\\s+van\\s+(?:'\\d{2}|\\d{2}|\\d{4}))?$",
+            pattern: "(?i)^de\\s+(\\d{1,2})(?:e|ste)\\s+week(?:\\s+van\\s+(?:\\d{4}|'\\d{2}|\\d{2}))?$",
             text: text
         ), groups.count >= 2, let week = Int(groups[1]) {
             return week

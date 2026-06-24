@@ -28,11 +28,25 @@ public final class OverlapRemovalRefiner: Refiner {
 
             for (idx, existing) in selected.enumerated() {
                 if strictlyContains(existing, candidate) {
+                    // The wider (containing) span normally wins. But never let a non-week span evict
+                    // an ISO-week result it merely engulfs — e.g. the day-parser's " in 2 weeks"
+                    // (with a leading boundary char) swallowing the week's tighter "in 2 weeks". Week
+                    // priority over such day matches is resolved later by the specificity refiners.
+                    if hasCertainISOWeek(candidate) && !hasCertainISOWeek(existing) {
+                        toRemove.append(idx)
+                        continue
+                    }
                     shouldAdd = false
                     break
                 }
 
                 if strictlyContains(candidate, existing) {
+                    // Symmetric guard: keep an existing ISO-week result even though the wider
+                    // non-week candidate contains it.
+                    if hasCertainISOWeek(existing) && !hasCertainISOWeek(candidate) {
+                        shouldAdd = false
+                        break
+                    }
                     toRemove.append(idx)
                     continue
                 }

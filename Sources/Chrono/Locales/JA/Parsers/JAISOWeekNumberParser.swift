@@ -6,12 +6,15 @@ final class JAISOWeekNumberParser: AbstractParserWithWordBoundaryChecking, @unch
     override func innerPattern(context: ParsingContext) -> String {
         let japaneseWeekPattern = "(?:\\b\\d{4}年\\s*第?\\d{1,2}週\\b|\\b第?\\d{1,2}週(?:\\s*の?\\s*\\d{4}年?)?\\b)"
         let isoYearWeekPattern = "(?i)(?:\\b\\d{4}-?w\\d{1,2}\\b)"
-        let isoWeekYearPattern = "(?i)(?:\\bw\\d{1,2}(?:[-/](?:'\\d{2}|\\d{2}|\\d{4}))?\\b)"
+        let isoWeekYearPattern = "(?i)(?:\\bw\\d{1,2}(?:[-/](?:\\d{4}|'\\d{2}|\\d{2}))?\\b)"
         return [japaneseWeekPattern, isoYearWeekPattern, isoWeekYearPattern].joined(separator: "|")
     }
 
     override func innerExtract(context: ParsingContext, match: TextMatch) -> Any? {
-        let matchedText = match.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        // Use the matched substring (not the whole input) so the ^…$ extraction anchors correctly
+        // and the result span doesn't swallow trailing text.
+        let matchedText = (match.string(at: 0) ?? match.text).trimmingCharacters(in: .whitespacesAndNewlines)
+        let matchIndex = match.startIndex(at: 0) ?? match.index
         guard let weekNumber = extractWeekNumber(from: matchedText), weekNumber >= 1 && weekNumber <= 53 else {
             return nil
         }
@@ -46,7 +49,7 @@ final class JAISOWeekNumberParser: AbstractParserWithWordBoundaryChecking, @unch
             }
         }
 
-        let result = context.createParsingResult(index: match.index, text: match.text, start: components)
+        let result = context.createParsingResult(index: matchIndex, text: matchedText, start: components)
         result.addTag("JAISOWeekParser")
         return result
     }
@@ -57,7 +60,7 @@ final class JAISOWeekNumberParser: AbstractParserWithWordBoundaryChecking, @unch
             return week
         }
 
-        if let groups = captureGroups(pattern: "(?i)^w(\\d{1,2})(?:[-/](?:'\\d{2}|\\d{2}|\\d{4}))?$", text: text),
+        if let groups = captureGroups(pattern: "(?i)^w(\\d{1,2})(?:[-/](?:\\d{4}|'\\d{2}|\\d{2}))?$", text: text),
            groups.count >= 2, let week = Int(groups[1]) {
             return week
         }

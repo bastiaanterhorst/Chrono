@@ -4,15 +4,18 @@ import Foundation
 /// Parser for ISO 8601 week numbers in French text
 final class FRISOWeekNumberParser: AbstractParserWithWordBoundaryChecking, @unchecked Sendable {
     override func innerPattern(context: ParsingContext) -> String {
-        let weekPattern = "(?i)(?:\\b(?:semaine|sem)\\b\\s*(?:num[eé]ro\\s*)?(?:#\\s*)?\\d{1,2}(?:e|eme|ème)?(?:\\s*(?:de|du|en)?\\s*(?:'\\d{2}|\\d{2}|\\d{4}))?)"
-        let ordinalWeekPattern = "(?i)(?:\\b(?:la\\s+)?\\d{1,2}(?:e|eme|ème)\\s+semaine(?:\\s+de\\s+(?:'\\d{2}|\\d{2}|\\d{4}))?)"
+        let weekPattern = "(?i)(?:\\b(?:semaine|sem)\\b\\s*(?:num[eé]ro\\s*)?(?:#\\s*)?\\d{1,2}(?:e|eme|ème)?(?:\\s*(?:de|du|en)?\\s*(?:\\d{4}|'\\d{2}|\\d{2}))?)"
+        let ordinalWeekPattern = "(?i)(?:\\b(?:la\\s+)?\\d{1,2}(?:e|eme|ème)\\s+semaine(?:\\s+de\\s+(?:\\d{4}|'\\d{2}|\\d{2}))?)"
         let isoYearWeekPattern = "(?i)(?:\\b\\d{4}-?w\\d{1,2}\\b)"
-        let isoWeekYearPattern = "(?i)(?:\\bw\\d{1,2}(?:[-/](?:'\\d{2}|\\d{2}|\\d{4}))?\\b)"
+        let isoWeekYearPattern = "(?i)(?:\\bw\\d{1,2}(?:[-/](?:\\d{4}|'\\d{2}|\\d{2}))?\\b)"
         return [weekPattern, ordinalWeekPattern, isoYearWeekPattern, isoWeekYearPattern].joined(separator: "|")
     }
 
     override func innerExtract(context: ParsingContext, match: TextMatch) -> Any? {
-        let matchedText = match.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        // Use the matched substring (not the whole input) so the ^…$ extraction anchors correctly
+        // and the result span doesn't swallow trailing text.
+        let matchedText = (match.string(at: 0) ?? match.text).trimmingCharacters(in: .whitespacesAndNewlines)
+        let matchIndex = match.startIndex(at: 0) ?? match.index
         guard let weekNumber = extractWeekNumber(from: matchedText), weekNumber >= 1 && weekNumber <= 53 else {
             return nil
         }
@@ -47,7 +50,7 @@ final class FRISOWeekNumberParser: AbstractParserWithWordBoundaryChecking, @unch
             }
         }
 
-        let result = context.createParsingResult(index: match.index, text: match.text, start: components)
+        let result = context.createParsingResult(index: matchIndex, text: matchedText, start: components)
         result.addTag("FRISOWeekParser")
         return result
     }
@@ -58,20 +61,20 @@ final class FRISOWeekNumberParser: AbstractParserWithWordBoundaryChecking, @unch
             return week
         }
 
-        if let groups = captureGroups(pattern: "(?i)^w(\\d{1,2})(?:[-/](?:'\\d{2}|\\d{2}|\\d{4}))?$", text: text),
+        if let groups = captureGroups(pattern: "(?i)^w(\\d{1,2})(?:[-/](?:\\d{4}|'\\d{2}|\\d{2}))?$", text: text),
            groups.count >= 2, let week = Int(groups[1]) {
             return week
         }
 
         if let groups = captureGroups(
-            pattern: "(?i)^(?:semaine|sem)\\s*(?:num[eé]ro\\s*)?(?:#\\s*)?(\\d{1,2})(?:e|eme|ème)?(?:\\s*(?:de|du|en)?\\s*(?:'\\d{2}|\\d{2}|\\d{4}))?$",
+            pattern: "(?i)^(?:semaine|sem)\\s*(?:num[eé]ro\\s*)?(?:#\\s*)?(\\d{1,2})(?:e|eme|ème)?(?:\\s*(?:de|du|en)?\\s*(?:\\d{4}|'\\d{2}|\\d{2}))?$",
             text: text
         ), groups.count >= 2, let week = Int(groups[1]) {
             return week
         }
 
         if let groups = captureGroups(
-            pattern: "(?i)^(?:la\\s+)?(\\d{1,2})(?:e|eme|ème)\\s+semaine(?:\\s+de\\s+(?:'\\d{2}|\\d{2}|\\d{4}))?$",
+            pattern: "(?i)^(?:la\\s+)?(\\d{1,2})(?:e|eme|ème)\\s+semaine(?:\\s+de\\s+(?:\\d{4}|'\\d{2}|\\d{2}))?$",
             text: text
         ), groups.count >= 2, let week = Int(groups[1]) {
             return week

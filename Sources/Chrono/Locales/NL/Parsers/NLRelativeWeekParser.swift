@@ -28,7 +28,9 @@ final class NLRelativeWeekParser: AbstractParserWithWordBoundaryChecking, @unche
     }
 
     override func innerExtract(context: ParsingContext, match: TextMatch) -> Any? {
-        let text = match.text.lowercased()
+        // Inspect only the matched substring so trailing text and other phrases don't leak in.
+        let matched = match.string(at: 0) ?? match.text
+        let text = matched.lowercased()
         let referenceDate = context.reference.instant
         let calendar = Calendar(identifier: .iso8601)
 
@@ -88,7 +90,10 @@ final class NLRelativeWeekParser: AbstractParserWithWordBoundaryChecking, @unche
             }
         }
 
-        let result = context.createParsingResult(index: match.index, text: match.text, start: components)
+        let result = context.createParsingResult(
+            index: match.startIndex(at: 0) ?? match.index,
+            text: matched.trimmingCharacters(in: .whitespacesAndNewlines),
+            start: components)
         result.addTag("NLRelativeWeekParser")
         return result
     }

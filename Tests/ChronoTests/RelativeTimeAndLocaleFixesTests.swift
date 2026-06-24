@@ -179,6 +179,51 @@ struct RelativeTimeAndLocaleFixesTests {
         #expect(firstResult("offsite this weekend")?.text.lowercased() == "this weekend")
     }
 
+    /// A relative-week ("in N weeks") or ISO-week ("week N") phrase followed by unrelated words must
+    /// match ONLY the phrase — the trailing words must not be swallowed into the result span.
+    /// Regression for "in 2 weeks xxx" highlighting/stripping "in 2 weeks xxx" as one date token.
+    @Test func weekPhrasesDoNotSwallowTrailingWords() {
+        func check(_ text: String, _ chrono: Chrono, phrase: String) {
+            let results = chrono.parse(text: text, referenceDate: ref, options: opts)
+            // No result may swallow the trailing sentinel "xxx".
+            for r in results {
+                #expect(!r.text.lowercased().contains("xxx"),
+                        "«\(text)» → result «\(r.text)» swallowed trailing text")
+            }
+            // The week phrase itself is matched (trimmed) by some result, and stays a week.
+            let weekTexts = results
+                .filter { $0.start.isCertain(.isoWeek) }
+                .map { $0.text.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
+            #expect(weekTexts.contains(phrase.lowercased()),
+                    "«\(text)» → expected a week «\(phrase)», got \(weekTexts)")
+        }
+        // Relative "in N weeks" forms across every supported locale.
+        check("plan in 2 weeks xxx", Chrono.casual, phrase: "in 2 weeks")
+        check("doe iets over 2 weken xxx", Chrono.nl.casual, phrase: "over 2 weken")
+        check("etwas in 2 wochen xxx", Chrono.de.casual, phrase: "in 2 wochen")
+        check("faire dans 2 semaines xxx", Chrono.fr.casual, phrase: "dans 2 semaines")
+        check("hacer en 2 semanas xxx", Chrono.es.casual, phrase: "en 2 semanas")
+        check("fazer em 2 semanas xxx", Chrono.pt.casual, phrase: "em 2 semanas")
+        // ISO "week N" forms (the explicit week-number parser).
+        check("meet week 25 xxx", Chrono.casual, phrase: "week 25")
+        check("plan week 25 xxx", Chrono.nl.casual, phrase: "week 25")
+        check("termin woche 25 xxx", Chrono.de.casual, phrase: "woche 25")
+    }
+
+    /// ISO week + explicit 4-digit year must capture the WHOLE year (not just the first 2 digits)
+    /// in the matched span — regression where "week 45 van 2023" matched "…van 20" and resolved 2020.
+    @Test func isoWeekKeepsFullFourDigitYear() {
+        for (text, chrono) in [("week 45 van 2023", Chrono.nl.casual),
+                               ("de 45ste week van 2023", Chrono.nl.casual),
+                               ("woche 45 von 2023", Chrono.de.casual)] {
+            let r = chrono.parse(text: text, referenceDate: ref, options: opts)
+                .first { $0.start.isCertain(.isoWeek) }
+            #expect(r != nil, "«\(text)» should parse as an ISO week")
+            #expect(r?.text.contains("2023") == true, "«\(text)» → span «\(r?.text ?? "")» dropped the year")
+            #expect(r?.start.get(.isoWeekYear) == 2023, "«\(text)» resolved week-year \(String(describing: r?.start.get(.isoWeekYear)))")
+        }
+    }
+
     /// A bare number is not a date — it must not greedily match (regression: "1" became "today",
     /// and any number up to ~100 turned into today).
     @Test func bareNumbersAreNotDates() {

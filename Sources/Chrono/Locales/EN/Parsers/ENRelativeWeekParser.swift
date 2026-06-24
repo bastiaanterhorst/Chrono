@@ -36,7 +36,10 @@ public class ENRelativeWeekParser: AbstractParserWithWordBoundaryChecking, @unch
     }
     
     override func innerExtract(context: ParsingContext, match: TextMatch) -> Any? {
-        let text = match.text.lowercased()
+        // Inspect only the matched substring (not the whole input) so a second week phrase in the
+        // same string can't bleed its keyword into this match, and numbers come only from this match.
+        let matched = match.string(at: 0) ?? match.text
+        let text = matched.lowercased()
         let referenceDate = context.reference.instant
         let calendar = Calendar(identifier: .iso8601)
         
@@ -57,10 +60,9 @@ public class ENRelativeWeekParser: AbstractParserWithWordBoundaryChecking, @unch
         
         // Calculate the week offset based on the matched pattern
         var weekOffset = 0
-        // Simple "this/last/next week(end)" forms (no number). Their RESULT text uses the matched
-        // substring so a trailing weekday ("next week thursday") isn't swallowed into the span. The
-        // number forms ("in N weeks") keep the full-input text (they have a competing day-parser and
-        // rely on the wider span to win), so this flag stays false for them.
+        // Tracks the simple "this/last/next week(end)" forms (no number). Both simple and number
+        // forms now report only their matched substring; this flag just selects the leading-only
+        // trim used by the simple branch below.
         var isSimpleWeek = false
 
         // Extract all numbers from the text as a fallback method
@@ -243,9 +245,10 @@ public class ENRelativeWeekParser: AbstractParserWithWordBoundaryChecking, @unch
             )
         }
         
-        // Simple week(end) forms: report the MATCHED substring (trimmed of any leading word-boundary
-        // whitespace) so an adjacent weekday stays a separate result. Number forms keep the full
-        // input text (their wider span lets the week win against the competing day-parser).
+        // Both simple week(end) forms and number forms report only the MATCHED substring so an
+        // adjacent weekday ("next week thursday") or trailing text ("in 2 weeks xxx") stays out of
+        // the span. The week still wins over the competing day-parser via ENPrioritizeWeekNumberRefiner
+        // (same index) and OverlapRemovalRefiner (ISO-week preference), not a wider span.
         if isSimpleWeek {
             let raw = match.matchedText
             let leading = raw.prefix { $0 == " " || $0 == "\t" }.count
@@ -256,8 +259,8 @@ public class ENRelativeWeekParser: AbstractParserWithWordBoundaryChecking, @unch
             )
         }
         return ParsedResult(
-            index: match.index,
-            text: match.text,
+            index: match.startIndex(at: 0) ?? match.index,
+            text: matched.trimmingCharacters(in: .whitespacesAndNewlines),
             start: components.toPublicDate()
         )
     }
