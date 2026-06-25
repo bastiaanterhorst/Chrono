@@ -12,7 +12,15 @@ final class ESRelativeWeekParser: AbstractParserWithWordBoundaryChecking, @unche
         let patternBeforeLast = "(?i)(?:la\\s+semana\\s+anterior)"
         let patternAfterNext = "(?i)(?:la\\s+semana\\s+siguiente)"
 
+        // Weekend variants must come BEFORE the bare-week patterns.
+        let patternThisWeekend = "(?i)(?:este\\s+fin\\s+de\\s+semana)"
+        let patternNextWeekend = "(?i)(?:(?:el\\s+)?pr[oó]ximo\\s+fin\\s+de\\s+semana|(?:el\\s+)?fin\\s+de\\s+semana\\s+que\\s+viene)"
+        let patternLastWeekend = "(?i)(?:(?:el\\s+)?fin\\s+de\\s+semana\\s+pasado)"
+
         return [
+            patternThisWeekend,
+            patternNextWeekend,
+            patternLastWeekend,
             patternThis,
             patternLast,
             patternNext,
@@ -31,6 +39,21 @@ final class ESRelativeWeekParser: AbstractParserWithWordBoundaryChecking, @unche
         let calendar = Calendar(identifier: .iso8601)
         let allNumbers = extractAllNumbers(from: text)
         var weekOffset = 0
+
+        // Weekend → first weekend day (locale-aware) as a concrete DAY, not an ISO week. Runs before
+        // the week checks. `text` is lowercased (not folded), so accept accented and bare "próximo".
+        if text.contains("fin de semana") {
+            let weekendOffset = (text.contains("próximo") || text.contains("proximo")
+                || text.contains("que viene")) ? 1 : (text.contains("pasado") ? -1 : 0)
+            if let components = WeekendResolver.weekendComponents(
+                context: context, weekOffset: weekendOffset, localeIdentifier: "es") {
+                components.addTag("ESRelativeWeekParser")
+                return context.createParsingResult(
+                    index: match.startIndex(at: 0) ?? match.index,
+                    text: matched.trimmingCharacters(in: .whitespacesAndNewlines),
+                    start: components)
+            }
+        }
 
         if text.contains("esta semana") {
             weekOffset = 0

@@ -15,7 +15,16 @@ final class NLRelativeWeekParser: AbstractParserWithWordBoundaryChecking, @unche
         let patternBeforeLast = "(?:de\\s+week\\s+voor\\s+vorige)"
         let patternAfterNext = "(?:de\\s+week\\s+na\\s+volgende)"
 
+        // Weekend variants must come BEFORE the bare-week patterns so "... weekend" matches as a
+        // unit rather than "... week" + stray "end".
+        let patternThisWeekend = "(?i)(?:dit\\s+weekend)"
+        let patternNextWeekend = "(?i)(?:(?:volgend|komend)\\s+weekend)"
+        let patternLastWeekend = "(?i)(?:(?:afgelopen|vorig)\\s+weekend)"
+
         return [
+            patternThisWeekend,
+            patternNextWeekend,
+            patternLastWeekend,
             patternThis,
             patternLast,
             patternNext,
@@ -36,6 +45,21 @@ final class NLRelativeWeekParser: AbstractParserWithWordBoundaryChecking, @unche
 
         let allNumbers = extractAllNumbers(from: text)
         var weekOffset = 0
+
+        // Weekend → first weekend day (locale-aware) as a concrete DAY, not an ISO week. Runs before
+        // the week checks because "... weekend" contains "... week".
+        if text.contains("weekend") {
+            let weekendOffset = (text.contains("volgend") || text.contains("komend")) ? 1
+                : ((text.contains("afgelopen") || text.contains("vorig")) ? -1 : 0)
+            if let components = WeekendResolver.weekendComponents(
+                context: context, weekOffset: weekendOffset, localeIdentifier: "nl") {
+                components.addTag("NLRelativeWeekParser")
+                return context.createParsingResult(
+                    index: match.startIndex(at: 0) ?? match.index,
+                    text: matched.trimmingCharacters(in: .whitespacesAndNewlines),
+                    start: components)
+            }
+        }
 
         if text.contains("deze week") {
             weekOffset = 0

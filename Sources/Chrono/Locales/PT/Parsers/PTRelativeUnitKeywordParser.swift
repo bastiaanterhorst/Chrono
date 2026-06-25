@@ -33,6 +33,11 @@ public struct PTRelativeUnitKeywordParser: Parser {
         }
 
         if unitText.hasPrefix("semana") {
+            // "fim de semana" is the fixed Portuguese expression for "weekend"; its "semana" must not
+            // be read as a week — PTRelativeWeekParser resolves the weekend to a day instead.
+            let nsText = context.text as NSString
+            let prefix = nsText.substring(to: min(max(match.index, 0), nsText.length)).foldedForMatching()
+            if prefix.hasSuffix("fim de ") { return nil }
             return extractWeek(context: context, offset: offset)
         }
 

@@ -71,6 +71,21 @@ public class ENRelativeWeekParser: AbstractParserWithWordBoundaryChecking, @unch
             context.debug("ENRelativeWeekParser - all numbers found: \(allNumbers)")
         }
 
+        // Weekend: resolve to the FIRST weekend day (locale-aware) as a concrete DAY, not an ISO
+        // week. Must run before the "this/last/next week" checks below, since "this weekend"
+        // contains "this week" as a substring.
+        if text.contains("weekend") {
+            let weekendOffset = text.contains("next") ? 1 : (text.contains("last") ? -1 : 0)
+            if let components = WeekendResolver.weekendComponents(
+                context: context, weekOffset: weekendOffset, localeIdentifier: "en") {
+                components.addTag("ENRelativeWeekParser")
+                return ParsedResult(
+                    index: match.startIndex(at: 0) ?? match.index,
+                    text: matched.trimmingCharacters(in: .whitespacesAndNewlines),
+                    start: components.toPublicDate())
+            }
+        }
+
         // Basic relative patterns
         if text.contains("this week") {
             weekOffset = 0; isSimpleWeek = true

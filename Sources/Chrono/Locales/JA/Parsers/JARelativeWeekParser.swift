@@ -12,7 +12,18 @@ final class JARelativeWeekParser: AbstractParserWithWordBoundaryChecking, @unche
         let patternBeforeLast = "(?:先々週)"
         let patternAfterNext = "(?:再来週)"
 
+        // Weekend variants must come BEFORE the bare-week patterns so "今週末" matches as a unit
+        // rather than "今週" + stray "末". Bare "週末" alone means this weekend.
+        let patternThisWeekend = "(?:今週末)"
+        let patternNextWeekend = "(?:来週末)"
+        let patternLastWeekend = "(?:先週末)"
+        let patternBareWeekend = "(?:週末)"
+
         return [
+            patternThisWeekend,
+            patternNextWeekend,
+            patternLastWeekend,
+            patternBareWeekend,
             patternThis,
             patternLast,
             patternNext,
@@ -31,6 +42,20 @@ final class JARelativeWeekParser: AbstractParserWithWordBoundaryChecking, @unche
         let calendar = Calendar(identifier: .iso8601)
         let allNumbers = extractAllNumbers(from: text)
         var weekOffset = 0
+
+        // Weekend → first weekend day (locale-aware) as a concrete DAY, not an ISO week. Runs before
+        // the week checks because "今週末" contains "今週".
+        if text.contains("週末") {
+            let weekendOffset = text.contains("来") ? 1 : (text.contains("先") ? -1 : 0)
+            if let components = WeekendResolver.weekendComponents(
+                context: context, weekOffset: weekendOffset, localeIdentifier: "ja") {
+                components.addTag("JARelativeWeekParser")
+                return context.createParsingResult(
+                    index: match.startIndex(at: 0) ?? match.index,
+                    text: matched.trimmingCharacters(in: .whitespacesAndNewlines),
+                    start: components)
+            }
+        }
 
         if text.contains("今週") {
             weekOffset = 0

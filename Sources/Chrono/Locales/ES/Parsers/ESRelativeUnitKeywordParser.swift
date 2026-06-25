@@ -33,6 +33,11 @@ public struct ESRelativeUnitKeywordParser: Parser {
         }
 
         if unitText.contains("semana") {
+            // "fin de semana" is the fixed Spanish expression for "weekend"; its "semana" must not
+            // be read as a week — ESRelativeWeekParser resolves the weekend to a day instead.
+            let nsText = context.text as NSString
+            let prefix = nsText.substring(to: min(max(match.index, 0), nsText.length)).foldedForMatching()
+            if prefix.hasSuffix("fin de ") { return nil }
             return extractWeek(context: context, offset: offset)
         }
 

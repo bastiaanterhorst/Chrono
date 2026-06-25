@@ -12,7 +12,16 @@ final class DERelativeWeekParser: AbstractParserWithWordBoundaryChecking, @unche
         let patternBeforeLast = "(?i)(?:vorletzte\\s+woche)"
         let patternAfterNext = "(?i)(?:[üu]bern[aä]chste\\s+woche)"
 
+        // Weekend variants must come BEFORE the bare-week patterns so "... wochenende" matches as a
+        // unit rather than "... woche" + stray "nende".
+        let patternThisWeekend = "(?i)(?:dieses?\\s+wochenende)"
+        let patternNextWeekend = "(?i)(?:n[aä]chstes\\s+wochenende)"
+        let patternLastWeekend = "(?i)(?:letztes\\s+wochenende)"
+
         return [
+            patternThisWeekend,
+            patternNextWeekend,
+            patternLastWeekend,
             patternThis,
             patternLast,
             patternNext,
@@ -31,6 +40,20 @@ final class DERelativeWeekParser: AbstractParserWithWordBoundaryChecking, @unche
         let calendar = Calendar(identifier: .iso8601)
         let allNumbers = extractAllNumbers(from: text)
         var weekOffset = 0
+
+        // Weekend → first weekend day (locale-aware) as a concrete DAY, not an ISO week. Runs before
+        // the week checks. `text` is diacritic-folded, so "nächstes" reads as "nachstes".
+        if text.contains("wochenende") {
+            let weekendOffset = text.contains("nachst") ? 1 : (text.contains("letzt") ? -1 : 0)
+            if let components = WeekendResolver.weekendComponents(
+                context: context, weekOffset: weekendOffset, localeIdentifier: "de") {
+                components.addTag("DERelativeWeekParser")
+                return context.createParsingResult(
+                    index: match.startIndex(at: 0) ?? match.index,
+                    text: matched.trimmingCharacters(in: .whitespacesAndNewlines),
+                    start: components)
+            }
+        }
 
         if text.contains("diese woche") {
             weekOffset = 0

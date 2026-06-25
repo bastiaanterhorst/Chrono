@@ -12,7 +12,16 @@ final class FRRelativeWeekParser: AbstractParserWithWordBoundaryChecking, @unche
         let patternBeforeLast = "(?i)(?:la\\s+semaine\\s+avant\\s+derni[eè]re)"
         let patternAfterNext = "(?i)(?:la\\s+semaine\\s+apr[eè]s\\s+prochaine)"
 
+        // Weekend variants must come BEFORE the bare-week patterns. "week-end", "weekend" and
+        // "week end" are all accepted.
+        let patternThisWeekend = "(?i)(?:ce\\s+week[\\s-]?end)"
+        let patternNextWeekend = "(?i)(?:(?:le\\s+)?week[\\s-]?end\\s+prochain)"
+        let patternLastWeekend = "(?i)(?:(?:le\\s+)?week[\\s-]?end\\s+dernier)"
+
         return [
+            patternThisWeekend,
+            patternNextWeekend,
+            patternLastWeekend,
             patternThis,
             patternLast,
             patternNext,
@@ -31,6 +40,20 @@ final class FRRelativeWeekParser: AbstractParserWithWordBoundaryChecking, @unche
         let calendar = Calendar(identifier: .iso8601)
         let allNumbers = extractAllNumbers(from: text)
         var weekOffset = 0
+
+        // Weekend → first weekend day (locale-aware) as a concrete DAY, not an ISO week. Runs before
+        // the week checks. The French week phrases use "semaine", so "week" uniquely flags a weekend.
+        if text.contains("week") {
+            let weekendOffset = text.contains("prochain") ? 1 : (text.contains("dernier") ? -1 : 0)
+            if let components = WeekendResolver.weekendComponents(
+                context: context, weekOffset: weekendOffset, localeIdentifier: "fr") {
+                components.addTag("FRRelativeWeekParser")
+                return context.createParsingResult(
+                    index: match.startIndex(at: 0) ?? match.index,
+                    text: matched.trimmingCharacters(in: .whitespacesAndNewlines),
+                    start: components)
+            }
+        }
 
         if text.contains("cette semaine") {
             weekOffset = 0
