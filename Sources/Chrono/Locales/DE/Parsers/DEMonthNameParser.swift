@@ -12,7 +12,8 @@ public struct DEMonthNameParser: Parser {
         // (?!:) so the hour of a clock time isn't taken as the day/year (e.g. "Juli 14:00" ≠ July 14).
         let day = "(?:\\s+([0-9]{1,2})(?:\\.|te|ten)?(?!:))?"
         let year = "(?:\\s*[,-]?\\s*([0-9]{2,4})(?!:))?"
-        return "(?i)" + prefix + month + day + year + "(?=\\W|$)"
+        // Leading `(?<!\w)` prevents matching a month abbreviation as the suffix of a longer word.
+        return "(?i)(?<!\\w)" + prefix + month + day + year + "(?=\\W|$)"
     }
 
     public func extract(context: ParsingContext, match: TextMatch) -> Any? {

@@ -3,12 +3,20 @@ import Foundation
 
 /// Constants for German date parsing
 public enum DEConstants {
-    /// Days of the week in German
+    /// Days of the week in German.
+    ///
+    /// Some weekday abbreviations are deliberately omitted because they collide with
+    /// extremely common German words and would otherwise turn ordinary task text into a
+    /// false date match (e.g. "Einkaufen mit Anna" → Mittwoch). For those days the user
+    /// must type the full weekday name:
+    ///   - "mit"  (= "with")  → use "mittwoch" ("mi" is still accepted)
+    ///   - "die"  (= "the")   → use "dienstag" ("di" is still accepted)
+    ///   - "so"   (= "so/thus")→ use "sonntag"  ("son" is still accepted)
     public static let WEEKDAY_DICTIONARY: [String: Int] = [
-        "sonntag": 0, "son": 0, "so": 0,
+        "sonntag": 0, "son": 0,
         "montag": 1, "mon": 1, "mo": 1,
-        "dienstag": 2, "die": 2, "di": 2,
-        "mittwoch": 3, "mit": 3, "mi": 3,
+        "dienstag": 2, "di": 2,
+        "mittwoch": 3, "mi": 3,
         "donnerstag": 4, "don": 4, "do": 4,
         "freitag": 5, "fre": 5, "fr": 5,
         "samstag": 6, "sam": 6, "sa": 6

@@ -3,7 +3,9 @@ import Foundation
 
 /// Parser for weekday expressions in Spanish (e.g., "lunes", "este martes", "próximo miércoles")
 public final class ESWeekdayParser: Parser {
-    private static let PATTERN = "(?:(?:\\,|\\(|\\（)\\s*)?(?:(este|esta|pasado|pr[oó]ximo)\\s*)?(\(PatternUtils.matchAnyPattern(ESConstants.WEEKDAY_DICTIONARY)))(?:\\s*(?:\\,|\\)|\\）))?(?:\\s*(este|esta|pasado|pr[óo]ximo)\\s*semana)?(?=\\W|\\d|$)"
+    // Leading `(?<!\w)` prevents matching a weekday abbreviation as the suffix of a longer word;
+    // the trailing lookahead already guards the other side.
+    private static let PATTERN = "(?<!\\w)(?:(?:\\,|\\(|\\（)\\s*)?(?:(este|esta|pasado|pr[oó]ximo)\\s*)?(\(PatternUtils.matchAnyPattern(ESConstants.WEEKDAY_DICTIONARY)))(?:\\s*(?:\\,|\\)|\\）))?(?:\\s*(este|esta|pasado|pr[óo]ximo)\\s*semana)?(?=\\W|\\d|$)"
     
     private static let PREFIX_GROUP = 1
     private static let WEEKDAY_GROUP = 2

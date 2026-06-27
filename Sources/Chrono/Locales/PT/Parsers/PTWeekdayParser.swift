@@ -6,7 +6,8 @@ public final class PTWeekdayParser: Parser {
     /// Returns the pattern for matching Portuguese weekday names
     public func pattern(context: ParsingContext) -> String {
         let weekdayNames = PatternUtils.matchAnyPattern(PTConstants.WEEKDAY_DICTIONARY)
-        return "(?:(?:\\,|\\(|\\（)\\s*)?(?:na\\s*)?(" + weekdayNames + ")(?:(?:\\,|\\)|\\）)\\s*)?(?:\\s*(passada|passado|[uú]ltim[ao]|pr[oó]xim[ao]))?(?=\\W|$)"
+        // Leading `(?<!\w)` prevents matching a weekday abbreviation as the suffix of a longer word.
+        return "(?<!\\w)(?:(?:\\,|\\(|\\（)\\s*)?(?:na\\s*)?(" + weekdayNames + ")(?:(?:\\,|\\)|\\）)\\s*)?(?:\\s*(passada|passado|[uú]ltim[ao]|pr[oó]xim[ao]))?(?=\\W|$)"
     }
     
     /// Extracts weekday information from matched text

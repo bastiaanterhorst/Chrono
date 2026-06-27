@@ -11,7 +11,8 @@ final class NLMonthNameParser: Parser {
         let day = "(?:\\s+([0-9]{1,2})(?:ste|de|e)?(?!:))?"
         let year = "(?:\\s*[,-]?\\s*([0-9]{2,4})(?!:))?"
         let end = "(?=\\W|$)"
-        return prefix + month + day + year + end
+        // Leading `(?<!\w)` prevents matching a month abbreviation as the suffix of a longer word.
+        return "(?<!\\w)" + prefix + month + day + year + end
     }
 
     func extract(context: ParsingContext, match: TextMatch) -> Any? {

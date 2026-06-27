@@ -3,26 +3,30 @@ import Foundation
 
 /// Parser for French weekday expressions like "lundi", "mardi prochain", etc.
 public final class FRWeekdayParser: Parser {
-    /// French weekday pattern
+    /// French weekday pattern.
+    ///
+    /// "mer" (= "sea") and "jeu" (= "game/play") are deliberately omitted as abbreviations: they are
+    /// common French words and would turn ordinary text ("au bord de la mer", "un jeu") into a false
+    /// date match. The full "mercredi"/"jeudi" is required instead.
     private let PATTERN = "\\b(" +
                                 "dimanche|dim|" +
                                 "lundi|lun|" +
                                 "mardi|mar|" +
-                                "mercredi|mer|" +
-                                "jeudi|jeu|" +
+                                "mercredi|" +
+                                "jeudi|" +
                                 "vendredi|ven|" +
                                 "samedi|sam" +
                            ")" +
                            "(?:\\s*(?:prochain|dernier|suivant|passe|pr[ée]c[ée]dent|precedent))?" +
                            "\\b"
-    
+
     /// Maps French weekday names to their numeric values (1 = Sunday, 2 = Monday, ..., 7 = Saturday)
     private let WEEKDAY_DICTIONARY: [String: Int] = [
         "dimanche": 1, "dim": 1,
         "lundi": 2, "lun": 2,
         "mardi": 3, "mar": 3,
-        "mercredi": 4, "mer": 4,
-        "jeudi": 5, "jeu": 5,
+        "mercredi": 4,
+        "jeudi": 5,
         "vendredi": 6, "ven": 6,
         "samedi": 7, "sam": 7
     ]

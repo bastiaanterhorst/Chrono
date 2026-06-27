@@ -11,7 +11,9 @@ public struct ESMonthNameParser: Parser {
         let month = "(" + months + ")"
         let day = "(?:\\s+([0-9]{1,2})(?:º|°|\\.|o|a)?)?"
         let year = "(?:\\s*(?:de)?\\s*[,-]?\\s*([0-9]{2,4}))?"
-        return "(?i)" + prefix + month + day + year + "(?=\\W|$)"
+        // Leading `(?<!\w)` prevents matching a month abbreviation as the suffix of a longer word
+        // (e.g. "hago"/"pago"/"lago" must not match "ago" = August).
+        return "(?i)(?<!\\w)" + prefix + month + day + year + "(?=\\W|$)"
     }
 
     public func extract(context: ParsingContext, match: TextMatch) -> Any? {

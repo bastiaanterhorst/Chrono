@@ -3,18 +3,26 @@ import Foundation
 
 /// Parser for weekday mentions like "Monday", "Tuesday", etc.
 public final class ENWeekdayParser: Parser {
-    private static let PATTERN = "(?:(this|last|next|past|previous)\\s+)?" +
-                                 "(sunday|sun|monday|mon|tuesday|tues|tue|wednesday|wed|thursday|thur|thu|friday|fri|saturday|sat)" +
+    // The leading `(?<!\w)` is a zero-width "not preceded by a word character" guard. Without it the
+    // bare-abbreviation alternatives match as the *suffix* of ordinary words ("le-mon" → Monday,
+    // "sta-tue" → Tuesday, "scre-wed" → Wednesday, "sal-mon" → Monday). The trailing `(?=\W|$)`
+    // already guards the other side.
+    //
+    // "sun" and "sat" are intentionally NOT accepted as abbreviations: they are common English words
+    // ("in the sun", "I sat down") and would produce false date matches. The full "sunday"/"saturday"
+    // is required instead.
+    private static let PATTERN = "(?<!\\w)(?:(this|last|next|past|previous)\\s+)?" +
+                                 "(sunday|monday|mon|tuesday|tues|tue|wednesday|wed|thursday|thur|thu|friday|fri|saturday)" +
                                  "(?=\\W|$)"
-    
+
     private static let WEEKDAY_DICTIONARY: [String: Int] = [
-        "sunday": 0, "sun": 0,
+        "sunday": 0,
         "monday": 1, "mon": 1,
         "tuesday": 2, "tues": 2, "tue": 2,
         "wednesday": 3, "wed": 3,
         "thursday": 4, "thur": 4, "thu": 4,
         "friday": 5, "fri": 5,
-        "saturday": 6, "sat": 6
+        "saturday": 6
     ]
     
     /// Returns the regex pattern for this parser

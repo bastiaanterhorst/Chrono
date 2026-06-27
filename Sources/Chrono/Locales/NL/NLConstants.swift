@@ -4,10 +4,16 @@ import Foundation
 /// Constants for Dutch locale
 struct NLConstants {
     /// Days of the week in Dutch (full names)
+    ///
+    /// Several weekday abbreviations are deliberately omitted because they collide with extremely
+    /// common Dutch words and would otherwise turn ordinary task text into a false date match. For
+    /// those days the user must type the full weekday name (or the unambiguous two-letter form):
+    ///   - "zo"   (= "so/thus")  → use "zondag"   ("zon" is also dropped as it = "sun")
+    ///   - "zon"  (= "sun")      → use "zondag"
+    ///   - "vrij" (= "free")     → use "vrijdag"  ("vr" is still accepted)
+    ///   - "zat"  (= "sat"/"drunk")→ use "zaterdag" ("za" is still accepted)
     static let WEEKDAY_DICTIONARY: [String: Int] = [
         "zondag": 0,
-        "zon": 0,
-        "zo": 0,
         "maandag": 1,
         "ma": 1,
         "dinsdag": 2,
@@ -19,10 +25,8 @@ struct NLConstants {
         "don": 4,
         "do": 4,
         "vrijdag": 5,
-        "vrij": 5,
         "vr": 5,
         "zaterdag": 6,
-        "zat": 6,
         "za": 6
     ]
     
