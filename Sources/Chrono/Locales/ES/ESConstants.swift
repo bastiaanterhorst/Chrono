@@ -4,16 +4,13 @@ import Foundation
 /// Spanish locale constants
 public enum ESConstants {
     /// Dictionary of Spanish weekday names to corresponding weekday numbers (0-6, Sunday-Saturday)
-    ///
-    /// "mar" is deliberately omitted as a Tuesday abbreviation: it is the common word "mar" (= "sea")
-    /// and the abbreviation for "marzo" (March), so it would turn ordinary text ("ir al mar") into a
-    /// false date match. The full "martes" is required instead.
     public static let WEEKDAY_DICTIONARY: [String: Int] = [
         "domingo": 0,
         "dom": 0,
         "lunes": 1,
         "lun": 1,
         "martes": 2,
+        "mar": 2,
         "miércoles": 3,
         "miercoles": 3,
         "mié": 3,
@@ -37,7 +34,8 @@ public enum ESConstants {
         "feb": 2,
         "feb.": 2,
         "marzo": 3,
-        // "mar"/"mar." omitted: "mar" = "sea", a common word. Use "marzo".
+        "mar": 3,
+        "mar.": 3,
         "abril": 4,
         "abr": 4,
         "abr.": 4,

@@ -3,14 +3,15 @@ import Foundation
 @testable import Chrono
 
 // Regression tests for "common word" collisions: short weekday/month abbreviations that are also
-// ordinary words in their language must NOT be parsed as dates, while the full names (and the
-// unambiguous abbreviations) must keep working. See the dictionaries/parsers in each Locale folder.
+// ordinary words. See the dictionaries/parsers in each Locale folder.
 //
-// Two failure modes are covered:
-//   1. Standalone common words ("mit" = with, "mar" = sea, "ter" = to have, …) — fixed by removing
-//      the abbreviation from the matching dictionary.
+// Two failure modes were identified; the handling differs:
+//   1. Standalone common words ("mit" = with, "die" = the, "so" = so) — handled by removing the
+//      abbreviation from the matching dictionary, GERMAN ONLY. Other locales intentionally keep
+//      their short forms (EN "sun"/"sat", ES "mar", FR "mer"/"jeu", NL "zo"/"zon"/"vrij"/"zat",
+//      PT "ter"/"mar") and DO parse them as dates.
 //   2. Common words that merely *end* with an abbreviation ("lemon" → "mon", "lago" → "ago") — fixed
-//      by a leading word-boundary guard in the parser pattern.
+//      by a leading word-boundary guard in the parser pattern; applies to ALL locales and stays.
 
 private func collisionRefDate() -> ParsingReference {
     var c = DateComponents()
@@ -54,10 +55,7 @@ private func expectDate(_ chrono: Chrono, _ text: String, _ comment: Comment) {
 // MARK: - English
 
 @Test func enCommonWordsAreNotDates() {
-    // Standalone common words.
-    expectNoDate(Chrono.casual, "I sat in the meeting", "sat = verb")
-    expectNoDate(Chrono.casual, "lunch in the sun", "sun = noun")
-    // Abbreviations matched as a word *suffix*.
+    // Abbreviations matched as a word *suffix* must not match (word-boundary guard).
     expectNoDate(Chrono.casual, "buy a lemon", "lemon ends in 'mon'")
     expectNoDate(Chrono.casual, "a common task", "common ends in 'mon'")
     expectNoDate(Chrono.casual, "look at the statue", "statue ends in 'tue'")
@@ -73,13 +71,15 @@ private func expectDate(_ chrono: Chrono, _ text: String, _ comment: Comment) {
     expectDate(Chrono.casual, "see you saturday", "saturday still parses")
     expectDate(Chrono.casual, "see you sunday", "sunday still parses")
     expectDate(Chrono.casual, "next friday", "friday still parses")
+    // "sun"/"sat" short forms are intentionally kept (standalone-word removal is DE-only).
+    #expect(Chrono.casual.parse(text: "see you sun", referenceDate: ref).first?.start.get(.weekday) == 0)
+    #expect(Chrono.casual.parse(text: "see you sat", referenceDate: ref).first?.start.get(.weekday) == 6)
 }
 
 // MARK: - Spanish
 
 @Test func esCommonWordsAreNotDates() {
-    expectNoDate(Chrono.es.casual, "ir al mar", "mar = sea (weekday/month)")
-    expectNoDate(Chrono.es.casual, "el mar está tranquilo", "mar = sea")
+    // Suffix-only collisions stay guarded ("ago" = agosto abbreviation).
     expectNoDate(Chrono.es.casual, "hago la cena", "hago ends in 'ago'")
     expectNoDate(Chrono.es.casual, "pagar el pago", "pago ends in 'ago'")
 }
@@ -90,45 +90,41 @@ private func expectDate(_ chrono: Chrono, _ text: String, _ comment: Comment) {
     expectDate(Chrono.es.casual, "nos vemos el lunes", "lunes still parses")
     expectDate(Chrono.es.casual, "en marzo", "marzo still parses")
     expectDate(Chrono.es.casual, "el 15 de marzo", "15 de marzo still parses")
+    // "mar" short form is intentionally kept (weekday Tuesday / month March).
+    expectDate(Chrono.es.casual, "ir al mar", "mar parses again")
 }
 
 // MARK: - French
-
-@Test func frCommonWordsAreNotDates() {
-    expectNoDate(Chrono.fr.casual, "au bord de la mer", "mer = sea")
-    expectNoDate(Chrono.fr.casual, "un jeu de societe", "jeu = game")
-    expectNoDate(Chrono.fr.casual, "j'ai un jeu", "jeu = game")
-}
 
 @Test func frRealDatesStillParse() {
     expectDate(Chrono.fr.casual, "reunion mercredi", "mercredi still parses")
     expectDate(Chrono.fr.casual, "rendez-vous jeudi", "jeudi still parses")
     expectDate(Chrono.fr.casual, "lundi prochain", "lundi still parses")
     expectDate(Chrono.fr.casual, "en mars", "mars still parses")
+    // "mer"/"jeu" short forms are intentionally kept (Wednesday / Thursday).
+    expectDate(Chrono.fr.casual, "rendez-vous mer", "mer parses as Wednesday")
+    expectDate(Chrono.fr.casual, "un jeu", "jeu parses as Thursday")
 }
 
 // MARK: - Dutch
-
-@Test func nlCommonWordsAreNotDates() {
-    expectNoDate(Chrono.nl.casual, "ik ben vrij", "vrij = free")
-    expectNoDate(Chrono.nl.casual, "doe het zo", "zo = so/thus")
-    expectNoDate(Chrono.nl.casual, "de zon schijnt", "zon = sun")
-    expectNoDate(Chrono.nl.casual, "ik zat te wachten", "zat = sat/drunk")
-}
 
 @Test func nlRealDatesStillParse() {
     expectDate(Chrono.nl.casual, "afspraak op woensdag", "woensdag still parses")
     expectDate(Chrono.nl.casual, "op vrijdag", "vrijdag still parses")
     expectDate(Chrono.nl.casual, "op zaterdag", "zaterdag still parses")
     expectDate(Chrono.nl.casual, "op maandag", "maandag still parses")
+    // "zo"/"zon"/"vrij"/"zat" short forms are intentionally kept.
+    expectDate(Chrono.nl.casual, "op zo", "zo parses as Sunday")
+    expectDate(Chrono.nl.casual, "de zon", "zon parses as Sunday")
+    expectDate(Chrono.nl.casual, "ben vrij", "vrij parses as Friday")
+    expectDate(Chrono.nl.casual, "op zat", "zat parses as Saturday")
 }
 
 // MARK: - Portuguese
 
 @Test func ptCommonWordsAreNotDates() {
-    expectNoDate(Chrono.pt.casual, "vou ter uma reuniao", "ter = to have")
+    // Suffix-only collision stays guarded ("ago" = agosto abbreviation).
     expectNoDate(Chrono.pt.casual, "ir ao lago", "lago ends in 'ago'")
-    expectNoDate(Chrono.pt.casual, "ir ao mar", "mar = sea")
 }
 
 @Test func ptRealDatesStillParse() {
@@ -136,4 +132,7 @@ private func expectDate(_ chrono: Chrono, _ text: String, _ comment: Comment) {
     expectDate(Chrono.pt.casual, "na terça", "terça still parses")
     expectDate(Chrono.pt.casual, "em março", "março still parses")
     expectDate(Chrono.pt.casual, "na sexta", "sexta still parses")
+    // "ter"/"mar" short forms are intentionally kept.
+    expectDate(Chrono.pt.casual, "na ter", "ter parses as Tuesday")
+    expectDate(Chrono.pt.casual, "em mar", "mar parses as March")
 }

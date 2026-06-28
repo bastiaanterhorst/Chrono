@@ -4,10 +4,6 @@ import Foundation
 /// Constants for Portuguese date parsing
 public enum PTConstants {
     /// Dictionary mapping Portuguese weekday names to their index (0 = Sunday, 1 = Monday, etc.)
-    ///
-    /// "ter" is deliberately omitted as a Tuesday abbreviation: it is the extremely common verb
-    /// "ter" (= "to have") and would turn ordinary text ("vou ter uma reunião") into a false date
-    /// match. The full "terça"/"terça-feira" is required instead.
     public static let WEEKDAY_DICTIONARY: [String: Int] = [
         "domingo": 0,
         "dom": 0,
@@ -16,6 +12,7 @@ public enum PTConstants {
         "seg": 1,
         "terça": 2,
         "terça-feira": 2,
+        "ter": 2,
         "quarta": 3,
         "quarta-feira": 3,
         "qua": 3,
@@ -40,7 +37,8 @@ public enum PTConstants {
         "fev.": 2,
         "março": 3,
         "marco": 3,
-        // "mar"/"mar." omitted: "mar" = "sea", a common word. Use "março".
+        "mar": 3,
+        "mar.": 3,
         "abril": 4,
         "abr": 4,
         "abr.": 4,
