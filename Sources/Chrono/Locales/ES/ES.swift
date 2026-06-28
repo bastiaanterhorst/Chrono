@@ -15,9 +15,12 @@ public enum ES {
             ESCasualDateParser(),
             ESCasualTimeParser(),
             
+            // Date-related parsers
+            ESSlashDateFormatParser(),
+
             // Time-related parsers
             ESTimeExpressionParser(),
-            
+
             // Date-related parsers
             ESWeekdayParser(),
             ESMonthNameParser(),
@@ -53,6 +56,7 @@ public enum ES {
             ESRelativeUnitKeywordParser(),
 
             // Only formal parsers, no casual expressions
+            ESSlashDateFormatParser(),
             ESTimeExpressionParser(),
             ESMonthNameParser(),
             MonthNameDayParser(months: ESConstants.MONTH_DICTIONARY, connectors: ["de"], tag: "ESMonthNameDayParser"),

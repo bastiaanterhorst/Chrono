@@ -18,6 +18,7 @@ public enum PT {
             
             // Standard parsers
             PTMonthNameParser(),
+            PTSlashDateFormatParser(),
             PTTimeExpressionParser(),
             PTWeekdayParser(),
             MonthNameDayParser(months: PTConstants.MONTH_DICTIONARY, connectors: ["de"], tag: "PTMonthNameDayParser")
@@ -49,6 +50,7 @@ public enum PT {
             PTRelativeTimeUnitParser(),
 
             PTMonthNameParser(),
+            PTSlashDateFormatParser(),
             PTTimeExpressionParser(),
             PTWeekdayParser(),
             MonthNameDayParser(months: PTConstants.MONTH_DICTIONARY, connectors: ["de"], tag: "PTMonthNameDayParser")

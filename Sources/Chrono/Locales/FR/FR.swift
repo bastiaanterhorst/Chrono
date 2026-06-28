@@ -15,6 +15,7 @@ public enum FR {
             FRCasualTimeParser(),
             FRMonthNameParser(),
             MonthNameDayParser(months: FRMonthNameParser.monthDictionary, tag: "FRMonthNameDayParser"),
+            FRSlashDateFormatParser(),
             FRTimeExpressionParser(),
             FRWeekdayParser(),
             FRSpecificTimeExpressionParser()
@@ -45,6 +46,7 @@ public enum FR {
             FRRelativeTimeUnitParser(),
             FRMonthNameParser(),
             MonthNameDayParser(months: FRMonthNameParser.monthDictionary, tag: "FRMonthNameDayParser"),
+            FRSlashDateFormatParser(),
             FRTimeExpressionParser(),
             FRSpecificTimeExpressionParser()
         ]
