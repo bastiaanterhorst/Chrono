@@ -5,7 +5,10 @@ import Foundation
 public final class ESTimeExpressionParser: Parser {
     /// The pattern to match time expressions in Spanish
     public func pattern(context: ParsingContext) -> String {
-        return "(?:(?:a\\s+las|aslas|deslas|las?|al?|de|del|,|\\s)\\s*)" +
+        // The word connectors (a las / la(s) / al / de / del …) require a leading word boundary
+        // so they only match whole words, not the tail of a larger word (e.g. the "a" of "cita").
+        // "," and whitespace are already boundaries and stay outside the \b group.
+        return "(?:(?:\\b(?:a\\s+las|aslas|deslas|las?|al?|de|del)|,|\\s)\\s*)" +
                "(mediodia|mediodía|medianoche|\\d{1,2}(?:[:.]\\d{2})?(?:\\s*[ap][m|\\.])?)(?=\\W|$)"
     }
     

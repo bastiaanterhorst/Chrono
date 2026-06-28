@@ -4,7 +4,9 @@ import Foundation
 /// Parser for casual time expressions in Spanish (e.g., "medianoche", "mediodía")
 public final class ESCasualTimeParser: Parser {
     public func pattern(context: ParsingContext) -> String {
-        return "(?:(?:al?|en\\s+la|a\\s+la|por\\s+la)?\\s*)(medianoche|mediodía|media\\s*noche|medio\\s*día|mediodia|medio\\s*dia)(?=\\W|$)"
+        // Require a leading word boundary on the connectors so the optional "a"/"al"/… does not
+        // match the trailing letter of the preceding word (e.g. the "a" of "comida").
+        return "(?:(?:\\b(?:al?|en\\s+la|a\\s+la|por\\s+la))?\\s*)(medianoche|mediodía|media\\s*noche|medio\\s*día|mediodia|medio\\s*dia)(?=\\W|$)"
     }
     
     public func extract(context: ParsingContext, match: TextMatch) -> Any? {
