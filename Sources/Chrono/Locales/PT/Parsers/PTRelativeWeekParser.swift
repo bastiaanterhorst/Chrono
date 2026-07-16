@@ -7,8 +7,8 @@ final class PTRelativeWeekParser: AbstractParserWithWordBoundaryChecking, @unche
         let patternThis = "(?i)(?:esta\\s+semana)"
         let patternLast = "(?i)(?:semana\\s+passada)"
         let patternNext = "(?i)(?:pr[oó]xima\\s+semana)"
-        let patternWeeksAgo = "(?:(?:h[aá]|faz)\\s+(\\d+)\\s+semanas?)"
-        let patternInWeeks = "(?:(?:em|daqui\\s+a)\\s+(\\d+)\\s+semanas?)"
+        let patternWeeksAgo = "(?:(?<!\\w)(?:h[aá]|faz)\\s+(\\d+)\\s+semanas?)"
+        let patternInWeeks = "(?:(?<!\\w)(?:em|daqui\\s+a)\\s+(\\d+)\\s+semanas?)"
         let patternBeforeLast = "(?i)(?:semana\\s+retrasada)"
         let patternAfterNext = "(?i)(?:semana\\s+seguinte)"
 

@@ -8,8 +8,8 @@ public struct PTRelativeUnitKeywordParser: Parser {
     public func pattern(context: ParsingContext) -> String {
         let modifier = "(este|esta|pr[oó]ximo|pr[oó]xima|passado|passada|anterior)"
         let unit = "(dia|dias|semana|semanas|m[eê]s|meses|ano|anos)"
-        let modifierFirst = modifier + "\\s+" + unit
-        let unitFirst = unit + "\\s+" + modifier
+        let modifierFirst = "(?<!\\w)" + modifier + "\\s+" + unit
+        let unitFirst = "(?<!\\w)" + unit + "\\s+" + modifier
         return "(?i)(?:" + modifierFirst + "|" + unitFirst + ")(?=\\W|$)"
     }
 

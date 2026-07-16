@@ -7,8 +7,9 @@ public struct PTRelativeTimeUnitParser: Parser {
 
     public func pattern(context: ParsingContext) -> String {
         let unit = "(dia|dias|semana|semanas|m[eê]s|meses|ano|anos)"
-        let future = "(em|daqui\\s+a)\\s+(\\d+)\\s+" + unit
-        let past = "(h[aá]|faz)\\s+(\\d+)\\s+" + unit
+        // Leading word boundaries: "it[em] 2 dias" / "apan[ha] 2 dias" must not match.
+        let future = "(?<!\\w)(em|daqui\\s+a)\\s+(\\d+)\\s+" + unit
+        let past = "(?<!\\w)(h[aá]|faz)\\s+(\\d+)\\s+" + unit
         return "(?i)(?:" + future + "|" + past + ")(?=\\W|$)"
     }
 

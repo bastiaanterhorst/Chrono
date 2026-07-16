@@ -175,6 +175,37 @@ func expectMatch(_ locale: String, _ text: String, _ comment: Comment,
     expectMatch("en", "tomorrow at 3:30", "date + colon time", day: 17, hour: 3, minute: 30)
 }
 
+// MARK: - Portuguese
+
+@Test func ptScopeDown() {
+    expectNoMatch("pt", "agora", "now-keyword")
+    expectNoMatch("pt", "comprar 2 maçãs", "bare number after whitespace")
+    expectNoMatch("pt", "às 27", "hour out of range")
+    expectNoMatch("pt", "reunião 2024", "no partial match inside digit runs")
+    expectNoMatch("pt", "em 30 segundos", "seconds phrase must not leak into the time parser")
+    expectNoMatch("pt", "há 2 minutos", "minutes phrase must not leak into the time parser")
+    expectNoMatch("pt", "durante 2 horas", "duration phrase")
+    expectNoMatch("pt", "por 2 horas", "duration phrase")
+    expectNoMatch("pt", "item 2 dias", "'em' must not match inside 'item'")
+    expectNoMatch("pt", "apanha 2 dias", "'ha' must not match inside 'apanha'")
+    // "versão 2.5" still reads as a dotted DATE (May 2) — deliberate 7c3b13b behavior, out of
+    // scope here (see design.md open questions). It must just never be a TIME again.
+    let dotted = parseScope("pt", "versão 2.5 do app")
+    #expect(dotted.allSatisfy { !$0.start.isCertain(.hour) }, "2.5 must not be read as a clock time")
+}
+
+@Test func ptKeptBehavior() {
+    let r = expectMatch("pt", "chamar às 3", "connected bare hour is a fragment", hour: 3, matchedText: "às 3")
+    #expect(r?.start.isCertain(.minute) == false)
+    let marker = expectMatch("pt", "às 15h", "h-marker makes minutes known", hour: 15, minute: 0)
+    #expect(marker?.start.isCertain(.minute) == true)
+    expectMatch("pt", "15h30", "bare h-marker time with minutes", hour: 15, minute: 30)
+    expectMatch("pt", "3h da tarde", "h-marker plus day period", hour: 15)
+    expectMatch("pt", "ontem", "yesterday stays (consumer policy)", day: 15)
+    expectMatch("pt", "há 2 dias", "days-ago stays (consumer policy)", day: 14)
+    expectMatch("pt", "em 2 dias", "in 2 days", day: 18)
+}
+
 // MARK: - Dutch
 
 @Test func nlScopeDown() {

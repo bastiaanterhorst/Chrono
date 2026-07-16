@@ -1,71 +1,65 @@
 // PTTimeExpressionParser.swift - Parser for time expressions in Portuguese
 import Foundation
 
-/// Parser for Portuguese time expressions like "às 3", "3:30", "15:45", etc.
+/// Parser for Portuguese time expressions like "às 3", "15h30", "3h da tarde", etc.
+///
+/// Two forms are accepted (see openspec spec `numeric-time-validation`):
+/// - Connector form: `às`/`as` (whole word) followed by a time, which may be a bare hour
+///   ("às 3") or an h-marker form ("às 15h").
+/// - Bare form: the time needs the h-marker with minutes ("15h30"), colon minutes ("15:30"),
+///   or an h-marker plus a day period ("3h da tarde") — a bare "3h" alone is as likely a
+///   duration, and unqualified bare numbers ("comprar 2 maçãs", "reunião 2024") never match.
 public final class PTTimeExpressionParser: Parser {
     /// Returns the pattern for matching Portuguese time expressions
     public func pattern(context: ParsingContext) -> String {
-        let hourMinuteRegex = "\\d{1,2}(?:h|:)\\d{2}(?:min|\\.)?";
-        let hourRegex = "\\d{1,2}(?:h|\\.)?";
-        
-        return "(?:às|as|[àa]s)?\\s*(" + hourMinuteRegex + "|" + hourRegex + ")(?:\\s*(da|pela|de|do|na|no)\\s*(manhã|manha|tarde|noite))?(?=\\W|$)"
+        let period = "(?:\\s*(da|pela|de|do|na|no)\\s+(manh[ãa]|tarde|noite))?"
+        // Group 1: connector-form time; group 2: bare-form time; groups 3-4: day period.
+        return "(?:(?<!\\w)[àa]s\\s+" +
+               "(\\d{1,2}(?:(?:h|:)\\d{2}(?:min)?|h)?)" +
+               "|(?<!\\S)" +
+               "(\\d{1,2}(?:h|:)\\d{2}(?:min)?|\\d{1,2}h(?=\\s*(?:da|pela|de|do|na|no)\\s+(?:manh[ãa]|tarde|noite)))" +
+               ")" + period + "(?=\\W|$)"
     }
-    
+
     /// Extracts time components from a matched time expression
     public func extract(context: ParsingContext, match: TextMatch) -> Any? {
-        guard let timeText = match.string(at: 1)?.lowercased() else { return nil }
-        
-        // Extract reference date components
-        let refDate = context.refDate
-        let calendar = Calendar.current
-        
-        // Implicitly set to reference date
+        guard let timeText = match.string(at: 1) ?? match.string(at: 2) else { return nil }
+
         let component = context.createParsingComponents()
-        component.imply(.day, value: calendar.component(.day, from: refDate))
-        component.imply(.month, value: calendar.component(.month, from: refDate))
-        component.imply(.year, value: calendar.component(.year, from: refDate))
-        
-        // Extract hour and minute
-        let hourMinuteSeparators = [":", "h"]
-        var hour: Int? = nil
-        var minute: Int = 0
-        
-        for separator in hourMinuteSeparators {
-            if timeText.contains(separator) {
-                let components = timeText.components(separatedBy: separator)
-                if components.count >= 2 {
-                    hour = Int(components[0].trimmingCharacters(in: .whitespacesAndNewlines))
-                    
-                    // Extract minute, removing any "min" suffix
-                    let minuteText = components[1].trimmingCharacters(in: .whitespacesAndNewlines)
-                    let cleanMinuteText = minuteText.replacingOccurrences(of: "min", with: "")
-                                                   .replacingOccurrences(of: "\\.", with: "", options: .regularExpression)
-                    minute = Int(cleanMinuteText) ?? 0
-                    break
-                }
-            }
+
+        // Hour, optional separator (h/:), optional two-digit minutes.
+        guard let innerRegex = try? NSRegularExpression(pattern: "^(\\d{1,2})(?:(h|:)(\\d{2}))?"),
+              let inner = innerRegex.firstMatch(in: timeText, options: [], range: NSRange(location: 0, length: timeText.utf16.count)) else {
+            return nil
         }
-        
-        // Handle case where only the hour is specified (e.g., "3h")
-        if hour == nil {
-            let cleanTimeText = timeText.replacingOccurrences(of: "h", with: "")
-                                       .replacingOccurrences(of: "\\.", with: "", options: .regularExpression)
-            hour = Int(cleanTimeText)
-            minute = 0
+
+        let nsText = timeText as NSString
+        func group(_ i: Int) -> String? {
+            let r = inner.range(at: i)
+            return r.location == NSNotFound ? nil : nsText.substring(with: r)
         }
-        
-        guard let hour = hour else { return nil }
-        
+
+        guard let hourStr = group(1), let hour = Int(hourStr) else { return nil }
+
+        // Reject out-of-range values instead of letting the calendar overflow into later days.
+        guard hour <= 23 else { return nil }
+
+        var minute: Int? = nil
+        if let minuteStr = group(3), let m = Int(minuteStr) {
+            guard m <= 59 else { return nil }
+            minute = m
+        }
+
         // Apply AM/PM meridiem from period mentions
         var meridiem: Int? = nil
-        if let period = match.string(at: 3)?.foldedForMatching() {
-            if period.contains("manha") {
+        if let periodText = match.string(at: 4)?.foldedForMatching() {
+            if periodText.contains("manha") {
                 meridiem = Meridiem.am.rawValue
-            } else if period.contains("tarde") || period.contains("noite") {
+            } else if periodText.contains("tarde") || periodText.contains("noite") {
                 meridiem = Meridiem.pm.rawValue
             }
         }
-        
+
         // Handle the 12-hour clock
         if meridiem == Meridiem.am.rawValue && hour == 12 {
             component.assign(.hour, value: 0)
@@ -74,20 +68,29 @@ public final class PTTimeExpressionParser: Parser {
         } else {
             component.assign(.hour, value: hour)
         }
-        
-        component.assign(.minute, value: minute)
-        
+
+        // Minutes are known when written or when the h-marker states a whole hour ("às 15h");
+        // a connected bare hour ("às 3") stays an ambiguous fragment with implied minutes.
+        let hasHourMarker = timeText.lowercased().contains("h")
+        if let minute {
+            component.assign(.minute, value: minute)
+        } else if hasHourMarker {
+            component.assign(.minute, value: 0)
+        } else {
+            component.imply(.minute, value: 0)
+        }
+
         // If meridiem was assigned explicitly
         if let meridiem = meridiem {
             component.assign(.meridiem, value: meridiem)
-        } 
+        }
         // Otherwise infer based on hour
         else if hour < 12 {
             component.imply(.meridiem, value: Meridiem.am.rawValue)
         } else {
             component.imply(.meridiem, value: Meridiem.pm.rawValue)
         }
-        
+
         component.addTag("PTTimeExpressionParser")
         return component
     }

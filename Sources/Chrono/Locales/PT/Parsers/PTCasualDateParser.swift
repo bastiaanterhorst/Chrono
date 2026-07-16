@@ -5,7 +5,7 @@ import Foundation
 public final class PTCasualDateParser: Parser {
     /// Returns the pattern for matching Portuguese casual date references
     public func pattern(context: ParsingContext) -> String {
-        return "(agora|hoje|amanha|amanhã|ontem)(?=\\W|$)"
+        return "(?<!\\w)(hoje|amanha|amanhã|ontem)(?=\\W|$)"
     }
     
     /// Extracts date components from a matched casual date reference
@@ -17,19 +17,6 @@ public final class PTCasualDateParser: Parser {
         let refDate = context.refDate
         
         switch matchText {
-        case "agora": // now
-            let now = refDate
-            let hour = calendar.component(.hour, from: now)
-            let minute = calendar.component(.minute, from: now)
-            let second = calendar.component(.second, from: now)
-            
-            component.assign(.hour, value: hour)
-            component.assign(.minute, value: minute)
-            component.assign(.second, value: second)
-            component.imply(.day, value: calendar.component(.day, from: now))
-            component.imply(.month, value: calendar.component(.month, from: now))
-            component.imply(.year, value: calendar.component(.year, from: now))
-            
         case "hoje": // today
             component.imply(.day, value: calendar.component(.day, from: refDate))
             component.imply(.month, value: calendar.component(.month, from: refDate))
