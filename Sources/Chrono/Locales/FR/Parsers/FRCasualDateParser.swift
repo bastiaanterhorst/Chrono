@@ -3,9 +3,10 @@ import Foundation
 
 /// Parser for French casual date references like "aujourd'hui", "hier", "demain" etc.
 public final class FRCasualDateParser: Parser {
-    /// The pattern to match French casual date references
+    /// The pattern to match French casual date references. Keywords match whole words only:
+    /// "lendemain" must not match "demain", "soirée" must not match "soir".
     public func pattern(context: ParsingContext) -> String {
-        return "maintenant|aujourd'hui|auj|hier|avant[ -]hier|demain|apres[ -]demain|cette nuit|ce matin|cet après-midi|cet apres-midi|ce soir|soir"
+        return "(?<![\\w-])(?:aujourd'hui|auj|avant[ -]hier|hier|apres[ -]demain|demain|cette nuit|ce matin|cet après-midi|cet apres-midi|ce soir|soir)(?=\\W|$)"
     }
     
     /// Extracts date components from a French casual date reference
@@ -17,16 +18,6 @@ public final class FRCasualDateParser: Parser {
         let calendar = Calendar.current
         
         switch matchText {
-        case "maintenant":
-            // Now
-            let components = calendar.dateComponents([.year, .month, .day, .hour, .minute, .second], from: refDate)
-            component.assign(.year, value: components.year ?? 0)
-            component.assign(.month, value: components.month ?? 0)
-            component.assign(.day, value: components.day ?? 0)
-            component.assign(.hour, value: components.hour ?? 0)
-            component.assign(.minute, value: components.minute ?? 0)
-            component.assign(.second, value: components.second ?? 0)
-            
         case "aujourd'hui", "auj":
             // Today
             let components = calendar.dateComponents([.year, .month, .day], from: refDate)

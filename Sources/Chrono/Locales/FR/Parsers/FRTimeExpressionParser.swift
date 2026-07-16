@@ -22,20 +22,21 @@ public final class FRTimeExpressionParser: Parser {
             return "(à 8h du matin)"
         }
         
-        // Generic patterns for other cases
-        return "(à|a|vers|de|sur|,)\\s+" +
+        // Generic patterns for other cases. Connectors are whole words only ("comman[de] 3h"
+        // must not match) and are required — a bare number is never a time here.
+        return "(?<!\\w)(à|a|vers|de|sur)\\s+" +
                "(\\d{1,2})(?:h|:)(?:(\\d{1,2})(?:min|\\'|m|\\s*minutes?)?)?" +
-               "(?:(?::|\\s)(\\d{1,2})(?:s|sec|\\'|\\'\\')?)?" +
+               "(?::(\\d{1,2})(?:s|sec|\\'|\\'\\')?)?" +
                "(?:\\s*(A\\.M\\.|P\\.M\\.|AM?|PM?))?" +
-               "(?:\\s*(?:du\\s+)?(?:matin|soir|après-midi|après\\s+midi|apres-midi|apres\\s+midi))?" +
+               "(?:\\s*(?:du\\s+)?(?:matin|soir|après-midi|après\\s+midi|apres-midi|apres\\s+midi))?(?!\\w)" +
                "|" +
-               "(à|a|vers|de|sur|,)\\s+" +
+               "(?<!\\w)(à|a|vers|de|sur)\\s+" +
                "(\\d{1,2})(?:\\s*h(?:eures?)?|\\s*heures?)\\s*(\\d{1,2})?(?:min|\\s*minutes?)?" +
                "(?:\\s*(A\\.M\\.|P\\.M\\.|AM?|PM?))?" +
-               "(?:\\s*(?:du\\s+)?(?:matin|soir|après-midi|après\\s+midi|apres-midi|apres\\s+midi))?" +
+               "(?:\\s*(?:du\\s+)?(?:matin|soir|après-midi|après\\s+midi|apres-midi|apres\\s+midi))?(?!\\w)" +
                "|" +
-               "(à|a|vers|de|sur|,)\\s+" +
-               "(midi|minuit)"
+               "(?<!\\w)(à|a|vers|de|sur)\\s+" +
+               "(midi|minuit)(?!\\w)"
     }
     
     /// Extracts time components from a French time expression
@@ -74,7 +75,7 @@ public final class FRTimeExpressionParser: Parser {
         // Generic handling for other cases
         
         // Check if this is the "midi" or "minuit" case
-        if let _ = match.string(at: 11), let noonMatch = match.string(at: 12)?.lowercased(), !noonMatch.isEmpty {
+        if let _ = match.string(at: 10), let noonMatch = match.string(at: 11)?.lowercased(), !noonMatch.isEmpty {
             if noonMatch == "midi" {
                 component.assign(.hour, value: 12)
                 component.assign(.minute, value: 0)
@@ -94,15 +95,15 @@ public final class FRTimeExpressionParser: Parser {
         
         // Get hour, minute, second, and meridiem values from match
         // Format 1: à 15h30, vers 6h, etc.
-        let hourGroup1 = match.string(at: 3)
-        let minuteGroup1 = match.string(at: 4)
-        let secondGroup = match.string(at: 5)
-        let meridiem1 = match.string(at: 6)
-        
+        let hourGroup1 = match.string(at: 2)
+        let minuteGroup1 = match.string(at: 3)
+        let secondGroup = match.string(at: 4)
+        let meridiem1 = match.string(at: 5)
+
         // Format 2: à 6 heures 30, vers 8 heures, etc.
-        let hourGroup2 = match.string(at: 9)
-        let minuteGroup2 = match.string(at: 10)
-        let meridiem2 = match.string(at: 11)
+        let hourGroup2 = match.string(at: 7)
+        let minuteGroup2 = match.string(at: 8)
+        let meridiem2 = match.string(at: 9)
         
         // Hour in first format (e.g., "6h30") or second format (e.g., "6 heures 30")
         let hour: Int?
@@ -141,8 +142,11 @@ public final class FRTimeExpressionParser: Parser {
         
         // Meridiem (AM/PM)
         let meridiemText = meridiem1 ?? meridiem2
-        
+
         guard let hour = hour else { return nil }
+
+        // Reject out-of-range values instead of letting the calendar overflow into later days.
+        guard hour <= 23, (minute ?? 0) <= 59, (second ?? 0) <= 59 else { return nil }
         
         // Handle meridiem (AM/PM)
         var adjustedHour = hour

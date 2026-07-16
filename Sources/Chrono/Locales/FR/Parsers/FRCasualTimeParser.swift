@@ -3,9 +3,10 @@ import Foundation
 
 /// Parser for French casual time expressions like "midi", "minuit", etc.
 public final class FRCasualTimeParser: Parser {
-    /// The pattern to match French casual time references
+    /// The pattern to match French casual time references. The keyword must be a whole word —
+    /// "après-midi" and "midinette" must not match "midi" (hence the explicit hyphen guard).
     public func pattern(context: ParsingContext) -> String {
-        return "(?:(?:\\a|à|vers|vers l[ae']|pour|dans l[ae'])?\\s*)?(midi|minuit)(?:\\s*(?:pile|précise|exactement|environ|passé de))?"
+        return "(?:(?<!\\w)(?:a|à|vers l[ae']|vers|pour|dans l[ae'])\\s+)?(?<![\\w-])(midi|minuit)(?:\\s*(?:pile|précise|exactement|environ|passé de))?(?=\\W|$)"
     }
     
     /// Extracts time components from a French casual time expression

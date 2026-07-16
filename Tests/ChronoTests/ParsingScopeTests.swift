@@ -175,6 +175,29 @@ func expectMatch(_ locale: String, _ text: String, _ comment: Comment,
     expectMatch("en", "tomorrow at 3:30", "date + colon time", day: 17, hour: 3, minute: 30)
 }
 
+// MARK: - French
+
+@Test func frScopeDown() {
+    expectNoMatch("fr", "maintenant", "now-keyword")
+    expectNoMatch("fr", "commande 3h", "'de' must not match inside 'commande'")
+    expectNoMatch("fr", "villa 3h", "'a' must not match inside 'villa'")
+    expectNoMatch("fr", "à 27h", "hour out of range")
+    expectNoMatch("fr", "à 5h99", "minute out of range")
+    expectNoMatch("fr", "score 3:2", "colon times need two-digit minutes")
+    expectNoMatch("fr", "lendemain", "demain inside lendemain")
+    expectNoMatch("fr", "une belle soirée", "soir inside soirée")
+    expectNoMatch("fr", "après-midi", "midi inside après-midi")
+    expectNoMatch("fr", "acheter 2 pommes", "bare number is not a time")
+}
+
+@Test func frKeptBehavior() {
+    expectMatch("fr", "hier", "yesterday stays (consumer policy)", day: 15)
+    expectMatch("fr", "réunion à 15h30", "connected h-marker time", hour: 15, minute: 30)
+    expectMatch("fr", "15h30", "bare h-marker time at string start", hour: 15, minute: 30)
+    expectMatch("fr", "8h du matin", "period keeps working", hour: 8)
+    expectMatch("fr", "ce soir", "ce soir still parses")
+}
+
 // MARK: - Spanish
 
 @Test func esScopeDown() {
