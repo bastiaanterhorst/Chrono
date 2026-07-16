@@ -56,9 +56,6 @@ struct NLConstants {
     
     /// Time units in Dutch
     static let TIME_UNIT_DICTIONARY: [String: Component] = [
-        "sec": .second,
-        "seconde": .second,
-        "seconden": .second,
         "min": .minute,
         "minuut": .minute,
         "minuten": .minute,

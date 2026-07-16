@@ -5,7 +5,7 @@ import Foundation
 final class NLCasualDateParser: Parser {
     func pattern(context: ParsingContext) -> String {
         // Define a pattern with a capture group for Dutch casual date expressions
-        return "(?:(?:\\s|^)(nu|vandaag|gisteren|eergisteren|morgen|overmorgen|vanavond|vannacht|vanochtend|vanmiddag)(?=\\W|$))"
+        return "(?:(?:\\s|^)(vandaag|gisteren|eergisteren|morgen|overmorgen|vanavond|vannacht|vanochtend|vanmiddag)(?=\\W|$))"
     }
     
     func extract(context: ParsingContext, match: TextMatch) -> Any? {
@@ -19,11 +19,6 @@ final class NLCasualDateParser: Parser {
         var minute: Int? = nil
         
         switch term {
-        case "nu":
-            // Use current time
-            let components = Calendar.current.dateComponents([.hour, .minute, .second], from: targetDate)
-            hour = components.hour
-            minute = components.minute
         case "vandaag":
             // Just the date, no time
             break

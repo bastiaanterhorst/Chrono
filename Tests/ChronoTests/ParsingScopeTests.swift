@@ -175,6 +175,34 @@ func expectMatch(_ locale: String, _ text: String, _ comment: Comment,
     expectMatch("en", "tomorrow at 3:30", "date + colon time", day: 17, hour: 3, minute: 30)
 }
 
+// MARK: - Dutch
+
+@Test func nlScopeDown() {
+    expectNoMatch("nl", "doe het nu even", "'nu' now-keyword")
+    expectNoMatch("nl", "over 30 seconden", "seconds unit")
+    expectNoMatch("nl", "30 seconden geleden", "seconds unit, past")
+    expectNoMatch("nl", "binnen 30 seconden", "within-parser seconds")
+    expectNoMatch("nl", "ik wil 3 a 4 appels", "lone-letter meridiem removed")
+    expectNoMatch("nl", "versie 2.0", "dot decimal is not a time")
+    expectNoMatch("nl", "kost 3.50 euro", "dot decimal is not a time")
+    expectNoMatch("nl", "gedurende 2 uur", "bare 'N uur' is a duration")
+    expectNoMatch("nl", "voor 2 uur", "'voor' is deliberately not a connector")
+    expectNoMatch("nl", "koop 2 appels", "bare number is not a time")
+    expectNoMatch("nl", "om 27", "hour out of range")
+}
+
+@Test func nlKeptBehavior() {
+    let uur = expectMatch("nl", "om 2 uur", "connected uur time is exact", hour: 2, minute: 0)
+    #expect(uur?.start.isCertain(.minute) == true)
+    let bare = expectMatch("nl", "bel om 3", "connected bare hour is a fragment", hour: 3, matchedText: "om 3")
+    #expect(bare?.start.isCertain(.minute) == false)
+    expectMatch("nl", "15:00", "bare colon time", hour: 15, minute: 0)
+    expectMatch("nl", "15.30 uur", "dot minutes with uur marker", hour: 15, minute: 30)
+    expectMatch("nl", "3pm", "meridiem time", hour: 15)
+    expectMatch("nl", "gisteren", "yesterday stays (consumer policy)", day: 15)
+    expectMatch("nl", "2 minuten geleden", "minutes-ago stays (consumer policy)", minute: 28)
+}
+
 // MARK: - German
 
 @Test func deScopeDown() {
