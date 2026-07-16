@@ -5,7 +5,7 @@ import Foundation
 public final class ENCasualDateParser: Parser {
     /// The pattern to match casual date references
     public func pattern(context: ParsingContext) -> String {
-        return "(now|today|tonight|tomorrow|tmr|tmrw|yesterday|last\\s*night)(?=\\W|$)"
+        return "(today|tonight|tomorrow|tmr|tmrw|yesterday|last\\s*night)(?=\\W|$)"
     }
     
     /// Extracts date components from a casual date reference
@@ -18,19 +18,6 @@ public final class ENCasualDateParser: Parser {
         let refDate = context.refDate
         
         switch matchText {
-        case "now":
-            let components = calendar.dateComponents(
-                [.year, .month, .day, .hour, .minute, .second],
-                from: refDate
-            )
-            
-            component.assign(.year, value: components.year ?? 0)
-            component.assign(.month, value: components.month ?? 0)
-            component.assign(.day, value: components.day ?? 0)
-            component.assign(.hour, value: components.hour ?? 0)
-            component.assign(.minute, value: components.minute ?? 0)
-            component.assign(.second, value: components.second ?? 0)
-            
         case "today":
             let components = calendar.dateComponents([.year, .month, .day], from: refDate)
             component.assign(.year, value: components.year ?? 0)

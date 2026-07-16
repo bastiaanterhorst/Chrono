@@ -7,12 +7,12 @@ public struct ENTimeUnitWithinFormatParser: Parser {
     
     public func pattern(context: ParsingContext) -> String {
         return "(\\W|^)" +
-               "(?:within|in|for)\\s*" +
+               "(?:within|in)\\s*" +
                "(?:(?:about|around|roughly|approximately|just)\\s*(?:~\\s*)?)?" +
                "(?:the\\s*)?(?:(past|last|next|coming)\\s*)?" +
                "([0-9]+|a(?:n)?|half(?:\\s*an?)?|some|couple(?:\\s*of)?)" +
                "\\s*" +
-               "(seconds?|minutes?|hours?|days?|weeks?|months?|years?)" +
+               "(minutes?|hours?|days?|weeks?|months?|years?)" +
                "(?=\\W|$)"
     }
     
@@ -59,9 +59,7 @@ public struct ENTimeUnitWithinFormatParser: Parser {
         guard let unitText = match.string(at: 4)?.lowercased() else { return nil }
         var timeUnit: Calendar.Component
         
-        if unitText.starts(with: "second") {
-            timeUnit = .second
-        } else if unitText.starts(with: "minute") {
+        if unitText.starts(with: "minute") {
             timeUnit = .minute
         } else if unitText.starts(with: "hour") {
             timeUnit = .hour
@@ -88,7 +86,7 @@ public struct ENTimeUnitWithinFormatParser: Parser {
         // This represents a date range from the reference date to the calculated date.
         // The date portion is known; the time-of-day is only known when the unit itself is a
         // time unit (e.g. "in 5 hours"), otherwise it is merely implied (e.g. "in 3 days").
-        let isTimeUnit = (timeUnit == .second || timeUnit == .minute || timeUnit == .hour)
+        let isTimeUnit = (timeUnit == .minute || timeUnit == .hour)
         result.assignRelativeDate(from: date, unitIsTime: isTimeUnit, calendar: calendar)
 
         return result

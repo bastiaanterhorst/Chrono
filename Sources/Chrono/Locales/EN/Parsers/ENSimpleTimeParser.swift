@@ -3,27 +3,32 @@ import Foundation
 
 /// A simpler parser for specific time formats like "HH:MMpm"
 public final class ENSimpleTimeParser: Parser {
-    /// The pattern to match time expressions like "6:30pm"
+    /// The pattern to match time expressions like "6:30pm". Digit boundaries keep the match from
+    /// starting or ending inside a longer digit run (e.g. "2024:30").
     public func pattern(context: ParsingContext) -> String {
-        return "(\\d{1,2}):(\\d{2})(am|pm)?"
+        return "(?<!\\d)(\\d{1,2}):(\\d{2})(am|pm)?(?!\\d)"
     }
-    
+
     /// Extracts time components from a time expression
     public func extract(context: ParsingContext, match: TextMatch) -> Any? {
         let component = context.createParsingComponents()
-        
+
         guard let hourStr = match.string(at: 1),
               let minuteStr = match.string(at: 2),
               let hour = Int(hourStr),
               let minute = Int(minuteStr) else {
             return nil
         }
-        
+
+        // Reject out-of-range values instead of letting the calendar overflow into later days.
+        guard minute <= 59 else { return nil }
+
         let meridiem = match.string(at: 3)?.lowercased()
-        
+
         component.assign(.minute, value: minute)
-        
+
         if let meridiem = meridiem {
+            guard (1...12).contains(hour) else { return nil }
             if meridiem == "am" {
                 component.assign(.meridiem, value: Meridiem.am.rawValue)
                 if hour == 12 {
@@ -38,14 +43,12 @@ public final class ENSimpleTimeParser: Parser {
                 } else {
                     component.assign(.hour, value: hour + 12)
                 }
-                
-                // Debug
-                print("PM time: \(hour) -> \(component.get(.hour) ?? 0)")
             }
         } else {
+            guard hour <= 23 else { return nil }
             component.assign(.hour, value: hour)
         }
-        
+
         component.imply(.second, value: 0)
         component.addTag("ENSimpleTimeParser")
         return component

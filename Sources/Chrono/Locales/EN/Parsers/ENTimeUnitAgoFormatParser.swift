@@ -10,7 +10,7 @@ public struct ENTimeUnitAgoFormatParser: Parser {
                "(?:within\\s*)?" +
                "([0-9]+|a(?:n)?|half(?:\\s*an)?|some|couple(?:\\s*of)?)" +
                "\\s*" +
-               "(seconds?|minutes?|hours?|days?|weeks?|months?|years?)" +
+               "(minutes?|hours?|days?|weeks?|months?|years?)" +
                "\\s*" +
                "(?:ago|before|earlier)(?=(?:\\W|$))"
     }
@@ -49,9 +49,7 @@ public struct ENTimeUnitAgoFormatParser: Parser {
         var timeUnit: Calendar.Component
         var calendar = Calendar.current
         
-        if unitText.starts(with: "second") {
-            timeUnit = .second
-        } else if unitText.starts(with: "minute") {
+        if unitText.starts(with: "minute") {
             timeUnit = .minute
         } else if unitText.starts(with: "hour") {
             timeUnit = .hour

@@ -110,3 +110,67 @@ func expectMatch(_ locale: String, _ text: String, _ comment: Comment,
     expectMatch("ja", "明日", "JA ashita", day: 17)
     expectMatch("en", "yesterday", "EN yesterday stays (forward-only is consumer policy)", day: 15)
 }
+
+// MARK: - English
+
+@Test func enNowIsNotParsed() {
+    expectNoMatch("en", "now", "bare now")
+    expectNoMatch("en", "do it now", "now inside a sentence")
+}
+
+@Test func enSecondsAreNotParsed() {
+    expectNoMatch("en", "in 30 seconds", "within-parser seconds")
+    expectNoMatch("en", "30 seconds ago", "ago-parser seconds")
+    expectNoMatch("en", "ping me +30s", "casual-relative 's' abbreviation")
+    expectNoMatch("en", "next 5 seconds", "casual-relative seconds")
+    expectNoMatch("en", "30 seconds from now", "relative-date seconds")
+}
+
+@Test func enDurationsAreNotDeadlines() {
+    expectNoMatch("en", "for 2 hours", "for + hours")
+    expectNoMatch("en", "meeting for 2 hours", "for + hours mid-sentence")
+    // "within"/"in" deadlines stay. (The span has always resolved to the inner "in 2 weeks"
+    // via overlap resolution — pre-existing behavior, only the semantics are asserted here.)
+    expectMatch("en", "within 2 weeks", "within stays", day: 27)
+}
+
+@Test func enBareNumbersAreNotTimes() {
+    expectNoMatch("en", "buy 2 apples", "bare number after whitespace")
+    expectNoMatch("en", "read chapter 12", "bare number after whitespace")
+    expectNoMatch("en", "call, 7", "comma is not a connector")
+    expectNoMatch("en", "test on 3", "'on' is not a time connector")
+    expectNoMatch("en", "pay 50", "bare out-of-range number")
+    expectNoMatch("en", "test 27", "bare out-of-range number")
+    expectNoMatch("en", "version 2.0", "connector must not match inside 'version'")
+}
+
+@Test func enOutOfRangeTimesAreRejected() {
+    expectNoMatch("en", "test at 27", "hour 27")
+    expectNoMatch("en", "test at50", "no whitespace after connector")
+    expectNoMatch("en", "test at 99", "hour 99")
+    expectNoMatch("en", "27:00", "H:MM hour out of range")
+    expectNoMatch("en", "5:80", "H:MM minute out of range")
+    expectNoMatch("en", "99:99", "H:MM both out of range")
+}
+
+@Test func enConnectedBareHourIsAFragment() {
+    // "at 3" stays matchable (so "tomorrow at 3" merges) but is a non-confident fragment:
+    // hour known, meridiem only implied. Consumers ignore it standalone.
+    let r = expectMatch("en", "test at 3", "connected bare hour", hour: 3, matchedText: "at 3")
+    #expect(r?.start.isCertain(.hour) == true)
+    #expect(r?.start.isCertain(.meridiem) == false)
+    expectMatch("en", "test at 15", "connected 24h bare hour", hour: 15, matchedText: "at 15")
+}
+
+@Test func enUnmatchedTrailingNumberIsNotSwallowed() {
+    // "tomorrow 8" must match ONLY "tomorrow" — the 8 stays out of the span (consumers strip
+    // matched spans from task names) and contributes no time.
+    let r = expectMatch("en", "tomorrow 8", "date keyword only", day: 17, matchedText: "tomorrow")
+    #expect(r?.start.isCertain(.hour) == false)
+}
+
+@Test func enQualifiedTimesWithoutConnector() {
+    expectMatch("en", "3pm", "meridiem at string start", hour: 15)
+    expectMatch("en", "7p", "attached single-letter meridiem", hour: 19)
+    expectMatch("en", "tomorrow at 3:30", "date + colon time", day: 17, hour: 3, minute: 30)
+}

@@ -10,7 +10,7 @@ public struct ENTimeUnitLaterFormatParser: Parser {
                "(?:within|in|after|later|from)\\s*" +
                "([0-9]+|an?|half(?:\\s*an?)?|some|couple(?:\\s*of)?)" +
                "\\s*" +
-               "(seconds?|minutes?|hours?|days?|weeks?|months?|years?)" +
+               "(minutes?|hours?|days?|weeks?|months?|years?)" +
                "(?:(?:\\s+|\\s*,\\s*)(?:later|from now|from today|from tomorrow|later|henceforth))?(?=(?:\\W|$))"
     }
     
@@ -48,9 +48,7 @@ public struct ENTimeUnitLaterFormatParser: Parser {
         var timeUnit: Calendar.Component
         var calendar = Calendar.current
         
-        if unitText.starts(with: "second") {
-            timeUnit = .second
-        } else if unitText.starts(with: "minute") {
+        if unitText.starts(with: "minute") {
             timeUnit = .minute
         } else if unitText.starts(with: "hour") {
             timeUnit = .hour
@@ -73,7 +71,7 @@ public struct ENTimeUnitLaterFormatParser: Parser {
         
         // The date portion is known; the time-of-day is only known when the unit itself is a
         // time unit (e.g. "in 5 hours"), otherwise it is merely implied (e.g. "5 days later").
-        let isTimeUnit = (timeUnit == .second || timeUnit == .minute || timeUnit == .hour)
+        let isTimeUnit = (timeUnit == .minute || timeUnit == .hour)
         result.assignRelativeDate(from: date, unitIsTime: isTimeUnit, calendar: calendar)
 
         return result

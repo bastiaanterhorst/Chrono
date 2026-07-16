@@ -5,7 +5,7 @@ import Foundation
 public final class ENRelativeDateFormatParser: Parser {
     private static let PATTERN = "(?:within\\s*)?" +
                                "(\\d+|few|half(?:\\s*an?)?|an?|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve)\\s*" +
-                               "(seconds?|minutes?|hours?|days?|weeks?|months?|years?)\\s*" +
+                               "(minutes?|hours?|days?|weeks?|months?|years?)\\s*" +
                                "(ago|before|earlier|prior|(?:from|before|after)\\s*now|from\\s*today|later|after|from)"
     
     private static let NUMBER_DICTIONARY: [String: Double] = [
@@ -86,8 +86,6 @@ public final class ENRelativeDateFormatParser: Parser {
             }
         } else if unitText.starts(with: "minute") {
             targetDate = calendar.date(byAdding: .minute, value: Int(number), to: refDate)
-        } else if unitText.starts(with: "second") {
-            targetDate = calendar.date(byAdding: .second, value: Int(number), to: refDate)
         } else {
             return nil
         }
@@ -109,7 +107,7 @@ public final class ENRelativeDateFormatParser: Parser {
             component.assign(.day, value: day)
         }
         
-        if unitText.starts(with: "hour") || unitText.starts(with: "minute") || unitText.starts(with: "second") {
+        if unitText.starts(with: "hour") || unitText.starts(with: "minute") {
             if let hour = dateComponents.hour {
                 component.assign(.hour, value: hour)
             }

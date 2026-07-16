@@ -12,10 +12,10 @@ public struct ENTimeUnitCasualRelativeFormatParser: Parser {
     }
     
     /// Pattern for time units with abbreviations
-    private let timeUnitsWithAbbr = "(?:(?:about|around)\\s{0,3})?(?:(?:\\d+|few|half|couple(?:\\s+of)?|several|an?|the)\\s{0,3}(?:seconds?|mins?|minutes?|hours?|days?|weeks?|months?|years?|s|m|h|d|w|mo|y)(?:\\s{0,5},?(?:\\s*and)?\\s{0,5}(?:\\d+|few|half|couple(?:\\s+of)?|several|an?|the)\\s{0,3}(?:seconds?|mins?|minutes?|hours?|days?|weeks?|months?|years?|s|m|h|d|w|mo|y)){0,10})"
-    
+    private let timeUnitsWithAbbr = "(?:(?:about|around)\\s{0,3})?(?:(?:\\d+|few|half|couple(?:\\s+of)?|several|an?|the)\\s{0,3}(?:mins?|minutes?|hours?|days?|weeks?|months?|years?|m|h|d|w|mo|y)(?:\\s{0,5},?(?:\\s*and)?\\s{0,5}(?:\\d+|few|half|couple(?:\\s+of)?|several|an?|the)\\s{0,3}(?:mins?|minutes?|hours?|days?|weeks?|months?|years?|m|h|d|w|mo|y)){0,10})"
+
     /// Pattern for time units without abbreviations
-    private let timeUnitsNoAbbr = "(?:(?:about|around)\\s{0,3})?(?:(?:\\d+|few|half|couple(?:\\s+of)?|several|an?|the)\\s{0,3}(?:seconds?|minutes?|hours?|days?|weeks?|months?|years?)(?:\\s{0,5},?(?:\\s*and)?\\s{0,5}(?:\\d+|few|half|couple(?:\\s+of)?|several|an?|the)\\s{0,3}(?:seconds?|minutes?|hours?|days?|weeks?|months?|years?)){0,10})"
+    private let timeUnitsNoAbbr = "(?:(?:about|around)\\s{0,3})?(?:(?:\\d+|few|half|couple(?:\\s+of)?|several|an?|the)\\s{0,3}(?:minutes?|hours?|days?|weeks?|months?|years?)(?:\\s{0,5},?(?:\\s*and)?\\s{0,5}(?:\\d+|few|half|couple(?:\\s+of)?|several|an?|the)\\s{0,3}(?:minutes?|hours?|days?|weeks?|months?|years?)){0,10})"
     
     /// Initialize the parser with abbreviation preference
     /// - Parameter allowAbbreviations: Whether to allow abbreviated units (s, min, hr, etc.)
@@ -65,7 +65,7 @@ public struct ENTimeUnitCasualRelativeFormatParser: Parser {
     /// - Returns: Dictionary mapping components to values
     private func parseTimeUnits(_ text: String) -> [Component: Double]? {
         // Match time unit patterns like "2 days", "1 hour", "30 minutes"
-        let pattern = "(\\d+|few|half|couple(?:\\s+of)?|several|an?|the)\\s{0,3}(seconds?|mins?|minutes?|hours?|days?|weeks?|months?|years?|s|m|h|d|w|mo|y)"
+        let pattern = "(\\d+|few|half|couple(?:\\s+of)?|several|an?|the)\\s{0,3}(mins?|minutes?|hours?|days?|weeks?|months?|years?|m|h|d|w|mo|y)"
         let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive])
         
         var components: [Component: Double] = [:]
@@ -93,9 +93,7 @@ public struct ENTimeUnitCasualRelativeFormatParser: Parser {
             
             // Map unit text to Component
             let component: Component
-            if unitText.hasPrefix("s") {
-                component = .second
-            } else if unitText.hasPrefix("m") && !unitText.hasPrefix("mo") {
+            if unitText.hasPrefix("m") && !unitText.hasPrefix("mo") {
                 component = .minute
             } else if unitText.hasPrefix("h") {
                 component = .hour
