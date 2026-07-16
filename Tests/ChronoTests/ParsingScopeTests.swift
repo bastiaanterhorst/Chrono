@@ -175,6 +175,33 @@ func expectMatch(_ locale: String, _ text: String, _ comment: Comment,
     expectMatch("en", "tomorrow at 3:30", "date + colon time", day: 17, hour: 3, minute: 30)
 }
 
+// MARK: - Japanese
+
+@Test func jaScopeDown() {
+    expectNoMatch("ja", "会議は2時間です", "時間 duration is not a clock time")
+    expectNoMatch("ja", "2時間かかる", "時間 duration is not a clock time")
+    expectNoMatch("ja", "24時間営業", "時間 duration is not a clock time")
+    expectNoMatch("ja", "100時間の作業", "no partial match inside digit runs")
+    expectNoMatch("ja", "99時", "hour out of range (>29)")
+    expectNoMatch("ja", "30時", "hour out of range (>29)")
+    expectNoMatch("ja", "10時70分", "minute out of range")
+    expectNoMatch("ja", "朝ごはんを作る", "bare 朝 removed (no word boundaries in Japanese)")
+    expectNoMatch("ja", "深夜まで作業", "bare 夜 removed")
+    expectNoMatch("ja", "今すぐ電話する", "今 is not a now-keyword (verifies no regression)")
+    expectNoMatch("ja", "りんごを2つ買う", "bare number is not a time")
+}
+
+@Test func jaKeptBehavior() {
+    expectMatch("ja", "3時に集合", "hour with 時 marker", hour: 3)
+    expectMatch("ja", "14時30分", "hour and minutes", hour: 14, minute: 30)
+    expectMatch("ja", "午後3時", "meridiem marker", hour: 15)
+    expectMatch("ja", "今朝メール", "compound 今朝 stays", hour: 6)
+    expectMatch("ja", "今夜やる", "compound 今夜 stays")
+    expectMatch("ja", "昨日の資料", "yesterday stays (consumer policy)", day: 15)
+    expectMatch("ja", "2日前に完了", "days-ago stays (consumer policy)", day: 14)
+    expectMatch("ja", "27時", "late-night hour stays", hour: 27)
+}
+
 // MARK: - Portuguese
 
 @Test func ptScopeDown() {

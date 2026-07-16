@@ -14,13 +14,15 @@ public final class JATimeExpressionParser: Parser {
             return "(14時30分)"
         }
         
-        // Generic patterns for other cases
+        // Generic patterns for other cases. 時(?!間) keeps the hour marker from matching inside
+        // the duration unit 時間 ("2時間" is 2 hours, not 02:00); the digit lookbehind keeps the
+        // hour from starting inside a longer number ("100時間" must not match "00時").
         // First pattern: Match with AM/PM markers ("午後3時", "午前10時30分")
-        let patternWithMeridiem = "(午前|午後|AM|PM)\\s*([0-9０-９]{1,2})\\s*時(\\s*([0-9０-９]{1,2})\\s*分)?"
-        
+        let patternWithMeridiem = "(午前|午後|AM|PM)\\s*([0-9０-９]{1,2})\\s*時(?!間)(\\s*([0-9０-９]{1,2})\\s*分)?"
+
         // Second pattern: Match 24-hour format with optional minutes ("14時30分", "15時")
-        let pattern24Hour = "([0-9０-９]{1,2})\\s*時(?:\\s*([0-9０-９]{1,2})\\s*分)?"
-        
+        let pattern24Hour = "(?<![0-9０-９])([0-9０-９]{1,2})\\s*時(?!間)(?:\\s*([0-9０-９]{1,2})\\s*分)?"
+
         return patternWithMeridiem + "|" + pattern24Hour
     }
     
@@ -86,8 +88,16 @@ public final class JATimeExpressionParser: Parser {
             minute = normalizeNumber(match.string(at: 6)) ?? 0
         }
         
-        // Check if we have a valid hour
+        // Check if we have a valid hour. With an AM/PM marker the hour is on the 12-hour clock;
+        // without one, hours up to 29 are allowed (late-night convention: 27時 = 03:00 next day).
+        // Out-of-range values reject the match instead of overflowing further into the calendar.
         guard let hour = hour else { return nil }
+        guard minute <= 59 else { return nil }
+        if meridiemText != nil {
+            guard hour <= 12 else { return nil }
+        } else {
+            guard hour <= 29 else { return nil }
+        }
         
         // Apply meridiem (AM/PM) - special case for tests
         var actualHour = hour
@@ -102,9 +112,6 @@ public final class JATimeExpressionParser: Parser {
             component.assign(.meridiem, value: Meridiem.pm.rawValue)
         } else if let meridiem = meridiemText {
             if meridiem == "午後" || meridiem.uppercased() == "PM" {
-                // Debug output for the test
-                print("PM time: \(hour) -> \(hour < 12 ? hour + 12 : hour)")
-                
                 component.assign(.meridiem, value: Meridiem.pm.rawValue)
                 if hour < 12 {
                     actualHour = hour + 12

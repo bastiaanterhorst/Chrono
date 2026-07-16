@@ -3,9 +3,12 @@ import Foundation
 
 /// Parser for Japanese casual date references like "今日", "昨日", "明日" etc.
 public final class JACasualDateParser: Parser {
-    /// The pattern to match Japanese casual date references
+    /// The pattern to match Japanese casual date references. Bare single-character time words
+    /// (夜/よる, 朝/あさ) are deliberately absent: Japanese has no word boundaries, so they fire
+    /// inside ordinary vocabulary (朝ごはん, 深夜) — the compound forms (今夜, 今朝, 夕方, 午前,
+    /// 午後) carry the same meaning safely.
     public func pattern(context: ParsingContext) -> String {
-        return "今日|きょう|当日|とうじつ|昨日|きのう|一昨日|おととい|明日|あした|明後日|あさって|今夜|こんや|今晩|こんばん|今夕|こんゆう|今朝|けさ|夕方|ゆうがた|午前|ごぜん|午後|ごご|夜|よる|朝|あさ"
+        return "今日|きょう|当日|とうじつ|昨日|きのう|一昨日|おととい|明日|あした|明後日|あさって|今夜|こんや|今晩|こんばん|今夕|こんゆう|今朝|けさ|夕方|ゆうがた|午前|ごぜん|午後|ごご"
     }
     
     /// Normalizes hiragana text to kanji
