@@ -174,3 +174,26 @@ func expectMatch(_ locale: String, _ text: String, _ comment: Comment,
     expectMatch("en", "7p", "attached single-letter meridiem", hour: 19)
     expectMatch("en", "tomorrow at 3:30", "date + colon time", day: 17, hour: 3, minute: 30)
 }
+
+// MARK: - Spanish
+
+@Test func esScopeDown() {
+    expectNoMatch("es", "ahora", "now-keyword")
+    expectNoMatch("es", "en 30 segundos", "within-parser seconds")
+    expectNoMatch("es", "dentro de 30 segundos", "within-parser seconds")
+    expectNoMatch("es", "comprar 2 manzanas", "bare number after whitespace")
+    expectNoMatch("es", "a las 27", "hour out of range")
+    expectNoMatch("es", "a las50", "no whitespace after connector")
+    expectNoMatch("es", "version 2.0", "decimal is not a time")
+    expectNoMatch("es", "durante 2 horas", "duration phrase")
+    expectNoMatch("es", "por 2 horas", "duration phrase")
+}
+
+@Test func esKeptBehavior() {
+    let r = expectMatch("es", "a las 3", "connected bare hour", hour: 3, matchedText: "a las 3")
+    #expect(r?.start.isCertain(.meridiem) == false)
+    expectMatch("es", "a las 3pm", "connected meridiem hour", hour: 15)
+    expectMatch("es", "hoy", "today", day: 16)
+    expectMatch("es", "ayer", "yesterday stays (consumer policy)", day: 15)
+    expectMatch("es", "reunión a las 15:30", "connected colon time", hour: 15, minute: 30)
+}

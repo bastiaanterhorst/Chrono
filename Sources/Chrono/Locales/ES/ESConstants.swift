@@ -85,9 +85,6 @@ public enum ESConstants {
     
     /// Dictionary of Spanish time unit words to corresponding Calendar.Component values
     public static let TIME_UNIT_DICTIONARY: [String: Calendar.Component] = [
-        "seg": .second,
-        "segundo": .second,
-        "segundos": .second,
         "min": .minute,
         "mins": .minute,
         "minuto": .minute,

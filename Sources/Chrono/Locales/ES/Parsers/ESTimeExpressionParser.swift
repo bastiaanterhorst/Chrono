@@ -2,26 +2,32 @@
 import Foundation
 
 /// Parser for time expressions in Spanish (e.g., "a las 3:30 PM")
+///
+/// Two forms are accepted (see openspec spec `numeric-time-validation`):
+/// - Connector form: an explicit time-connector (`a las`, `a la`, `al`, `las`) followed by a
+///   time, which may be a bare hour ("a las 3"). The connector must start on a word boundary and
+///   be separated from the time by whitespace, so "a las50" and word tails don't match.
+/// - Bare form: a time qualified by minutes and/or a meridiem ("7pm", "15:30") preceded by
+///   whitespace or string start. Unqualified bare numbers ("comprar 2 manzanas") never match.
 public final class ESTimeExpressionParser: Parser {
     /// The pattern to match time expressions in Spanish
     public func pattern(context: ParsingContext) -> String {
-        // The word connectors (a las / la(s) / al / de / del …) require a leading word boundary
-        // so they only match whole words, not the tail of a larger word (e.g. the "a" of "cita").
-        // "," and whitespace are already boundaries and stay outside the \b group.
-        return "(?:(?:\\b(?:a\\s+las|aslas|deslas|las?|al?|de|del)|,|\\s)\\s*)" +
-               "(mediodia|mediodía|medianoche|\\d{1,2}(?:[:.]\\d{2})?(?:\\s*[ap][m|\\.])?)(?=\\W|$)"
+        // Group 1: connector-form time (bare hour allowed)
+        // Group 2: bare-form time (minutes and/or meridiem required)
+        return "(?:(?<!\\w)(?:a\\s+las?|al|las)\\s+" +
+               "(mediod[ií]a|medianoche|\\d{1,2}(?:[:.]\\d{2})?(?:\\s*[ap]\\.?m\\.?|[ap])?)" +
+               "|(?<!\\S)" +
+               "(\\d{1,2}(?:[:.]\\d{2})?(?:\\s*[ap]\\.?m\\.?|[ap])|\\d{1,2}:\\d{2}))" +
+               "(?=\\W|$)"
     }
-    
+
     /// Extracts time components from a time expression
     public func extract(context: ParsingContext, match: TextMatch) -> Any? {
         let component = context.createParsingComponents()
-        
-        guard let text = match.string(at: 1)?.lowercased() else { return nil }
-        
-        // Get the full match for context analysis
-        let fullText = match.string(at: 0) ?? text
-        
-        // Special cases: mediodia/mediodía and medianoche
+
+        guard let text = (match.string(at: 1) ?? match.string(at: 2))?.lowercased() else { return nil }
+
+        // Special cases: mediodía and medianoche (connector form only)
         if text == "mediodia" || text == "mediodía" {
             component.assign(.hour, value: 12)
             component.assign(.minute, value: 0)
@@ -29,7 +35,7 @@ public final class ESTimeExpressionParser: Parser {
             component.assign(.meridiem, value: Meridiem.pm.rawValue)
             return component
         }
-        
+
         if text == "medianoche" {
             component.assign(.hour, value: 0)
             component.assign(.minute, value: 0)
@@ -37,120 +43,50 @@ public final class ESTimeExpressionParser: Parser {
             component.assign(.meridiem, value: Meridiem.am.rawValue)
             return component
         }
-        
-        // Handle time like "6:30pm"
-        if text.contains(":") {
-            let parts = text.split(separator: ":")
-            guard parts.count == 2 else { return nil }
-            
-            // Get hour
-            guard let hourStr = parts.first,
-                  let hour = Int(hourStr) else { return nil }
-            component.assign(.hour, value: hour)
-            
-            // Get minute with possible meridiem
-            let minutePart = String(parts[1])
-            if minutePart.lowercased().contains("p") {
-                // PM case
-                let minuteStr = minutePart.lowercased()
-                    .replacingOccurrences(of: "pm", with: "")
-                    .replacingOccurrences(of: "p.", with: "")
-                    .replacingOccurrences(of: "p", with: "")
-                    .trimmingCharacters(in: .whitespacesAndNewlines)
-                
-                guard let minute = Int(minuteStr) else { return nil }
-                component.assign(.minute, value: minute)
-                component.assign(.meridiem, value: Meridiem.pm.rawValue)
-                
-                // Convert to 24-hour time
-                if hour != 12 {
-                    component.assign(.hour, value: hour + 12)
-                }
-            } else if minutePart.lowercased().contains("a") {
-                // AM case
-                let minuteStr = minutePart.lowercased()
-                    .replacingOccurrences(of: "am", with: "")
-                    .replacingOccurrences(of: "a.", with: "")
-                    .replacingOccurrences(of: "a", with: "")
-                    .trimmingCharacters(in: .whitespacesAndNewlines)
-                
-                guard let minute = Int(minuteStr) else { return nil }
-                component.assign(.minute, value: minute)
+
+        // Numeric time: hour, optional two-digit minutes, optional meridiem letter.
+        guard let innerRegex = try? NSRegularExpression(pattern: "^(\\d{1,2})(?:[:.](\\d{2}))?\\s*([ap])?"),
+              let inner = innerRegex.firstMatch(in: text, options: [], range: NSRange(location: 0, length: text.utf16.count)) else {
+            return nil
+        }
+
+        let nsText = text as NSString
+        func group(_ i: Int) -> String? {
+            let r = inner.range(at: i)
+            return r.location == NSNotFound ? nil : nsText.substring(with: r)
+        }
+
+        guard let hourStr = group(1), let hour = Int(hourStr) else { return nil }
+
+        var minute: Int? = nil
+        if let minuteStr = group(2), let m = Int(minuteStr) {
+            guard m <= 59 else { return nil }
+            minute = m
+        }
+
+        if let meridiemStr = group(3) {
+            // Meridiem present: 12-hour clock, hour must be 1-12.
+            guard (1...12).contains(hour) else { return nil }
+            if meridiemStr == "a" {
                 component.assign(.meridiem, value: Meridiem.am.rawValue)
-                
-                // Convert to 24-hour time
-                if hour == 12 {
-                    component.assign(.hour, value: 0)
-                }
+                component.assign(.hour, value: hour == 12 ? 0 : hour)
             } else {
-                // No meridiem specified
-                guard let minute = Int(minutePart) else { return nil }
-                component.assign(.minute, value: minute)
-                
-                // Check if PM is specified in the full match text
-                if fullText.lowercased().contains("pm") {
-                    component.assign(.meridiem, value: Meridiem.pm.rawValue)
-                    if hour != 12 {
-                        component.assign(.hour, value: hour + 12)
-                    }
-                } else if fullText.lowercased().contains("am") {
-                    component.assign(.meridiem, value: Meridiem.am.rawValue)
-                    if hour == 12 {
-                        component.assign(.hour, value: 0)
-                    }
-                } else {
-                    component.imply(.meridiem, value: Meridiem.am.rawValue)
-                }
+                component.assign(.meridiem, value: Meridiem.pm.rawValue)
+                component.assign(.hour, value: hour == 12 ? 12 : hour + 12)
             }
         } else {
-            // Simple hour only
-            // Check if there's AM/PM
-            if text.lowercased().contains("pm") || text.lowercased().contains("p.") || text.lowercased().hasSuffix("p") || fullText.lowercased().contains("pm") {
-                let hourStr = text.lowercased()
-                    .replacingOccurrences(of: "pm", with: "")
-                    .replacingOccurrences(of: "p.", with: "")
-                    .replacingOccurrences(of: "p", with: "")
-                    .trimmingCharacters(in: .whitespacesAndNewlines)
-                
-                guard let hour = Int(hourStr) else { return nil }
-                component.assign(.meridiem, value: Meridiem.pm.rawValue)
-                
-                // Convert to 24-hour time
-                if hour != 12 {
-                    component.assign(.hour, value: hour + 12)
-                } else {
-                    component.assign(.hour, value: hour)
-                }
-                component.imply(.minute, value: 0)
-            } else if text.lowercased().contains("am") || text.lowercased().contains("a.") || text.lowercased().hasSuffix("a") || fullText.lowercased().contains("am") {
-                let hourStr = text.lowercased()
-                    .replacingOccurrences(of: "am", with: "")
-                    .replacingOccurrences(of: "a.", with: "")
-                    .replacingOccurrences(of: "a", with: "")
-                    .trimmingCharacters(in: .whitespacesAndNewlines)
-                
-                guard let hour = Int(hourStr) else { return nil }
-                component.assign(.meridiem, value: Meridiem.am.rawValue)
-                
-                // Convert to 24-hour time
-                if hour == 12 {
-                    component.assign(.hour, value: 0)
-                } else {
-                    component.assign(.hour, value: hour)
-                }
-                component.imply(.minute, value: 0)
-            } else {
-                // No meridiem specified
-                guard let hour = Int(text) else { return nil }
-                component.assign(.hour, value: hour)
-                component.imply(.minute, value: 0)
-                
-                // For Spanish, hour 1-12 can be AM or PM depending on context
-                // Default to what's most common for the hour
-                component.imply(.meridiem, value: hour < 12 ? Meridiem.am.rawValue : Meridiem.pm.rawValue)
-            }
+            // No meridiem: 24-hour clock, reject out-of-range instead of overflowing.
+            guard (0...23).contains(hour) else { return nil }
+            component.assign(.hour, value: hour)
+            component.imply(.meridiem, value: hour < 12 ? Meridiem.am.rawValue : Meridiem.pm.rawValue)
         }
-        
+
+        if let minute {
+            component.assign(.minute, value: minute)
+        } else {
+            component.imply(.minute, value: 0)
+        }
+
         component.imply(.second, value: 0)
         component.addTag("ESTimeExpressionParser")
         return component
