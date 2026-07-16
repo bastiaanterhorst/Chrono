@@ -29,7 +29,7 @@ let package = Package(
         .target(
             name: "Chrono",
             swiftSettings: [
-                .define("CHRONO_VERSION_STRING=\"0.1.0\"")
+                .define("CHRONO_VERSION_STRING=\"0.2.0\"")
             ]),
         .executableTarget(
             name: "Benchmark",

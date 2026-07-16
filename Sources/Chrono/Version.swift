@@ -6,6 +6,6 @@ public enum ChronoVersion {
     #if CHRONO_VERSION_STRING
     public static let current = CHRONO_VERSION_STRING
     #else
-    public static let current = "0.1.0"
+    public static let current = "0.2.0"
     #endif
 }

@@ -175,6 +175,18 @@ func expectMatch(_ locale: String, _ text: String, _ comment: Comment,
     expectMatch("en", "tomorrow at 3:30", "date + colon time", day: 17, hour: 3, minute: 30)
 }
 
+// MARK: - Strict configurations (share the same time parsers)
+
+@Test func strictConfigurationsShareTheFixes() {
+    let strict = Chrono.strict
+    #expect(strict.parse(text: "test at 27", referenceDate: scopeRefDate()).isEmpty,
+            "strict: out-of-range hour must reject")
+    #expect(strict.parse(text: "buy 2 apples", referenceDate: scopeRefDate()).isEmpty,
+            "strict: bare numbers are not times")
+    #expect(!strict.parse(text: "14:30", referenceDate: scopeRefDate()).isEmpty,
+            "strict: proper times still parse")
+}
+
 // MARK: - Japanese
 
 @Test func jaScopeDown() {
