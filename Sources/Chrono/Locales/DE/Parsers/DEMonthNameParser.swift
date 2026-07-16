@@ -8,16 +8,19 @@ public struct DEMonthNameParser: Parser {
     public func pattern(context: ParsingContext) -> String {
         let months = PatternUtils.matchAnyPattern(DEConstants.MONTH_DICTIONARY)
         let prefix = "(?:(?:im|in|am|ab)\\s+)?"
+        // German day-before-month ("15. März", "am 15. März") — the standard written form.
+        let dayBefore = "(?:([0-9]{1,2})\\.?(?:te|ten)?\\s+)?"
         let month = "(" + months + ")"
         // (?!:) so the hour of a clock time isn't taken as the day/year (e.g. "Juli 14:00" ≠ July 14).
-        let day = "(?:\\s+([0-9]{1,2})(?:\\.|te|ten)?(?!:))?"
+        let dayAfter = "(?:\\s+([0-9]{1,2})(?:\\.|te|ten)?(?!:))?"
         let year = "(?:\\s*[,-]?\\s*([0-9]{2,4})(?!:))?"
-        // Leading `(?<!\w)` prevents matching a month abbreviation as the suffix of a longer word.
-        return "(?i)(?<!\\w)" + prefix + month + day + year + "(?=\\W|$)"
+        // Leading `(?<!\w)` prevents matching a month abbreviation as the suffix of a longer word
+        // and keeps the day from starting inside a digit run ("2024. März").
+        return "(?i)(?<!\\w)" + prefix + dayBefore + month + dayAfter + year + "(?=\\W|$)"
     }
 
     public func extract(context: ParsingContext, match: TextMatch) -> Any? {
-        guard let monthText = match.string(at: 1)?.lowercased(),
+        guard let monthText = match.string(at: 2)?.lowercased(),
               let month = DEConstants.MONTH_DICTIONARY.matchValue(for: monthText) else {
             return nil
         }
@@ -26,14 +29,15 @@ public struct DEMonthNameParser: Parser {
         component.assign(.month, value: month)
 
         let day: Int?
-        if let dayText = match.string(at: 2), let parsedDay = Int(dayText), (1...31).contains(parsedDay) {
+        if let dayText = match.string(at: 1) ?? match.string(at: 3),
+           let parsedDay = Int(dayText), (1...31).contains(parsedDay) {
             day = parsedDay
             component.assign(.day, value: parsedDay)
         } else {
             day = nil
         }
 
-        let year = resolveYear(context: context, month: month, day: day, rawYear: match.string(at: 3))
+        let year = resolveYear(context: context, month: month, day: day, rawYear: match.string(at: 4))
         component.imply(.year, value: year)
         component.addTag("DEMonthNameParser")
         return component

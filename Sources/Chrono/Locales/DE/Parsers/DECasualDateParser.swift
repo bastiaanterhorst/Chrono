@@ -7,7 +7,7 @@ public struct DECasualDateParser: Parser {
     
     public func pattern(context: ParsingContext) -> String {
         // Match both lowercase and uppercase initial letters with word boundaries
-        return "(?:\\W|^)([Jj]etzt|[Hh]eute|[Mm]orgen|[Üü]bermorgen|[Uu]ebermorgen|[Gg]estern|[Vv]orgestern|[Ll]etzte\\s*[Nn]acht)(?=\\W|$)"
+        return "(?:\\W|^)([Hh]eute|[Mm]orgen|[Üü]bermorgen|[Uu]ebermorgen|[Gg]estern|[Vv]orgestern|[Ll]etzte\\s*[Nn]acht)(?=\\W|$)"
     }
     
     public func extract(context: ParsingContext, match: TextMatch) -> Any? {
@@ -23,7 +23,7 @@ public struct DECasualDateParser: Parser {
         let calendar = Calendar.current
         
         // Process date references
-        if lowerText == "heute" || lowerText == "jetzt" {
+        if lowerText == "heute" {
             // Today
             let dateComponents = calendar.dateComponents([.year, .month, .day], from: referenceDate)
             if let year = dateComponents.year {

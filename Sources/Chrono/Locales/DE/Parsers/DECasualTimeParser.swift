@@ -8,7 +8,9 @@ public struct DECasualTimeParser: Parser {
     public func pattern(context: ParsingContext) -> String {
         // "morgens" (adverbial "in the morning") requires the trailing "s"; bare
         // "morgen" means "tomorrow" and is handled by DECasualDateParser only.
-        return "(mittags?|mitternacht|morgens|vormittags?|nachmittags?|abends?|nachts?)(?=\\W|$)"
+        // Whole words only ("Feierabend" must not match "abend"); case-insensitive so
+        // sentence-start "Mittags"/"Abends" work too.
+        return "(?i)(?<!\\w)(mittags?|mitternacht|morgens|vormittags?|nachmittags?|abends?|nachts?)(?=\\W|$)"
     }
     
     public func extract(context: ParsingContext, match: TextMatch) -> Any? {

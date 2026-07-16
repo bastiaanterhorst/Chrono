@@ -7,7 +7,8 @@ final class DERelativeWeekParser: AbstractParserWithWordBoundaryChecking, @unche
         let patternThis = "(?i)(?:diese\\s+woche)"
         let patternLast = "(?i)(?:letzte\\s+woche)"
         let patternNext = "(?i)(?:n[aä]chste\\s+woche)"
-        let patternWeeksAgo = "(?:(?:vor\\s+)?(\\d+)\\s+wochen?\\s*(?:zuvor|her|zur[üu]ck)?)"
+        // A direction word is required on one side — a bare "3 Wochen" is a duration, not a date.
+        let patternWeeksAgo = "(?:vor\\s+(\\d+)\\s+wochen?|(\\d+)\\s+wochen?\\s+(?:zuvor|her|zur[üu]ck))"
         let patternInWeeks = "(?:(?:in)\\s+(\\d+)\\s+wochen?)"
         let patternBeforeLast = "(?i)(?:vorletzte\\s+woche)"
         let patternAfterNext = "(?i)(?:[üu]bern[aä]chste\\s+woche)"

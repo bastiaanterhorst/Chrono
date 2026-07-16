@@ -175,6 +175,39 @@ func expectMatch(_ locale: String, _ text: String, _ comment: Comment,
     expectMatch("en", "tomorrow at 3:30", "date + colon time", day: 17, hour: 3, minute: 30)
 }
 
+// MARK: - German
+
+@Test func deScopeDown() {
+    expectNoMatch("de", "jetzt", "now-keyword")
+    expectNoMatch("de", "in 30 Sekunden", "seconds unit")
+    expectNoMatch("de", "vor 30 Sekunden", "seconds unit, past")
+    expectNoMatch("de", "in 30s", "seconds abbreviation")
+    expectNoMatch("de", "kaufe 2 Äpfel", "bare number after whitespace")
+    expectNoMatch("de", "Version 2.0", "dot decimal is not a time")
+    expectNoMatch("de", "kostet 2,50 Euro", "comma decimal is not a time")
+    expectNoMatch("de", "während 2 Stunden Meeting", "'während' marks a duration")
+    expectNoMatch("de", "etwa 2 Stunden", "approximation alone is a duration")
+    expectNoMatch("de", "3 Wochen", "bare week count is a duration")
+    expectNoMatch("de", "Feierabend vorbereiten", "'abend' inside Feierabend")
+    expectNoMatch("de", "um 27", "hour out of range")
+}
+
+@Test func deKeptBehavior() {
+    expectMatch("de", "in 5 Stunden", "in + hours (was hijacked to 05:00 by the bare-number bug)", hour: 15, minute: 30)
+    expectMatch("de", "in etwa 2 Stunden", "direction + approximation stays", hour: 12)
+    expectMatch("de", "um 3", "connected bare hour", hour: 3, matchedText: "um 3")
+    expectMatch("de", "8 Uhr", "Uhr marker after whitespace", hour: 8)
+    expectMatch("de", "um 15.30", "German dot minutes", hour: 15, minute: 30)
+    expectMatch("de", "gestern", "yesterday stays (consumer policy)", day: 15)
+    expectMatch("de", "vor 2 Wochen", "weeks ago stays (consumer policy)")
+    expectMatch("de", "mittags", "casual time keyword", hour: 12)
+}
+
+@Test func deUnmatchedTrailingNumberIsNotSwallowed() {
+    let r = expectMatch("de", "morgen 8", "date keyword only", day: 17, matchedText: "morgen")
+    #expect(r?.start.isCertain(.hour) == false)
+}
+
 // MARK: - French
 
 @Test func frScopeDown() {

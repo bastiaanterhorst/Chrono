@@ -6,11 +6,13 @@ public struct DETimeUnitWithinFormatParser: Parser {
     public init() {}
     
     public func pattern(context: ParsingContext) -> String {
-        return "(?:\\W|^)" +
-               "(innerhalb|binnen|während|waehrend|in)\\s*(?:von)?\\s*" +
+        // "während" (during) is a duration marker, not a deadline, and must not match.
+        // Case-insensitive: units are capitalized nouns in German ("binnen 2 Wochen").
+        return "(?i)(?:\\W|^)" +
+               "(innerhalb|binnen|in)\\s*(?:von)?\\s*" +
                "(?:(?:ca\\.|circa|etwa|ungefähr|ungefaehr)\\s*)?" +
                "((?:einer?|\\d+)(?:\\.\\d+)?)\\s*" +
-               "(sekunden?|minuten?|stunden?|tag(?:en)?|wochen?|monat(?:en)?|jahr(?:en)?|(?:s|m|h|d|w|j))" +
+               "(minuten?|stunden?|tag(?:en)?|wochen?|monat(?:en)?|jahr(?:en)?|(?:m|h|d|w|j))" +
                "(?=\\W|$)"
     }
     
@@ -46,9 +48,7 @@ public struct DETimeUnitWithinFormatParser: Parser {
         
         // Single letter abbreviations
         if timeUnit == nil {
-            if unitStr == "s" {
-                timeUnit = .second
-            } else if unitStr == "m" {
+            if unitStr == "m" {
                 timeUnit = .minute
             } else if unitStr == "h" {
                 timeUnit = .hour
@@ -78,7 +78,7 @@ public struct DETimeUnitWithinFormatParser: Parser {
         
         // The date portion is known; the time-of-day is only known for time units
         // (e.g. "in 5 Stunden"), otherwise it is merely implied (e.g. "in 3 Tagen").
-        let isTimeUnit = (unit == .second || unit == .minute || unit == .hour)
+        let isTimeUnit = (unit == .minute || unit == .hour)
         result.assignRelativeDate(from: targetDate, unitIsTime: isTimeUnit, calendar: calendar)
 
         return result

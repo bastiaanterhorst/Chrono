@@ -47,7 +47,6 @@ public enum DEConstants {
     
     /// Time units in German
     public static let TIMEUNIT_DICTIONARY: [String: Calendar.Component] = [
-        "sekunde": .second, "sekunden": .second, "sek": .second, "s": .second,
         "minute": .minute, "minuten": .minute, "min": .minute, "m": .minute,
         "stunde": .hour, "stunden": .hour, "std": .hour, "h": .hour,
         "tag": .day, "tage": .day, "tagen": .day, "d": .day,

@@ -6,10 +6,13 @@ public struct DETimeUnitRelativeFormatParser: Parser {
     public init() {}
     
     public func pattern(context: ParsingContext) -> String {
-        return "(?:\\W|^)" +
-               "(in|vor|vor etwa|etwa|ungefähr|ungefaehr)\\s*" +
+        // A real direction word is required; approximation words alone ("etwa 2 Stunden") are
+        // durations, not deadlines, and must not match. Case-insensitive: units are capitalized
+        // nouns in German ("in 5 Stunden").
+        return "(?i)(?:\\W|^)" +
+               "(in|vor)\\s*(?:(?:etwa|ungefähr|ungefaehr|ca\\.|circa)\\s*)?" +
                "((?:eine[mr]?|\\d+)(?:\\.\\d+)?)\\s*" +
-               "(sekunden?|minuten?|stunden?|tag(?:en)?|wochen?|monat(?:en)?|jahr(?:en)?|(?:s|m|h|d|w|j))" +
+               "(minuten?|stunden?|tag(?:en)?|wochen?|monat(?:en)?|jahr(?:en)?|(?:m|h|d|w|j))" +
                "(?:\\s*(?:zuvor|danach|später|spaeter))?" +
                "(?=\\W|$)"
     }
@@ -55,9 +58,7 @@ public struct DETimeUnitRelativeFormatParser: Parser {
         
         // Single letter abbreviations
         if timeUnit == nil {
-            if unitStr == "s" {
-                timeUnit = .second
-            } else if unitStr == "m" {
+            if unitStr == "m" {
                 timeUnit = .minute
             } else if unitStr == "h" {
                 timeUnit = .hour
@@ -84,7 +85,7 @@ public struct DETimeUnitRelativeFormatParser: Parser {
         
         // The date portion is known; the time-of-day is only known for time units
         // (e.g. "in 5 Stunden"), otherwise it is merely implied (e.g. "in 3 Tagen").
-        let isTimeUnit = (unit == .second || unit == .minute || unit == .hour)
+        let isTimeUnit = (unit == .minute || unit == .hour)
         result.assignRelativeDate(from: targetDate, unitIsTime: isTimeUnit, calendar: calendar)
 
         return result
