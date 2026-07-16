@@ -16,26 +16,28 @@ public final class PTCasualDateParser: Parser {
         let calendar = Calendar.current
         let refDate = context.refDate
         
+        // A stated day ("hoje", "amanhã", "ontem") is a KNOWN date, not an implied one — every
+        // other locale assigns here, and consumers rely on known date components to schedule.
         switch matchText {
         case "hoje": // today
-            component.imply(.day, value: calendar.component(.day, from: refDate))
-            component.imply(.month, value: calendar.component(.month, from: refDate))
-            component.imply(.year, value: calendar.component(.year, from: refDate))
-            
+            component.assign(.day, value: calendar.component(.day, from: refDate))
+            component.assign(.month, value: calendar.component(.month, from: refDate))
+            component.assign(.year, value: calendar.component(.year, from: refDate))
+
         case "amanha": // tomorrow
             if let tomorrow = calendar.date(byAdding: .day, value: 1, to: refDate) {
-                component.imply(.day, value: calendar.component(.day, from: tomorrow))
-                component.imply(.month, value: calendar.component(.month, from: tomorrow))
-                component.imply(.year, value: calendar.component(.year, from: tomorrow))
+                component.assign(.day, value: calendar.component(.day, from: tomorrow))
+                component.assign(.month, value: calendar.component(.month, from: tomorrow))
+                component.assign(.year, value: calendar.component(.year, from: tomorrow))
             }
-            
+
         case "ontem": // yesterday
             if let yesterday = calendar.date(byAdding: .day, value: -1, to: refDate) {
-                component.imply(.day, value: calendar.component(.day, from: yesterday))
-                component.imply(.month, value: calendar.component(.month, from: yesterday))
-                component.imply(.year, value: calendar.component(.year, from: yesterday))
+                component.assign(.day, value: calendar.component(.day, from: yesterday))
+                component.assign(.month, value: calendar.component(.month, from: yesterday))
+                component.assign(.year, value: calendar.component(.year, from: yesterday))
             }
-            
+
         default:
             return nil
         }
