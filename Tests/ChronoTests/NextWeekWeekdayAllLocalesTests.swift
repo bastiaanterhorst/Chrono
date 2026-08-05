@@ -3,7 +3,7 @@ import Foundation
 @testable import Chrono
 
 /// "next week <weekday>" (and "<weekday> next week") must resolve to that weekday WITHIN the
-/// relative week, in EVERY language Space uses (en, nl, de, fr, es, pt, ja; ko falls back to en).
+/// relative week, in EVERY language Space uses (en, nl, de, fr, es, pt, ja, zh; ko falls back to en).
 /// Handled by the cross-locale `CombineRelativeWeekAndWeekdayRefiner`.
 ///
 /// Reference: Tuesday 2026-02-17 (a deliberately mid-week ref so a standalone weekday and the
@@ -44,6 +44,10 @@ struct NextWeekWeekdayAllLocalesTests {
             (ES.casual, "la próxima semana el jueves",   "el jueves la próxima semana"),
             (PT.casual, "na próxima semana quinta-feira","quinta-feira na próxima semana"),
             (JA.casual, "来週木曜日",                      "木曜日来週"),
+            // Chinese fuses the week word and the weekday into a single token — 下周四 IS
+            // "next-week Thursday" — so the two word orders every other locale has collapse to
+            // one phrase here. Both columns are deliberately the same string.
+            (ZH.casual, "下周四",                          "下周四"),
         ]
     }
 
@@ -67,6 +71,8 @@ struct NextWeekWeekdayAllLocalesTests {
         expect("nächste woche sonntag", DE.casual, 2026, 3, 1)
         expect("来週日曜日", JA.casual, 2026, 3, 1)
         expect("来週月曜日", JA.casual, 2026, 2, 23)
+        expect("下周日", ZH.casual, 2026, 3, 1)   // 日 = Sunday, the day that ENDS ISO week 9
+        expect("下周一", ZH.casual, 2026, 2, 23)
     }
 
     /// "this/last week <weekday>" must use the WEEK anchor, not the standalone (forward-adjusted)

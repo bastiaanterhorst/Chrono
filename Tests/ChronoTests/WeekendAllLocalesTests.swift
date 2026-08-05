@@ -3,7 +3,7 @@ import Foundation
 @testable import Chrono
 
 /// "this/next/last weekend" must resolve to the FIRST weekend day (Saturday in every locale Space
-/// supports) as a concrete DAY — not an ISO week — in en, nl, de, fr, es, pt, ja.
+/// supports) as a concrete DAY — not an ISO week — in en, nl, de, fr, es, pt, ja, zh.
 ///
 /// Reference: Wednesday 2026-02-18 (mid-week, so the weekend is unambiguously in the future).
 /// ISO week 8: Mon 02-16 … Sun 02-22 → this weekend = Sat 02-21, next = Sat 02-28, last = Sat 02-14.
@@ -36,6 +36,7 @@ struct WeekendAllLocalesTests {
             (ES.casual, "este fin de semana",  "el próximo fin de semana","el fin de semana pasado"),
             (PT.casual, "este fim de semana",  "o próximo fim de semana", "o fim de semana passado"),
             (JA.casual, "今週末",               "来週末",                   "先週末"),
+            (ZH.casual, "本周末",               "下周末",                   "上周末"),
         ]
     }
 
@@ -47,10 +48,12 @@ struct WeekendAllLocalesTests {
         }
     }
 
-    /// Bare Japanese "週末" (no modifier) means this weekend, and a trailing-context English phrase
-    /// still resolves the weekend rather than the week.
+    /// Bare Japanese "週末" and Chinese "周末" (no modifier) mean this weekend, and a
+    /// trailing-context English phrase still resolves the weekend rather than the week.
     @Test func weekendVariants() {
         expectWeekend("週末", JA.casual, 2026, 2, 21)
+        expectWeekend("周末", ZH.casual, 2026, 2, 21)
+        expectWeekend("这周末", ZH.casual, 2026, 2, 21) // 这 and 本 are both "this"
         expectWeekend("offsite this weekend", EN.casual, 2026, 2, 21)
         expectWeekend("planning next weekend", EN.casual, 2026, 2, 28)
     }

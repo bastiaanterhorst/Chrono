@@ -34,6 +34,7 @@ struct RelativeMonthFirstTests {
         expect("el próximo mes", ES.casual, 2026, 7, 1)
         expect("próximo mês", PT.casual, 2026, 7, 1)
         expect("来月", JA.casual, 2026, 7, 1)
+        expect("下个月", ZH.casual, 2026, 7, 1)
     }
 
     /// this/last month also resolve to the 1st (start of the unit), e.g. in English.
@@ -42,6 +43,8 @@ struct RelativeMonthFirstTests {
         expect("last month", EN.casual, 2026, 5, 1)
         expect("deze maand", NL.casual, 2026, 6, 1)
         expect("vorige maand", NL.casual, 2026, 5, 1)
+        expect("这个月", ZH.casual, 2026, 6, 1)
+        expect("上个月", ZH.casual, 2026, 5, 1)
     }
 
     /// Regression guard: "next week" stays a week (Monday anchor), and a relative DAY keeps its

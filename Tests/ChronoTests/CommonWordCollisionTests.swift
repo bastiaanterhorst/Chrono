@@ -136,3 +136,34 @@ private func expectDate(_ chrono: Chrono, _ text: String, _ comment: Comment) {
     expectDate(Chrono.pt.casual, "na ter", "ter parses as Tuesday")
     expectDate(Chrono.pt.casual, "em mar", "mar parses as March")
 }
+
+// MARK: - Chinese
+
+// Chinese can use neither handling above. It has no word boundaries at all — nothing separates one
+// word from the next — and ICU classifies every Han ideograph as `\w`, so the leading `\b` guard
+// that fixes mode 2 for the Latin locales NEVER fires between two Han characters.
+// Every ZH guard is therefore explicit: a required compound (今天, never a bare 天), a required
+// measure word (3个月, never a bare 月), or a lookaround (点 vs 一点点). The exhaustive per-token
+// suite is `ZH/ZHCollisionTests.swift`; these are the cross-locale spot checks.
+
+@Test func zhCommonWordsAreNotDates() {
+    expectNoDate(Chrono.zh.casual, "十分重要", "十分 = very, not 10 minutes")
+    expectNoDate(Chrono.zh.casual, "一点点", "一点点 = a little, not 1 o'clock")
+    expectNoDate(Chrono.zh.casual, "有点累", "有点 = somewhat, not 1 o'clock")
+    expectNoDate(Chrono.zh.casual, "吃点心", "点心 = dim sum")
+    expectNoDate(Chrono.zh.casual, "我喜欢日本", "日本 = Japan, not a 日 day marker")
+    expectNoDate(Chrono.zh.casual, "生日快乐", "生日 = birthday")
+    expectNoDate(Chrono.zh.casual, "他很年轻", "年轻 = young, not a 年 year marker")
+    expectNoDate(Chrono.zh.casual, "一起聊天", "聊天 = to chat, not a 天 day marker")
+    expectNoDate(Chrono.zh.casual, "周围很安静", "周围 = surroundings, not a 周 week")
+    expectNoDate(Chrono.zh.casual, "每天跑步", "每天 = daily, a recurrence not a date")
+    expectNoDate(Chrono.zh.casual, "坐3号线", "3号线 = metro line 3, not day-of-month 3")
+}
+
+@Test func zhRealDatesStillParse() {
+    expectDate(Chrono.zh.casual, "今天", "今天 still parses")
+    expectDate(Chrono.zh.casual, "明天开会", "明天 still parses with trailing text")
+    expectDate(Chrono.zh.casual, "下周三", "下周三 still parses")
+    expectDate(Chrono.zh.casual, "3月15日", "3月15日 still parses")
+    expectDate(Chrono.zh.casual, "下午3点", "下午3点 still parses")
+}

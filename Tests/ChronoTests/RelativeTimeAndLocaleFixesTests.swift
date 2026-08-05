@@ -16,7 +16,7 @@ struct RelativeTimeAndLocaleFixesTests {
     /// Relative date phrases ("in 3 days", "next week") must NOT report a certain hour —
     /// they carry no clock time. Previously they leaked the reference time as "known".
     @Test func relativeDatesHaveNoSpuriousTime() {
-        // Languages Space uses: en, nl, fr, es, pt, ja (ko falls back to en in Chrono).
+        // Languages Space uses: en, nl, fr, es, pt, ja, zh (ko falls back to en in Chrono).
         #expect(firstResult("in 3 days")?.start.isCertain(.hour) == false)
         #expect(firstResult("5 days later")?.start.isCertain(.hour) == false)
         #expect(firstResult("next week")?.start.isCertain(.hour) == false)
@@ -27,6 +27,10 @@ struct RelativeTimeAndLocaleFixesTests {
         #expect(firstResult("dans 3 jours", Chrono.fr.casual)?.start.isCertain(.hour) == false)
         #expect(firstResult("em 3 dias", Chrono.pt.casual)?.start.isCertain(.hour) == false)
         #expect(firstResult("3日後", Chrono.ja.casual)?.start.isCertain(.hour) == false)
+        // 3天后 is a DAY offset — 后 is shared with 2小时后 (a real hour offset), so the unit word
+        // is what decides, and a day offset must not invent an hour.
+        #expect(firstResult("3天后", Chrono.zh.casual)?.start.isCertain(.hour) == false)
+        #expect(firstResult("下周", Chrono.zh.casual)?.start.isCertain(.hour) == false)
     }
 
     /// `assignNull(.hour)` (used by week parsers) must not leak the internal -1 sentinel into
@@ -117,6 +121,7 @@ struct RelativeTimeAndLocaleFixesTests {
             ("water plants tomorrow call dentist friday", Chrono.casual),
             ("review pr next friday and ship monday", Chrono.casual),
             ("morgen bellen en vrijdag mailen", Chrono.nl.casual),
+            ("明天开会周五发邮件", Chrono.zh.casual), // no spaces at all — index order is the only order
         ]
         for (text, chrono) in cases {
             var serialized = Set<String>()

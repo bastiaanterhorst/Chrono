@@ -26,6 +26,7 @@ private func chrono(_ locale: String) -> Chrono {
     case "nl": return Chrono.nl.casual
     case "pt": return Chrono.pt.casual
     case "ja": return Chrono.ja.casual
+    case "zh": return Chrono.zh.casual
     default: return Chrono.casual
     }
 }
@@ -67,6 +68,9 @@ func expectMatch(_ locale: String, _ text: String, _ comment: Comment,
     expectMatch("en", "tomorrow at 15", "EN date + 24h bare hour merge", day: 17, hour: 15)
     expectMatch("en", "friday at 3", "EN weekday + bare hour merge", day: 17, hour: 3)
     expectMatch("ja", "明日の3時", "JA date + hour merge", day: 17, hour: 3)
+    // ZH writes the date and the time with nothing between them; the merge refiner must still
+    // produce ONE datetime rather than a bare 明天 plus a floating 下午3点.
+    expectMatch("zh", "明天下午3点", "ZH date + time merge", day: 17, hour: 15)
 }
 
 @Test func mergeProtectionQualifiedTimes() {
@@ -77,6 +81,7 @@ func expectMatch(_ locale: String, _ text: String, _ comment: Comment,
     expectMatch("fr", "à 3h", "FR h-marker time", hour: 3)
     expectMatch("pt", "amanhã às 15h", "PT date + h-marker time", day: 17, hour: 15)
     expectMatch("nl", "morgen om 15:00", "NL date + connected H:MM", day: 17)
+    expectMatch("zh", "下午3点", "ZH day-period + 点 hour marker", hour: 15)
 }
 
 @Test func mergeProtectionLocaleClockConventions() {
@@ -97,6 +102,9 @@ func expectMatch(_ locale: String, _ text: String, _ comment: Comment,
     expectMatch("es", "en 2 horas", "ES en + hours", hour: 12)
     expectMatch("pt", "daqui a 2 dias", "PT daqui a + days", day: 18)
     expectMatch("ja", "2日後", "JA N days later", day: 18)
+    expectMatch("zh", "3天后", "ZH N days later", day: 19)
+    expectMatch("zh", "2小时后", "ZH in N hours", hour: 12, minute: 30)
+    expectMatch("zh", "30分钟后", "ZH in N minutes", hour: 11, minute: 0)
 }
 
 @Test func mergeProtectionCasualKeywords() {
@@ -108,6 +116,7 @@ func expectMatch(_ locale: String, _ text: String, _ comment: Comment,
     expectMatch("es", "mañana", "ES mañana", day: 17)
     expectMatch("pt", "amanhã", "PT amanhã", day: 17)
     expectMatch("ja", "明日", "JA ashita", day: 17)
+    expectMatch("zh", "明天", "ZH mingtian", day: 17)
     expectMatch("en", "yesterday", "EN yesterday stays (forward-only is consumer policy)", day: 15)
 }
 
@@ -212,6 +221,24 @@ func expectMatch(_ locale: String, _ text: String, _ comment: Comment,
     expectMatch("ja", "昨日の資料", "yesterday stays (consumer policy)", day: 15)
     expectMatch("ja", "2日前に完了", "days-ago stays (consumer policy)", day: 14)
     expectMatch("ja", "27時", "late-night hour stays", hour: 27)
+}
+
+// MARK: - Chinese
+
+@Test func zhScopeDown() {
+    expectNoMatch("zh", "现在就做", "现在 is not a now-keyword (no locale has one)")
+    expectNoMatch("zh", "现在", "bare 现在")
+    expectNoMatch("zh", "会议2小时", "小时 duration is not a clock time")
+    expectNoMatch("zh", "24小时营业", "小时 duration is not a clock time")
+    expectNoMatch("zh", "25点", "hour out of range")
+    expectNoMatch("zh", "3点80分", "minute out of range")
+}
+
+@Test func zhKeptBehavior() {
+    expectMatch("zh", "后天", "day after tomorrow", day: 18)
+    expectMatch("zh", "15:30", "colon time (ZH writes clock times the Western way)", hour: 15, minute: 30)
+    expectMatch("zh", "3月15日", "month-day", day: 15)
+    expectMatch("zh", "2026年3月15日", "year-month-day", day: 15)
 }
 
 // MARK: - Portuguese

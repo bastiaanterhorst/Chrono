@@ -18,13 +18,13 @@ public enum Component: String, CaseIterable, Sendable {
 }
 
 /// Time of day (AM/PM)
-public enum Meridiem: Int {
+public enum Meridiem: Int, Sendable {
     case am = 0
     case pm = 1
 }
 
 /// Days of the week
-public enum Weekday: Int {
+public enum Weekday: Int, Sendable {
     case sunday = 0
     case monday = 1
     case tuesday = 2
