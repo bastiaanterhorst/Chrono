@@ -21,7 +21,8 @@ public struct ZHClockTimeParser: Parser {
     /// and seconds require exactly two digits, per the shared `numeric-time-validation` rule that
     /// keeps `3:2` (a score) from parsing.
     public func pattern(context: ParsingContext) -> String {
-        let prefix = "(?:(\(ZHConstants.TIME_OF_DAY_WORDS)|[AaPp][Mm])\\s*)?"
+        let prefix =
+            "(?:(\(ZHConstants.DAY_TIME_COMPOUND_WORDS)|\(ZHConstants.TIME_OF_DAY_WORDS)|[AaPp][Mm])\\s*)?"
         let time = "(?<![0-9０-９:：])([0-9０-９]{1,2})[:：]([0-9０-９]{2})(?:[:：]([0-9０-９]{2}))?(?![0-9０-９:：])"
         return prefix + time
     }
@@ -61,6 +62,14 @@ public struct ZHClockTimeParser: Parser {
 
         components.assign(.hour, value: hour)
         components.assign(.minute, value: minute)
+
+        // A contracted compound states the day too — 今晚8:30 is tonight. Mirrors
+        // `ZHTimeExpressionParser`; the two parsers differ only in how the time is spelled.
+        if let prefixText, let compound = ZHConstants.DAY_TIME_COMPOUNDS[prefixText] {
+            guard components.assignZHDay(offsetBy: compound.offset, from: context.refDate) else {
+                return nil
+            }
+        }
 
         if let second {
             components.assign(.second, value: second)

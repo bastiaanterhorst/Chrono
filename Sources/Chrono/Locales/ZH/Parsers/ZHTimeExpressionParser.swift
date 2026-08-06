@@ -26,6 +26,14 @@ enum ZHTimeOfDayPrefix {
         default: break
         }
 
+        // A contracted day+time compound settles the half of the clock exactly as its time-of-day
+        // half would on its own: 今晚8点 is 20:00, 明早9点 is 09:00. The *day* it also names is
+        // applied by the caller, which is the only part a bare time-of-day word does not carry.
+        if let compound = ZHConstants.DAY_TIME_COMPOUNDS[text] {
+            self = compound.meridiem == .pm ? .afternoon : .morning
+            return
+        }
+
         guard let standaloneHour = ZHConstants.TIME_OF_DAY_HOURS[text] else { return nil }
 
         if ZHConstants.isAfternoon(text) {
@@ -113,8 +121,14 @@ public struct ZHTimeExpressionParser: Parser {
 
         // (a) A time-of-day word (or AM/PM) settles the meridiem, so the hour may be written in any
         // script and needs no tail. 时/時 is accepted as a formal hour marker alongside 点/點.
+        //
+        // A contracted day+time compound (今晚, 明早) is accepted in the same position and listed
+        // first, because it settles the meridiem *and* names the day: 今晚8点 is one expression
+        // meaning 20:00 tonight. It must precede the plain word list — 今晚 and the bare 晚上 have
+        // no common prefix, but keeping the more specific token first matches the file's convention.
         let withPrefix =
-            "(\(ZHConstants.TIME_OF_DAY_WORDS)|[AaPp][Mm])\\s*(\(ZHConstants.NUMBER))\\s*[点點时時]" +
+            "(\(ZHConstants.DAY_TIME_COMPOUND_WORDS)|\(ZHConstants.TIME_OF_DAY_WORDS)|[AaPp][Mm])" +
+            "\\s*(\(ZHConstants.NUMBER))\\s*[点點时時]" +
             "(?:\\s*(\(ZHConstants.NUMBER))\\s*分(?![钟鐘])|\\s*\(fraction))?(?:\\s*[钟鐘])?"
 
         // (b) A digit hour is unambiguous on its own. The digit lookbehind keeps the hour from
@@ -190,6 +204,15 @@ public struct ZHTimeExpressionParser: Parser {
         components.assign(.hour, value: hour)
         components.assign(.minute, value: minute)
         components.imply(.second, value: 0)
+
+        // A contracted compound states the day as well as the hour — 明早9点 is tomorrow, not the
+        // reference day at 09:00 — so the date is assigned here rather than left to the merge
+        // refiner, which has no neighbouring date word to work from.
+        if let prefixText, let compound = ZHConstants.DAY_TIME_COMPOUNDS[prefixText] {
+            guard components.assignZHDay(offsetBy: compound.offset, from: context.refDate) else {
+                return nil
+            }
+        }
 
         if let meridiem = prefix?.meridiem(forWrittenHour: writtenHour) {
             components.assign(.meridiem, value: meridiem.rawValue)

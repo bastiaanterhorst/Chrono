@@ -200,6 +200,57 @@ enum ZHConstants {
         }
     }
 
+    // MARK: - Contracted day + time-of-day compounds
+
+    /// A word that contracts a day *and* a time of day into two characters — 今晚 "tonight",
+    /// 明早 "tomorrow morning", 昨夜 "last night".
+    ///
+    /// These are the one place where Chinese needs a rule the Latin locales get for free. English
+    /// writes "tonight 8pm" as two words, so an explicit clock time simply merges with the day word.
+    /// Chinese fuses the two, so 今晚 already carries an hour of its own (22:00) — and when a clock
+    /// time follows, that implied hour must lose to the stated one: 今晚8点 is 20:00 tonight, not
+    /// 22:00 plus an orphaned 8点.
+    ///
+    /// Getting that right means three parsers have to agree on one lexicon, which is why this table
+    /// lives here rather than inside any of them: `ZHCasualDateParser` reads the implied `hour` for
+    /// the bare word, while `ZHTimeExpressionParser` and `ZHClockTimeParser` read `offset` and
+    /// `meridiem` to place a following 点 time or colon time on the right day and half of the clock.
+    struct DayTimeCompound: Sendable {
+        /// Days from the reference date: 今 = 0, 明 = +1, 昨 = -1.
+        let offset: Int
+        /// The hour the word implies on its own, when no clock time follows.
+        let hour: Int
+        /// The half of the clock that an explicit hour written after this word belongs to.
+        let meridiem: Meridiem
+    }
+
+    /// The contracted compounds. Evening words imply 22:00 and morning words 06:00, matching the
+    /// Japanese locale's 今夜/今朝 choices so the two CJK locales agree.
+    static let DAY_TIME_COMPOUNDS: [String: DayTimeCompound] = [
+        "今晚": DayTimeCompound(offset: 0, hour: 22, meridiem: .pm),
+        "今夜": DayTimeCompound(offset: 0, hour: 22, meridiem: .pm),
+        "今早": DayTimeCompound(offset: 0, hour: 6, meridiem: .am),
+        "今晨": DayTimeCompound(offset: 0, hour: 6, meridiem: .am),
+        "明早": DayTimeCompound(offset: 1, hour: 6, meridiem: .am),
+        "明晨": DayTimeCompound(offset: 1, hour: 6, meridiem: .am),
+        "明晚": DayTimeCompound(offset: 1, hour: 22, meridiem: .pm),
+        "明夜": DayTimeCompound(offset: 1, hour: 22, meridiem: .pm),
+        "昨晚": DayTimeCompound(offset: -1, hour: 22, meridiem: .pm),
+        "昨夜": DayTimeCompound(offset: -1, hour: 22, meridiem: .pm)
+    ]
+
+    /// The compounds as a regex alternation. Every token is two characters and none is a prefix of
+    /// another, so the order is presentational only.
+    static let DAY_TIME_COMPOUND_WORDS = "(?:今晚|今夜|今早|今晨|明早|明晨|明晚|明夜|昨晚|昨夜)"
+
+    /// Rejects a time-of-day word that is immediately followed by a clock time in either notation —
+    /// `3点` / `3时` or `3:30`. 下午3点 and 今晚8:30 are each *one* expression, owned by
+    /// `ZHTimeExpressionParser` and `ZHClockTimeParser` respectively; without this guard the bare
+    /// word would match too and leave a stray time behind, producing two results for one phrase.
+    static var notFollowedByClockTime: String {
+        "(?!\\s*(?:" + NUMBER + "\\s*[点點时時]|[0-9０-９]{1,2}\\s*[:：]))"
+    }
+
     // MARK: - Direction suffixes
 
     /// "after / from now" suffixes, longest-first.
@@ -219,17 +270,49 @@ enum ZHConstants {
     /// March, not three months — the relative form requires the measure word 个/個) and 周/週/星期,
     /// which are owned by `ZHRelativeWeekParser` because a week resolves to an ISO week rather than
     /// a plain day offset.
+    /// Hour units take an *optional* measure word: 一个小时 is at least as idiomatic as 一小时, the
+    /// way English says "in an hour" rather than "in one hour". Month units take a *mandatory* one
+    /// (see above), and day/year units take none at all — there is no 个天 or 个年.
     static let TIME_UNIT_DICTIONARY: [String: Calendar.Component] = [
         "分钟": .minute, "分鐘": .minute,
+        "个小时": .hour, "個小時": .hour, "个钟头": .hour, "個鐘頭": .hour,
         "小时": .hour, "小時": .hour, "钟头": .hour, "鐘頭": .hour,
         "天": .day, "日": .day,
         "个月": .month, "個月": .month,
         "年": .year
     ]
 
-    /// The time units as a longest-first regex alternation.
-    static let TIME_UNIT_WORDS = "(?:分钟|分鐘|小时|小時|钟头|鐘頭|个月|個月|天|日|年)"
+    /// The time units as a longest-first regex alternation — 个小时 must precede 小时 so that the
+    /// measure word is consumed by the unit rather than left to break the match.
+    static let TIME_UNIT_WORDS =
+        "(?:分钟|分鐘|个小时|個小時|个钟头|個鐘頭|小时|小時|钟头|鐘頭|个月|個月|天|日|年)"
 
     /// The week units, which the relative-week parser owns.
     static let WEEK_UNIT_WORDS = "(?:个星期|個星期|个礼拜|個禮拜|星期|礼拜|禮拜|周|週)"
+}
+
+extension ParsingComponents {
+    /// Assigns the year/month/day of `refDate` shifted by `days`.
+    ///
+    /// The date is *known*, not implied: every caller reached here through a word that names one
+    /// specific calendar day (明天, 今晚 …). Shared by `ZHCasualDateParser` and by the two time
+    /// parsers, which need the same assignment when a contracted compound states the day (今晚8点).
+    ///
+    /// Returns false when the shift falls outside the calendar, so the caller can reject the match
+    /// rather than report a date it could not compute.
+    @discardableResult
+    func assignZHDay(offsetBy days: Int, from refDate: Date) -> Bool {
+        let calendar = Calendar.current
+        guard let target = calendar.date(byAdding: .day, value: days, to: refDate) else { return false }
+
+        let values = calendar.dateComponents([.year, .month, .day], from: target)
+        guard let year = values.year, let month = values.month, let day = values.day else {
+            return false
+        }
+
+        assign(.year, value: year)
+        assign(.month, value: month)
+        assign(.day, value: day)
+        return true
+    }
 }

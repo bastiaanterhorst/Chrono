@@ -7,8 +7,9 @@ import Foundation
 ///    specific calendar day, so year/month/day are assigned as *known* values and no clock time is
 ///    invented: 明天 says nothing about the hour.
 /// 2. **Day + time-of-day compounds** — 今晚, 今早, 明早, 明晚, 昨晚 … Each names a day *and* a rough
-///    hour (evening = 22:00, morning = 06:00), mirroring the Japanese locale's 今夜/今朝 choices so
-///    the two CJK locales agree.
+///    hour, read from `ZHConstants.DAY_TIME_COMPOUNDS`. The implied hour applies only to the bare
+///    word: when a clock time follows, the whole phrase belongs to the time parsers instead
+///    (今晚8点 = 20:00 tonight), which is what the guard below enforces.
 /// 3. **Bare time-of-day words** — 上午, 中午, 下午, 傍晚, 晚上, 半夜 … They attach to the reference day
 ///    and take their hour from `ZHConstants.TIME_OF_DAY_HOURS`.
 ///
@@ -20,8 +21,9 @@ import Foundation
 ///
 /// - `本日` is guarded against a preceding 日 so it cannot be cut out of 日本日期 (日本 + 日期).
 /// - `前天` is guarded against a preceding 以/之 so 以前天气 stays 以前 + 天气 rather than 以 + 前天 + 气.
-/// - The bare time-of-day words are guarded against a following clock time, because 下午3点 is *one*
-///   expression owned by `ZHTimeExpressionParser`; matching 下午 here would split it in two.
+/// - The time-of-day words and the day+time compounds are both guarded against a following clock
+///   time, because 下午3点 and 今晚8点 are each *one* expression owned by `ZHTimeExpressionParser`
+///   (or `ZHClockTimeParser` for 今晚8:30); matching the leading word here would split it in two.
 public struct ZHCasualDateParser: Parser {
     public init() {}
 
@@ -53,37 +55,21 @@ public struct ZHCasualDateParser: Parser {
         ("前天", "(?<![以之])", -2)     // 以前天气 must not yield 前天
     ]
 
-    /// A word that names a day *and* a time of day, with the hour and half-of-day it implies.
-    private static let dayTimeWords: [(token: String, offset: Int, hour: Int, meridiem: Meridiem)] = [
-        ("今晚", 0, 22, .pm),
-        ("今夜", 0, 22, .pm),
-        ("今早", 0, 6, .am),
-        ("今晨", 0, 6, .am),
-        ("明早", 1, 6, .am),
-        ("明晨", 1, 6, .am),
-        ("明晚", 1, 22, .pm),
-        ("明夜", 1, 22, .pm),
-        ("昨晚", -1, 22, .pm),
-        ("昨夜", -1, 22, .pm)
-    ]
-
-    /// Rejects a time-of-day word that is immediately followed by a clock time. 下午3点 / 晚上八点 are
-    /// single expressions claimed by `ZHTimeExpressionParser`; without this the bare word would take
-    /// 下午 and leave a stray 3点 behind, producing two results for one phrase.
-    private static var notFollowedByClockTime: String {
-        "(?!\\s*" + ZHConstants.NUMBER + "\\s*[点點时時])"
-    }
-
     // MARK: - Parser
 
     public func pattern(context: ParsingContext) -> String {
         // Day+time compounds first: they are the most specific reading of their opening character
         // (今夜 must win over the bare 夜里 in 今夜里).
-        let dayTimePattern = ZHCasualDateParser.dayTimeWords.map(\.token).joined(separator: "|")
+        //
+        // Both they and the bare time-of-day words yield to a following clock time. A compound
+        // carries an hour of its own, so without the guard 今晚8点 would report 22:00 *and* leave a
+        // stray 8点 for another parser to pick up; the phrase is one expression meaning 20:00, and
+        // the time parsers claim it whole.
+        let dayTimePattern = ZHConstants.DAY_TIME_COMPOUND_WORDS + ZHConstants.notFollowedByClockTime
         let dayPattern = ZHCasualDateParser.dayWords
             .map { $0.guardPattern + $0.token }
             .joined(separator: "|")
-        let timeOfDayPattern = ZHConstants.TIME_OF_DAY_WORDS + ZHCasualDateParser.notFollowedByClockTime
+        let timeOfDayPattern = ZHConstants.TIME_OF_DAY_WORDS + ZHConstants.notFollowedByClockTime
 
         return "(?:" + dayTimePattern + "|" + dayPattern + "|" + timeOfDayPattern + ")"
     }
@@ -92,14 +78,14 @@ public struct ZHCasualDateParser: Parser {
         let text = match.matchedText
         let components = context.createParsingComponents()
 
-        if let word = ZHCasualDateParser.dayTimeWords.first(where: { $0.token == text }) {
-            guard assignDay(components, offsetBy: word.offset, context: context) else { return nil }
-            components.assign(.hour, value: word.hour)
+        if let compound = ZHConstants.DAY_TIME_COMPOUNDS[text] {
+            guard components.assignZHDay(offsetBy: compound.offset, from: context.refDate) else { return nil }
+            components.assign(.hour, value: compound.hour)
             components.assign(.minute, value: 0)
-            components.assign(.meridiem, value: word.meridiem.rawValue)
+            components.assign(.meridiem, value: compound.meridiem.rawValue)
         } else if let word = ZHCasualDateParser.dayWords.first(where: { $0.token == text }) {
             // A day word names a day and nothing else — deliberately no hour.
-            guard assignDay(components, offsetBy: word.offset, context: context) else { return nil }
+            guard components.assignZHDay(offsetBy: word.offset, from: context.refDate) else { return nil }
         } else if let hour = ZHConstants.TIME_OF_DAY_HOURS[text] {
             // 半夜/午夜 arrive here too: the lexicon already maps them to hour 0, and `isAfternoon`
             // reports false for them, so they resolve to midnight (am) on the reference day.
@@ -124,28 +110,6 @@ public struct ZHCasualDateParser: Parser {
     }
 
     // MARK: - Helpers
-
-    /// Assigns the year/month/day of the reference date shifted by `offsetBy` days.
-    ///
-    /// The date is *known*, not implied: 明天 names one specific calendar day.
-    private func assignDay(_ components: ParsingComponents, offsetBy offset: Int, context: ParsingContext) -> Bool {
-        let calendar = Calendar.current
-        guard let targetDate = calendar.date(byAdding: .day, value: offset, to: context.refDate) else {
-            return false
-        }
-
-        let dateComponents = calendar.dateComponents([.year, .month, .day], from: targetDate)
-        guard let year = dateComponents.year,
-              let month = dateComponents.month,
-              let day = dateComponents.day else {
-            return false
-        }
-
-        components.assign(.year, value: year)
-        components.assign(.month, value: month)
-        components.assign(.day, value: day)
-        return true
-    }
 
     /// Anchors a time-only match to the reference day *without* claiming the day was stated.
     ///
