@@ -122,6 +122,13 @@ public struct ZHTimeExpressionParser: Parser {
     /// but the order matches the surrounding files' convention.
     private static let FRACTION_TAIL = "(半|一刻|三刻)"
 
+    /// The words that may close an hour without changing it: 钟 ("o'clock") and 整 ("on the hour").
+    ///
+    /// 整 needs a guard that 钟 does not, because it opens a great many ordinary words — 整理 (to
+    /// tidy), 整个 (whole), 整天 (all day), 整体, 整齐. Without it `3点整理文件` ("tidy the files at
+    /// three") would be read as `3点整` and name the task 「理文件」.
+    private static let HOUR_TAIL = "(?:[钟鐘]|整(?![理個个齐齊体體天数數容修顿頓形容洁潔]))"
+
     /// One pattern, four alternatives, in this order:
     ///
     /// | Alternative | Shape | Groups |
@@ -158,19 +165,20 @@ public struct ZHTimeExpressionParser: Parser {
         let withPrefix =
             "(\(ZHConstants.DAY_TIME_COMPOUND_WORDS)|\(ZHConstants.TIME_OF_DAY_WORDS)|[AaPp][Mm])" +
             "\\s*(\(ZHConstants.NUMBER))\\s*[点點时時]\(afterDian)" +
-            "(?:\\s*(\(ZHConstants.NUMBER))\\s*分(?![钟鐘])|\\s*\(fraction))?(?:\\s*[钟鐘])?"
+            "(?:\\s*(\(ZHConstants.NUMBER))\\s*分(?![钟鐘])|\\s*\(fraction))?(?:\\s*\(ZHTimeExpressionParser.HOUR_TAIL))?"
 
         // (b) A digit hour needs no tail, but it needs the enumeration guards just as much as a
         // Chinese numeral does: 记录3点建议 is "note three suggestions", not 03:00.
         let bareDigits =
             "(?<![0-9０-９])\(noEnumVerb)([0-9０-９]{1,2})\\s*[点點]\(afterDian)" +
-            "(?:\\s*([0-9０-９]{1,2})\\s*分(?![钟鐘])|\\s*\(fraction))?(?:\\s*[钟鐘])?"
+            "(?:\\s*([0-9０-９]{1,2})\\s*分(?![钟鐘])|\\s*\(fraction))?(?:\\s*\(ZHTimeExpressionParser.HOUR_TAIL))?"
 
         // (c) Any Chinese numeral, with a tail — minutes, a half/quarter, or 钟 — which is what
         // lets 一点半 and 二点十分 be read despite 一/二 being gated bare.
         let chineseWithTail =
             "\(noEnumVerb)(\(numeral){1,3})\\s*[点點]\(afterDian)" +
-            "(?:\\s*(\(numeral){1,3}|[0-9０-９]{1,2})\\s*分(?![钟鐘])|\\s*\(fraction)|\\s*[钟鐘])"
+            "(?:\\s*(\(numeral){1,3}|[0-9０-９]{1,2})\\s*分(?![钟鐘])|\\s*\(fraction)"
+            + "|\\s*\(ZHTimeExpressionParser.HOUR_TAIL))"
 
         // (d) A Chinese numeral that stands on its own — everything except 一 ("a little") and 二
         // (not how two o'clock is said).

@@ -85,13 +85,14 @@ public struct ZHNumericRelativeUnitParser: Parser {
             + "(" + number + ")\\s*"
             + "(" + unit + ")"
 
-        // 半小时后 · 半个小时之后 — a fixed +30 minutes.
-        let halfHourForm =
+        // 半小时后 · 半个小时之后 · 半个月后 · 半年后 · 半天后 — half of a unit, always forward.
+        // Group 6 is the unit, group 7 the direction.
+        let halfForm =
             Self.halfLookbehind
-            + "半\\s*(?:个|個)?\\s*(?:小时|小時)\\s*"
+            + "半\\s*(?:个|個)?\\s*(小时|小時|月|年|天)\\s*"
             + "(" + ZHConstants.FUTURE_SUFFIX + ")"
 
-        return "(?:" + suffixForm + "|" + prefixForm + "|" + halfHourForm + ")"
+        return "(?:" + suffixForm + "|" + prefixForm + "|" + halfForm + ")"
     }
 
     // MARK: - Extraction
@@ -120,9 +121,17 @@ public struct ZHNumericRelativeUnitParser: Parser {
             return relativeComponents(context: context, unit: unit, offset: value)
         }
 
-        // Half-hour form — no numeral to read, the amount is fixed.
-        if match.string(at: 6) != nil {
-            return relativeComponents(context: context, unit: .minute, offset: 30)
+        // Half form — no numeral to read, the amount is half of whatever unit was named. Each is
+        // expressed in the largest unit that divides evenly, so the result stays exact: half a month
+        // is fifteen days rather than a fractional month.
+        if let unitText = match.string(at: 6), match.string(at: 7) != nil {
+            switch unitText {
+            case "小时", "小時": return relativeComponents(context: context, unit: .minute, offset: 30)
+            case "天": return relativeComponents(context: context, unit: .hour, offset: 12)
+            case "月": return relativeComponents(context: context, unit: .day, offset: 15)
+            case "年": return relativeComponents(context: context, unit: .month, offset: 6)
+            default: return nil
+            }
         }
 
         return nil

@@ -10,7 +10,15 @@ import Foundation
  */
 public final class ISOFormatParser: AbstractParserWithWordBoundaryChecking, @unchecked Sendable {
     
-    private static let PATTERN = #"([0-9]{4})\-([0-9]{1,2})\-([0-9]{1,2})(?:T([0-9]{1,2}):([0-9]{1,2})(?::([0-9]{1,2})(?:\.(\d{1,4}))?)?([zZ]|([+-]\d{2}):?(\d{2})?)?)?(?=\W|$)"#
+    /// The trailing guard is a negated *Latin* word class rather than `(?=\W|$)`.
+    ///
+    /// ICU classifies Han ideographs as `\w`, so `\W` is false for them and the old guard rejected
+    /// every ISO date written flush against CJK text: `2026-03-15开会` did not parse while
+    /// `2026-03-15 开会` did. Chinese and Japanese write no space there, so that is the ordinary
+    /// case rather than an edge one. Guarding against Latin letters, digits and `_` keeps the
+    /// original intent — don't match inside a longer token such as `2026-03-15abc` — while letting
+    /// CJK text follow.
+    private static let PATTERN = #"([0-9]{4})\-([0-9]{1,2})\-([0-9]{1,2})(?:T([0-9]{1,2}):([0-9]{1,2})(?::([0-9]{1,2})(?:\.(\d{1,4}))?)?([zZ]|([+-]\d{2}):?(\d{2})?)?)?(?![0-9_\p{script=Latin}])"#
     
     private static let YEAR_NUMBER_GROUP = 1
     private static let MONTH_NUMBER_GROUP = 2

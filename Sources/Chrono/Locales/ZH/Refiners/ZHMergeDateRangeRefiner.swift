@@ -38,13 +38,26 @@ public struct ZHMergeDateRangeRefiner: Refiner {
 
             if i + 1 < ordered.count {
                 let second = ordered[i + 1]
-                if isDate(first),
-                   isDate(second),
-                   let gap = textBetween(first, second, in: nsText),
+                if let gap = textBetween(first, second, in: nsText),
                    Self.rangeConnectors.contains(gap.trimmingCharacters(in: .whitespacesAndNewlines)) {
-                    output.append(merge(from: first, to: second, context: context, nsText: nsText))
-                    i += 2 // both results are consumed by the range
-                    continue
+                    // A day-to-day range (3月1日到3月5日) keeps the closing date exactly as parsed.
+                    if isDate(first), isDate(second) {
+                        output.append(merge(from: first, to: second, end: second.start,
+                                            context: context, nsText: nsText))
+                        i += 2 // both results are consumed by the range
+                        continue
+                    }
+                    // A clock-to-clock range (明天9点到11点) is how an event gets booked. The closing
+                    // time names no day of its own — `11点` resolved to the reference day — so it has
+                    // to be moved onto the day the opening time named, or the event ends before it
+                    // begins.
+                    if isTime(first), isTime(second) {
+                        output.append(merge(from: first, to: second,
+                                            end: closingTime(second.start, onDayOf: first.start),
+                                            context: context, nsText: nsText))
+                        i += 2
+                        continue
+                    }
                 }
             }
 
@@ -76,6 +89,91 @@ public struct ZHMergeDateRangeRefiner: Refiner {
         return hasKnownValue(start, .day) || hasKnownValue(start, .isoWeek)
     }
 
+    /// A clock time: an hour that was actually stated. The opening side of an event range usually
+    /// names a day as well (`明天9点`), so this deliberately does not exclude a known day — it is the
+    /// *hour* that makes a pair a time range, and the day-to-day branch is tried first.
+    private func isTime(_ result: ParsingResult) -> Bool {
+        guard result.end == nil else { return false }
+        return hasKnownValue(result.start, .hour)
+    }
+
+    // MARK: - Closing time
+
+    /// Resolves the closing side of a time range against its opening side.
+    ///
+    /// Three things are read from the opening time, in this order, because each depends on the last:
+    ///
+    /// 1. **The calendar day.** `11点` in `明天9点到11点` parsed against the reference date, so alone
+    ///    it is *today* at 11:00 while the event starts *tomorrow* at 09:00.
+    /// 2. **The half of the clock.** A time-of-day word scopes over the whole range: `下午2点到4点`
+    ///    ends at 16:00, not 04:00, and `晚上10点到11点` at 23:00. This is applied only when the
+    ///    closing side did not state a half of its own (`上午9点到下午5点` keeps its 下午) and only
+    ///    when the shifted time still lands after the opening — which is what keeps `晚上11点到1点`
+    ///    from becoming 13:00.
+    /// 3. **The day boundary.** A closing time still at or before the opening one either belongs to
+    ///    the other half of the clock (`上午11点到1点` → 13:00) or runs past midnight
+    ///    (`晚上11点到1点` → 01:00 tomorrow).
+    private func closingTime(_ closing: ParsingComponents, onDayOf opening: ParsingComponents) -> ParsingComponents {
+        let result = closing.clone()
+
+        for component in [Component.year, .month, .day] {
+            guard let value = opening.get(component) else { continue }
+            // Mirror the opening side's certainty: an inherited day is no more "stated" than the
+            // day the opening time itself was given.
+            if opening.isCertain(component) {
+                result.assign(component, value: value)
+            } else {
+                result.imply(component, value: value)
+            }
+        }
+
+        guard let openingMinutes = minutesOfDay(opening), var closingMinutes = minutesOfDay(result) else {
+            return result
+        }
+
+        // (2) The opening side's time-of-day word scopes over the closing one.
+        if opening.isCertain(.meridiem), !closing.isCertain(.meridiem),
+           let meridiem = opening.get(.meridiem) {
+            let shifted = closingMinutes + (meridiem == Meridiem.pm.rawValue ? 12 * 60 : 0)
+            if shifted > openingMinutes, shifted < 24 * 60 {
+                setHour(shifted / 60, on: result)
+                result.assign(.meridiem, value: meridiem)
+                closingMinutes = shifted
+            }
+        }
+
+        guard closingMinutes <= openingMinutes else { return result }
+
+        // (3) The other half of the clock, if that lands after the opening; otherwise tomorrow.
+        let alternative = closingMinutes + 12 * 60
+        if alternative > openingMinutes, alternative < 24 * 60 {
+            setHour(alternative / 60, on: result)
+            result.assign(.meridiem, value: Meridiem.pm.rawValue)
+            return result
+        }
+
+        let calendar = Calendar.current
+        guard let closingDate = result.date(),
+              let nextDay = calendar.date(byAdding: .day, value: 1, to: closingDate) else {
+            return result
+        }
+        let values = calendar.dateComponents([.year, .month, .day], from: nextDay)
+        if let year = values.year { result.assign(.year, value: year) }
+        if let month = values.month { result.assign(.month, value: month) }
+        if let day = values.day { result.assign(.day, value: day) }
+        return result
+    }
+
+    /// Minutes since midnight, or nil when the components carry no clock time.
+    private func minutesOfDay(_ components: ParsingComponents) -> Int? {
+        guard let hour = components.get(.hour) else { return nil }
+        return hour * 60 + (components.get(.minute) ?? 0)
+    }
+
+    private func setHour(_ hour: Int, on components: ParsingComponents) {
+        components.assign(.hour, value: hour)
+    }
+
     // MARK: - Text between the matches
 
     /// The end of a result, in UTF-16 units, clamped to the input. A result's
@@ -98,6 +196,7 @@ public struct ZHMergeDateRangeRefiner: Refiner {
     // MARK: - Merging
 
     private func merge(from first: ParsingResult, to second: ParsingResult,
+                       end: ParsingComponents,
                        context: ParsingContext, nsText: NSString) -> ParsingResult {
         // The span runs from the start of the first match to the end of the second, read out of the
         // original text so the connector between them is reproduced exactly as written.
@@ -110,7 +209,7 @@ public struct ZHMergeDateRangeRefiner: Refiner {
             index: startLocation,
             text: rangeText,
             start: first.start,
-            end: second.start
+            end: end
         )
 
         // Carry both endpoints' tags forward so later refiners can still tell which parser produced

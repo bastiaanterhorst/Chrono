@@ -34,7 +34,10 @@ public struct ZHDeadlineParticleRefiner: Refiner {
     private static let guarded: [(particle: String, notFollowedBy: Set<Character>)] = [
         ("前", Set("台檯往面方夕辈輩景后後线線身世任妻夫男女排沿头頭卫衛程期因者车車门門厅廳场場端锋鋒")),
         ("内", Set("容部心存在幕涵疚陆陸地外科衣裤褲饰飾分行勤")),
-        ("內", Set("容部心存在幕涵疚陸地外科衣褲飾分行勤"))
+        ("內", Set("容部心存在幕涵疚陸地外科衣褲飾分行勤")),
+        // 的 attaches a date to a noun — 明天的会议 is "tomorrow's meeting", and the particle belongs
+        // to the date rather than to 会议. 的士 is "taxi" and 的话 is "if", so both stay put.
+        ("的", Set("士话話"))
     ]
 
     public func refine(context: ParsingContext, results: [ParsingResult]) -> [ParsingResult] {
