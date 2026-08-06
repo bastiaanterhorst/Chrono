@@ -11,7 +11,10 @@ public enum ZH {
     /// The parsers shared by the casual and strict configurations.
     /// Week parsers run first so they claim `下周三` before the bare-week patterns can.
     private static func baseParsers(casual: Bool) -> [Parser] {
+        // `ZHPeriodBoundaryParser` leads: 月底 / 下个月底 / 3月底 must be claimed whole before the
+        // relative-unit and month-name parsers can take the 月 and abandon the 底.
         var parsers: [Parser] = [
+            ZHPeriodBoundaryParser(),
             ZHISOWeekNumberParser(),
             ZHRelativeWeekParser(),
             ZHRelativeUnitKeywordParser(),
@@ -30,6 +33,9 @@ public enum ZH {
             ZHMonthNameParser(),
             ZHSlashDateFormatParser(),
             ZHWeekdayParser(),
+            // After the full-date parsers: a bare 15号 is only a day of the month when no month
+            // stands next to it, and those parsers claim the ones that do.
+            ZHDayOfMonthParser(),
             ZHClockTimeParser(),
             ZHTimeExpressionParser()
         ]
@@ -43,7 +49,10 @@ public enum ZH {
         [
             ZHMergeDateTimeRefiner(),
             ZHMergeDateRangeRefiner(),
-            ZHPrioritizeWeekNumberRefiner()
+            ZHPrioritizeWeekNumberRefiner(),
+            // Last: it only widens the matched text, so it must see the ranges the merge refiners
+            // have already settled on.
+            ZHDeadlineParticleRefiner()
         ]
     }
 

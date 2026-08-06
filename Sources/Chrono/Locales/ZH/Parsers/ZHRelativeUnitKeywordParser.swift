@@ -20,8 +20,18 @@ public struct ZHRelativeUnitKeywordParser: Parser {
 
     public func pattern(context: ParsingContext) -> String {
         // Group 2 captures the offset prefix, which is what distinguishes a month from a year below.
-        let month = "(\(ZHConstants.OFFSET_PREFIX))(?:个|個)?月(?![亮球])"
+        // Group 3 captures an optional day of that month.
+        //
+        // 下个月15号 is one expression, not 下个月 followed by an orphan. Reading only the 下个月 gave
+        // the 1st of next month and left 15号 sitting in the task's name — a wrong date, silently,
+        // which is worse than no date at all. The day is optional, so a bare 下个月 still means the
+        // start of the month.
+        let day = "(?:\\s*(\(ZHConstants.NUMBER))\\s*\(ZHConstants.DAY_MARKER)\(ZHConstants.NOT_AN_IDENTIFIER_NOUN))?"
+        // 底/初 hand the phrase to `ZHPeriodBoundaryParser`: 下个月底 is the *end* of next month, not
+        // its 1st with a stray 底. The year guard also covers the doubled form (今年年底).
+        let month = "(\(ZHConstants.OFFSET_PREFIX))(?:个|個)?月(?![亮球底初])" + day
         let year = "(?:今年|本年|(?<![说說])明年|来年|來年|(?<![以之今此])(?:后年|後年)|去年|上年(?![纪紀])|前年)"
+            + "(?![底初])(?!年[底初])"
         return "(\(month)|\(year))"
     }
 
@@ -75,9 +85,21 @@ public struct ZHRelativeUnitKeywordParser: Parser {
             component.assign(.month, value: month)
         }
         // A relative MONTH means the 1st of that month (start of the unit), not the reference
-        // day-of-month — matching how a relative week anchors to its Monday.
+        // day-of-month — matching how a relative week anchors to its Monday. A *stated* day
+        // replaces that default: 下个月15号 is the 15th, not the 1st.
         if calendarUnit == .month {
-            component.assign(.day, value: 1)
+            if let dayText = match.string(at: 3) {
+                // The group participated, so its text is inside the matched range. A day we cannot
+                // read, or one out of range, rejects the match rather than silently reporting the
+                // 1st for text that plainly said otherwise.
+                guard let statedDay = ZHConstants.parseNumber(dayText),
+                      (1...31).contains(statedDay) else {
+                    return nil
+                }
+                component.assign(.day, value: statedDay)
+            } else {
+                component.assign(.day, value: 1)
+            }
         } else if let day = values.day {
             component.assign(.day, value: day)
         }

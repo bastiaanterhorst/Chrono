@@ -78,15 +78,29 @@ enum ZHTimeOfDayPrefix {
 /// Parser for 点-based Chinese clock times: `3点`, `3点30分`, `下午3点`, `一点半`, `晚上八点一刻`,
 /// `３点`, `九点钟`.
 ///
-/// **A bare Chinese-numeral hour is deliberately not accepted.** `一点` overwhelmingly means "a
-/// little bit" rather than "one o'clock" — `改一点文案` is "edit the copy a little", `有点累` is
-/// "a bit tired", `差一点` is "very nearly". A Chinese-numeral hour is therefore only read as a time
-/// when something disambiguates it: either a preceding time-of-day word (`下午一点`) or a following
-/// minute/half/quarter tail (`一点半`, `一点十五分`, `一点钟`). Hours written in ASCII or full-width
-/// digits (`3点`, `３点`) carry no such ambiguity and need no gate.
+/// ## Telling the clock 点 from the measure-word 点
 ///
-/// The remaining 点 collisions are blocked by a single lookahead, `(?![心子头頭点點])`, which stops
-/// 点心 (dim sum), 点子, 点头 and — crucially — the doubled 一点点.
+/// 点 is also the measure word for enumerated items, so `三点建议` is "three suggestions" and
+/// `记录3点意见` is "note three opinions" — neither is a time. Three guards separate the readings,
+/// and all of them apply to **every** spelling of the hour, digits included: an enumeration is
+/// written with ASCII numerals as readily as with Chinese ones.
+///
+/// 1. `ZHConstants.NOT_AFTER_ENUMERATION_VERB` — an enumeration is introduced by a verb that
+///    governs it (记录/总结/提出/列出/有…), and that verb sits immediately before the numeral.
+/// 2. `ZHConstants.NOT_BEFORE_ENUMERABLE_NOUN` — the noun being counted, for the rarer case where
+///    no verb introduces it.
+/// 3. `(?![心子头頭点點])` — the fixed compounds 点心 (dim sum), 点子, 点头, and the doubled 一点点.
+///
+/// **`一点` and `二点` additionally require a tail.** `一点` overwhelmingly means "a little bit"
+/// (`改一点文案`, `有点累`, `差一点`), and `二点` is simply not how Chinese states two o'clock — that
+/// is `两点`. Both are read as times only once something disambiguates them: a time-of-day word
+/// (`下午一点`) or a minute/half/quarter/钟 tail (`一点半`, `一点十五分`, `一点钟`). Every other
+/// Chinese numeral is accepted bare, exactly as a digit is, so `十点开会` and `两点开会` resolve.
+///
+/// Note that a bare hour is read literally in any script: `两点` is 02:00, not 14:00. Chinese is
+/// genuinely ambiguous there and so is the digit form (`3点` has always meant 03:00), so the two
+/// spellings agree; a user who means the afternoon writes `下午两点`, which is the ordinary phrasing
+/// precisely because the bare form is ambiguous.
 ///
 /// Chinese has **no** late-night hour convention: unlike Japanese `27時`, there is no `27点`, so the
 /// no-prefix hour range is capped at 23 rather than 29.
@@ -96,6 +110,10 @@ public struct ZHTimeExpressionParser: Parser {
     /// Chinese numerals that can spell an hour or a minute. `百` is excluded: no clock value needs it.
     private static let CLOCK_NUMERAL = "[〇零一二两兩三四五六七八九十]"
 
+    /// The numerals that may spell a **bare** hour — every one except 一 and 二, which are gated by
+    /// the tail requirement (see the type comment). 十 leads so that 十一/十二 are matched whole.
+    private static let BARE_CLOCK_NUMERAL = "(?:十[一二]|[三四五六七八九十]|两|兩)"
+
     /// The 点 characters that must not be followed by 心/子/头/頭 (词 collisions) or another 点
     /// (`一点点`).
     private static let NOT_A_WORD_AFTER_DIAN = "(?![心子头頭点點])"
@@ -104,20 +122,28 @@ public struct ZHTimeExpressionParser: Parser {
     /// but the order matches the surrounding files' convention.
     private static let FRACTION_TAIL = "(半|一刻|三刻)"
 
-    /// One pattern, three alternatives, in this order:
+    /// One pattern, four alternatives, in this order:
     ///
     /// | Alternative | Shape | Groups |
     /// |---|---|---|
     /// | (a) prefix + hour, any script | `下午3点30分` | 1 = prefix, 2 = hour, 3 = minute, 4 = fraction |
     /// | (b) bare ASCII/full-width hour | `3点半` | 5 = hour, 6 = minute, 7 = fraction |
     /// | (c) Chinese-numeral hour, tail REQUIRED | `一点半` | 8 = hour, 9 = minute, 10 = fraction |
+    /// | (d) Chinese-numeral hour, no tail | `十点` | 11 = hour |
+    ///
+    /// (c) precedes (d) so that a numeral which *has* a tail is read with it — `三点半` is 03:30 by
+    /// way of (c), and (d) never sees it. (d) then accepts only the numerals that need no tail.
     ///
     /// Getting those indices wrong is the easiest mistake to make here, so `extract` reads them
     /// through the same table.
     public func pattern(context: ParsingContext) -> String {
         let numeral = ZHTimeExpressionParser.CLOCK_NUMERAL
-        let notWord = ZHTimeExpressionParser.NOT_A_WORD_AFTER_DIAN
+        let bareNumeral = ZHTimeExpressionParser.BARE_CLOCK_NUMERAL
         let fraction = ZHTimeExpressionParser.FRACTION_TAIL
+        let noEnumVerb = ZHConstants.NOT_AFTER_ENUMERATION_VERB
+        // Everything that may not follow the 点 of a clock time: the fixed compounds, and the noun
+        // of an enumeration written without a governing verb.
+        let afterDian = ZHTimeExpressionParser.NOT_A_WORD_AFTER_DIAN + ZHConstants.NOT_BEFORE_ENUMERABLE_NOUN
 
         // (a) A time-of-day word (or AM/PM) settles the meridiem, so the hour may be written in any
         // script and needs no tail. 时/時 is accepted as a formal hour marker alongside 点/點.
@@ -126,24 +152,31 @@ public struct ZHTimeExpressionParser: Parser {
         // first, because it settles the meridiem *and* names the day: 今晚8点 is one expression
         // meaning 20:00 tonight. It must precede the plain word list — 今晚 and the bare 晚上 have
         // no common prefix, but keeping the more specific token first matches the file's convention.
+        //
+        // No enumeration guard on the left here: the prefix occupies that position, and a counted
+        // 点 is never introduced by 下午 or 今晚.
         let withPrefix =
             "(\(ZHConstants.DAY_TIME_COMPOUND_WORDS)|\(ZHConstants.TIME_OF_DAY_WORDS)|[AaPp][Mm])" +
-            "\\s*(\(ZHConstants.NUMBER))\\s*[点點时時]" +
+            "\\s*(\(ZHConstants.NUMBER))\\s*[点點时時]\(afterDian)" +
             "(?:\\s*(\(ZHConstants.NUMBER))\\s*分(?![钟鐘])|\\s*\(fraction))?(?:\\s*[钟鐘])?"
 
-        // (b) A digit hour is unambiguous on its own. The digit lookbehind keeps the hour from
-        // starting inside a longer number.
+        // (b) A digit hour needs no tail, but it needs the enumeration guards just as much as a
+        // Chinese numeral does: 记录3点建议 is "note three suggestions", not 03:00.
         let bareDigits =
-            "(?<![0-9０-９])([0-9０-９]{1,2})\\s*[点點]\(notWord)" +
+            "(?<![0-9０-９])\(noEnumVerb)([0-9０-９]{1,2})\\s*[点點]\(afterDian)" +
             "(?:\\s*([0-9０-９]{1,2})\\s*分(?![钟鐘])|\\s*\(fraction))?(?:\\s*[钟鐘])?"
 
-        // (c) A Chinese-numeral hour needs a tail — minutes, a half/quarter, or 钟 — to prove it is
-        // a clock time and not 一点 "a little".
-        let bareChinese =
-            "(\(numeral){1,3})\\s*[点點]\(notWord)" +
+        // (c) Any Chinese numeral, with a tail — minutes, a half/quarter, or 钟 — which is what
+        // lets 一点半 and 二点十分 be read despite 一/二 being gated bare.
+        let chineseWithTail =
+            "\(noEnumVerb)(\(numeral){1,3})\\s*[点點]\(afterDian)" +
             "(?:\\s*(\(numeral){1,3}|[0-9０-９]{1,2})\\s*分(?![钟鐘])|\\s*\(fraction)|\\s*[钟鐘])"
 
-        return withPrefix + "|" + bareDigits + "|" + bareChinese
+        // (d) A Chinese numeral that stands on its own — everything except 一 ("a little") and 二
+        // (not how two o'clock is said).
+        let chineseBare = "\(noEnumVerb)(\(bareNumeral))\\s*[点點]\(afterDian)"
+
+        return withPrefix + "|" + bareDigits + "|" + chineseWithTail + "|" + chineseBare
     }
 
     public func extract(context: ParsingContext, match: TextMatch) -> Any? {
@@ -168,6 +201,11 @@ public struct ZHTimeExpressionParser: Parser {
             hourText = hour
             minuteText = match.string(at: 9)
             fractionText = match.string(at: 10)
+        } else if let hour = match.string(at: 11) {
+            prefixText = nil
+            hourText = hour
+            minuteText = nil
+            fractionText = nil
         } else {
             return nil
         }

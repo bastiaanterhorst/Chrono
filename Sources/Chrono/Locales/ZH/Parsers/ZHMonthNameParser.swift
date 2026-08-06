@@ -29,7 +29,10 @@ public struct ZHMonthNameParser: Parser {
         // A day in any script, in the position a full date would put it.
         let notFollowedByDay = "(?!\\s*(?:\(ZHConstants.ARABIC_NUMBER)|[\(ZHConstants.CHINESE_NUMERAL_CHARS)]{1,6})\\s*(?:日|号|號))"
         let notFollowedByDirection = "(?!\\s*(?:\(ZHConstants.FUTURE_SUFFIX)|\(ZHConstants.PAST_SUFFIX)|\(ZHConstants.WITHIN_SUFFIX)))"
-        return year + month + notFollowedByDay + notFollowedByDirection
+        // 3月底 is the end of March, owned by `ZHPeriodBoundaryParser` — matching 3月 here would
+        // leave a stray 底 in the task's name and report the 1st.
+        let notFollowedByBoundary = "(?![底初])"
+        return year + month + notFollowedByDay + notFollowedByDirection + notFollowedByBoundary
     }
 
     public func extract(context: ParsingContext, match: TextMatch) -> Any? {

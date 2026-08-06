@@ -129,13 +129,13 @@ struct ZHIdiomaticTimeTests {
     /// and left alone on purpose; the test exists so a future change to any of them is a deliberate
     /// decision rather than an accident.
     @Test func documentedLimitationsHold() {
-        // A bare Chinese-numeral hour stays unread: 一点 is "a little", 两点建议 is "two suggestions".
-        // The disambiguated forms all work, so nothing idiomatic is actually lost.
-        zhExpectNothing("两点", "a bare Chinese-numeral hour needs a tail or a prefix")
-        zhExpectNothing("十点", "same rule, no collision of its own but the gate is uniform")
-        zhExpectSomething("下午两点", "…and the prefixed form resolves")
-        zhExpectSomething("两点半", "…as does the form with a tail")
-        zhExpectSomething("两点钟", "…and the 钟 marker")
+        // Only 一 and 二 are gated bare: 一点 is "a little", and 二点 is simply not how two o'clock
+        // is said (that is 两点). Every other numeral reads as an hour on its own.
+        zhExpectNothing("一点", "一点 is \"a little\", not 01:00")
+        zhExpectNothing("二点", "二点 is not how Chinese states two o'clock")
+        zhExpectSomething("下午一点", "…but a prefix disambiguates it")
+        zhExpectSomething("一点半", "…as does a tail")
+        zhExpectSomething("一点钟", "…and the 钟 marker")
 
         // "One and a half hours" is not read. English drops the half silently ("in an hour and a
         // half" → 13:00) and Dutch reads nothing at all, so refusing the phrase is at or above both

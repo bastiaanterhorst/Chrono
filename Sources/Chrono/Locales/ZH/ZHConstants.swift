@@ -200,6 +200,51 @@ enum ZHConstants {
         }
     }
 
+    // MARK: - The 点 enumeration collision
+
+    /// 点 is a *measure word for items* as well as the clock marker: 三点建议 is "three
+    /// suggestions", not 03:00. The two readings are told apart by what surrounds the number,
+    /// because Chinese offers no boundary to lean on.
+    ///
+    /// This is the stronger of the two signals. An enumeration is nearly always introduced by a
+    /// verb that governs it — 记录三点 ("note three points"), 总结/提出/列出/分为/包括/有 — and that
+    /// verb's last character sits immediately before the numeral. A clock time is introduced by
+    /// nothing, or by a date word (明天3点), or by a time-of-day word (下午3点), none of which
+    /// appear here.
+    ///
+    /// Deliberately absent: 说/講/认/定, which end verbs that legitimately precede a time
+    /// (确认3点开会 "confirm the 3 o'clock meeting", 定3点 "make it 3"). 说明 is still covered,
+    /// through its 明.
+    static let NOT_AFTER_ENUMERATION_VERB =
+        "(?<![记記录錄结結出有论論括为為调調列总總充纳納述谈談写寫提明强強举舉含分归歸汇匯概理])"
+
+    /// The weaker signal, for an enumeration written without a governing verb. Only nouns that
+    /// cannot also begin a verb phrase are listed — 三点建议 is blocked, but 三点看电影 ("watch a
+    /// film at three"), 三点体检, 三点理发 and 三点问医生 must all survive, so 看/体/理/问/要/反/启
+    /// are deliberately *not* here even though each begins a plausible enumerable noun.
+    static let NOT_BEFORE_ENUMERABLE_NOUN = "(?![建意疑内內区區原感共经經])"
+
+    // MARK: - Day-of-month markers
+
+    /// The characters that close a day of the month. 号/號 is the everyday form and 日 the formal one.
+    static let DAY_MARKER = "(?:日|号|號)"
+
+    /// 号 also means "number", which is how Chinese labels almost everything: 3号线 (metro line 3),
+    /// 5号楼 (building 5), 5号电池 (an AA battery), 2号选手 (contestant 2), 42号鞋 (size 42).
+    /// A day of the month is never followed by any of these, so this lookahead separates the two
+    /// readings from the right-hand side.
+    static let NOT_AN_IDENTIFIER_NOUN =
+        "(?![线線楼樓院店馆館位码碼床桌车車机機房门門铺舖台檯厅廳区區座路球选選公窗柜櫃箱袋号號" +
+        "电電字鞋衣干乾池风風场場站港街巷室井库庫仓倉舱艙厢廂员員人组組队隊班桥橋洞岛島峰])"
+
+    /// …and this one separates them from the left. A container noun before the number makes it a
+    /// label rather than a date: 会议室2号, 房间5号, 工位3号, 大号/中号/小号. A date is introduced by
+    /// a verb, a subject, or nothing at all, none of which appear here.
+    static let NOT_AFTER_IDENTIFIER_CONTAINER =
+        "(?<![室房间間楼樓座车車床桌排组組班队隊学學手机機账賬帳型编編卡门門窗柜櫃箱袋位铺舖店馆館" +
+        "厅廳区區场場台檯站线線路号號大中小加特码碼牌证證件员員表单單库庫架层層格第" +
+        "厢廂舱艙仓倉栋棟幢巷街港井])"
+
     // MARK: - Contracted day + time-of-day compounds
 
     /// A word that contracts a day *and* a time of day into two characters — 今晚 "tonight",
