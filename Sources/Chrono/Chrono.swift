@@ -148,12 +148,8 @@ public struct Chrono: Sendable {
             return []
         }
         
-        // Create regex
-        let regex: NSRegularExpression
-        do {
-            regex = try NSRegularExpression(pattern: pattern, options: [])
-        } catch {
-            context.debug("Error compiling pattern: \(pattern). Error: \(error)")
+        // Create regex (memoized — see `RegexCache`)
+        guard let regex = RegexCache.regex(for: pattern, debug: context.debug) else {
             return []
         }
         
@@ -361,5 +357,49 @@ public extension Chrono {
         options: ParsingOptions? = nil
     ) -> Date? {
         return casual.parseDate(text: text, referenceDate: referenceDate, options: options)
+    }
+}
+
+/// Compiled-pattern memo for `Chrono.executeParser`.
+///
+/// Every parse used to recompile an `NSRegularExpression` for each of the ~20
+/// parsers in a configuration, on every call — so a single keystroke in a text
+/// field backed by Chrono paid ~20 regex compilations, and several of those
+/// patterns are large alternations built from the month/weekday dictionaries.
+///
+/// The memo is keyed on the exact pattern string and the options are always
+/// `[]`, so a hit is by construction the same regex the old code would have
+/// built: parsers are free to vary their pattern by context, because a different
+/// pattern is simply a different key. `NSRegularExpression` is documented as
+/// thread-safe for matching, and only the dictionary needs guarding. The key
+/// space is bounded by the distinct patterns the configurations can emit, so
+/// this does not grow without limit.
+private enum RegexCache {
+    nonisolated(unsafe) private static var cache: [String: NSRegularExpression] = [:]
+    private static let lock = NSLock()
+
+    static func regex(for pattern: String, debug: (String) -> Void) -> NSRegularExpression? {
+        lock.lock()
+        if let hit = cache[pattern] {
+            lock.unlock()
+            return hit
+        }
+        lock.unlock()
+
+        let compiled: NSRegularExpression
+        do {
+            compiled = try NSRegularExpression(pattern: pattern, options: [])
+        } catch {
+            // Not cached: a pattern that fails to compile is a programming error
+            // in the parser, and re-reporting it on every parse is more useful
+            // than silently swallowing it after the first.
+            debug("Error compiling pattern: \(pattern). Error: \(error)")
+            return nil
+        }
+
+        lock.lock()
+        cache[pattern] = compiled
+        lock.unlock()
+        return compiled
     }
 }
