@@ -53,16 +53,22 @@ struct NumericDateBoundaryTests {
         #expect(day("22/4", FR.casual)! == (4, 22))
         #expect(day("22/4", ES.casual)! == (4, 22))
         #expect(day("22/4", PT.casual)! == (4, 22))
-        #expect(day("4.22", EN.casual)! == (4, 22))   // English is month-first
-        #expect(day("12/25", EN.casual) == nil)       // EN slash stays filtered (unrelated policy)
+        #expect(day("4.22", EN.casual)! == (4, 22))   // English is month-first by default
+        #expect(day("12/25", EN.casual)! == (12, 25))
     }
 
-    /// English rejects a first number that cannot be a month rather than inventing one.
-    @Test func englishRejectsAnImpossibleMonthOutright() {
-        for text in ["22.4", "31.12", "13.5"] {
-            let dates = EN.casual.parse(text: text, referenceDate: ref, options: opts)
-                .filter { $0.start.isCertain(.day) && $0.start.isCertain(.month) }
-            #expect(dates.isEmpty, "EN '\(text)' produced \(dates.count) date(s); it should produce none")
+    /// When the first number cannot be a month, English reads the pair the only way it can rather
+    /// than matching some fragment of it. The point of the boundary fix is that the *whole* token is
+    /// considered — not that impossible pairs are silently trimmed until something fits.
+    @Test func englishReadsAnImpossibleMonthTheOnlyWayItCan() {
+        func ymd(_ text: String) -> (Int, Int)? {
+            guard let r = EN.casual.parse(text: text, referenceDate: ref, options: opts)
+                .first(where: { $0.start.isCertain(.day) && $0.start.isCertain(.month) }) else { return nil }
+            let c = Calendar.current.dateComponents([.month, .day], from: r.start.date)
+            return (c.month!, c.day!)
         }
+        #expect(ymd("22.4")! == (4, 22))    // not 4 February, as the shifted match used to give
+        #expect(ymd("31.12")! == (12, 31))  // not 12 January
+        #expect(ymd("13.5")! == (5, 13))
     }
 }

@@ -342,6 +342,15 @@ public extension Chrono {
         public static var strict: Chrono { ZH.strict }
     }
 
+    /// Namespace for Korean parsers
+    struct ko {
+        /// Korean casual parser (including informal expressions)
+        public static var casual: Chrono { KO.casual }
+
+        /// Korean strict parser (formal expressions only)
+        public static var strict: Chrono { KO.strict }
+    }
+
     /// Namespace for Dutch parsers
     struct nl {
         /// Dutch casual parser (including informal expressions)

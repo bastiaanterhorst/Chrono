@@ -16,24 +16,19 @@ public struct ENSlashMonthFormatParser: Parser {
     }
     
     public func extract(context: ParsingContext, match: TextMatch) -> Any? {
-        // MM/DD/YYYY format (US style)
-        
-        let text = match.text
-        
-        // First group should be the first number (month)
-        guard let monthStr = match.string(at: 2), 
-              let month = Int(monthStr),
-              month >= 1 && month <= 12 else {
+        // Numeric date. Which number is the month follows the reader's region — English is written
+        // month-first in the United States and day-first almost everywhere else — so the order is
+        // taken from the options, defaulting to the American convention for this language.
+        guard let firstStr = match.string(at: 2), let first = Int(firstStr),
+              let secondStr = match.string(at: 3), let second = Int(secondStr) else {
             return nil
         }
-        
-        // Second group should be the second number (day)
-        guard let dayStr = match.string(at: 3), 
-              let day = Int(dayStr),
-              day >= 1 && day <= 31 else {
+        let order = context.options.numericDateOrder ?? .monthFirst
+        guard let (day, month) = NumericDateInterpreter.dayAndMonth(first: first, second: second,
+                                                                    order: order) else {
             return nil
         }
-        
+
         let result = ParsingComponents(reference: context.reference)
         result.assign(.month, value: month)
         result.assign(.day, value: day)

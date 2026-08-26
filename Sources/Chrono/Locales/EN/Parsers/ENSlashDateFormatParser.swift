@@ -14,6 +14,11 @@ public final class ENSlashDateFormatParser: Parser {
     
     /// Extracts date from slash format expressions
     public func extract(context: ParsingContext, match: TextMatch) -> Any? {
+        // This pattern hard-codes the American order in its capture groups. When the reader's region
+        // writes dates day-first, stand aside and let `ENSlashMonthFormatParser` — whose groups are
+        // unconstrained — read them the right way round.
+        if (context.options.numericDateOrder ?? .monthFirst) == .dayFirst { return nil }
+
         let component = context.createParsingComponents()
         let calendar = Calendar.current
         

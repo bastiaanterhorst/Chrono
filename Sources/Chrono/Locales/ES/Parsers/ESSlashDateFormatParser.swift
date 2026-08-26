@@ -10,7 +10,7 @@ import Foundation
 public final class ESSlashDateFormatParser: Parser {
     // The leading lookbehind stops the match starting midway through a longer number:
     // without it "123.4" matched from the second digit and became 23 April.
-    private static let PATTERN = "(?<![0-9./-])\\s*(0?[1-9]|[12][0-9]|3[01])[\\/\\.\\-](0?[1-9]|1[0-2])(?:[\\/\\.\\-]([0-9]{2,4}))?(?=\\W|$)"
+    private static let PATTERN = "(?<![0-9./-])\\s*([0-9]{1,2})[\\/\\.\\-]([0-9]{1,2})(?:[\\/\\.\\-]([0-9]{2,4}))?(?=\\W|$)"
 
     public init() {}
 
@@ -24,18 +24,16 @@ public final class ESSlashDateFormatParser: Parser {
         let component = context.createParsingComponents()
         let calendar = Calendar.current
 
-        // In Spain, the date format is DD/MM/YYYY
-        guard let dayStr = match.string(at: 1), let day = Int(dayStr),
-              let monthStr = match.string(at: 2), let month = Int(monthStr) else {
+        // The two leading numbers are read in the reader's regional order — day-first for this
+        // language's usual territories, month-first for someone whose system says so — with a
+        // fallback to the other order when the stated one is impossible ("22/4" is not month 22).
+        guard let firstStr = match.string(at: 1), let first = Int(firstStr),
+              let secondStr = match.string(at: 2), let second = Int(secondStr) else {
             return nil
         }
-
-        // Validate day and month values
-        if day < 1 || day > 31 {
-            return nil
-        }
-
-        if month < 1 || month > 12 {
+        let order = context.options.numericDateOrder ?? .dayFirst
+        guard let (day, month) = NumericDateInterpreter.dayAndMonth(first: first, second: second,
+                                                                    order: order) else {
             return nil
         }
 

@@ -24,15 +24,16 @@ final class NLSlashDateFormatParser: Parser {
             return nil
         }
         
-        // In Dutch, the format is typically DD/MM/YYYY
-        let day = Int(dayStr) ?? 0
-        let month = Int(monthStr) ?? 0
-        
-        // Validate day and month
-        if day < 1 || day > 31 || month < 1 || month > 12 {
+        // The two leading numbers are read in the reader's regional order — day-first for the
+        // Dutch-speaking territories, month-first for someone whose system says so — falling back
+        // to the other order when the stated one is impossible ("22/4" is not month 22).
+        guard let first = Int(dayStr), let second = Int(monthStr) else { return nil }
+        let order = context.options.numericDateOrder ?? .dayFirst
+        guard let (day, month) = NumericDateInterpreter.dayAndMonth(first: first, second: second,
+                                                                    order: order) else {
             return nil
         }
-        
+
         let component = context.createParsingComponents()
         component.assign(.day, value: day)
         component.assign(.month, value: month)

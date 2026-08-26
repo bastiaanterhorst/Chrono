@@ -58,8 +58,11 @@ public struct ENUnlikelyFormatFilter: Refiner {
             return true
         }
         
-        // Check for path-like pattern
-        let pathPattern = try? NSRegularExpression(pattern: "[\\w\\-_.]+/[\\w\\-_.]+", options: [])
+        // Check for path-like pattern. At least one side must contain a letter: "docs/readme" is a
+        // path, but "12/25" is a date, and requiring a letter is what tells them apart.
+        let pathPattern = try? NSRegularExpression(
+            pattern: "[\\w\\-_.]*[A-Za-z][\\w\\-_.]*/[\\w\\-_.]+|[\\w\\-_.]+/[\\w\\-_.]*[A-Za-z][\\w\\-_.]*",
+            options: [])
         if let matches = pathPattern?.matches(in: context, options: [], range: NSRange(location: 0, length: context.utf16.count)),
            !matches.isEmpty {
             return true
@@ -69,18 +72,12 @@ public struct ENUnlikelyFormatFilter: Refiner {
     }
     
     /// Checks if the date components are likely to be a false match based on specific patterns
-    private func isUnlikelyDate(components _: ParsingComponents, text: String) -> Bool {
-        // Check for ranges of numbers that look like scores or ratios
-        if text.contains("/") && !text.contains(":") {
-            let numbers = text.components(separatedBy: CharacterSet(charactersIn: "/.-"))
-                .compactMap { Int($0.trimmingCharacters(in: .whitespaces)) }
-            
-            // Check for score-like numbers (e.g. 3/2 as a score)
-            if numbers.count == 2 && numbers.allSatisfy({ $0 < 50 }) {
-                return true
-            }
-        }
-        
+    ///
+    /// This used to reject any two `/`-separated numbers under 50 as a score or ratio, which is
+    /// every slash date there is — "12/25" and "4/22" included. English was the only locale unable
+    /// to read the format its own users reach for first, while every day-first locale has shipped
+    /// slash dates all along (and reads "3/4 cup" as a date too — the same trade, already made).
+    private func isUnlikelyDate(components _: ParsingComponents, text _: String) -> Bool {
         return false
     }
     

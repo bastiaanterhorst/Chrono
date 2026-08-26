@@ -111,6 +111,11 @@ public struct ParsingOptions {
     /// The week convention every week number in this parse is read and written in. Defaults to
     /// ISO 8601; pass the host application's own calendar when its users choose a first weekday.
     public var weekRules: WeekRules
+
+    /// Which number comes first in a purely numeric date ("22/4" vs "4/22"). This follows the
+    /// reader's *region*, not the parsing language — an English-reading user in Europe still writes
+    /// 22/4. Leave nil to use each language's own customary order.
+    public var numericDateOrder: NumericDateOrder?
     
     /// Creates new parsing options
     /// - Parameters:
@@ -119,11 +124,12 @@ public struct ParsingOptions {
     ///   - timezones: Custom timezone mappings
     ///   - weekRules: Week numbering convention (defaults to ISO 8601)
     public init(forwardDate: Bool = false, debug: Any? = nil, timezones: [String: Int]? = nil,
-                weekRules: WeekRules = .iso) {
+                weekRules: WeekRules = .iso, numericDateOrder: NumericDateOrder? = nil) {
         self.forwardDate = forwardDate
         self.debug = debug
         self.timezones = timezones
         self.weekRules = weekRules
+        self.numericDateOrder = numericDateOrder
     }
 }
 

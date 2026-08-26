@@ -9,17 +9,29 @@ import Foundation
 ///   be separated from the time by whitespace, so "a las50" and word tails don't match.
 /// - Bare form: a time qualified by minutes and/or a meridiem ("7pm", "15:30") preceded by
 ///   whitespace or string start. Unqualified bare numbers ("comprar 2 manzanas") never match.
+///
+/// Either form may carry a day period — "a las 9 de la mañana", "a las 9 de la noche" — which is
+/// how Spanish says what English says with am/pm, and is the natural way to write a time here. It
+/// must be part of *this* match: left to itself "mañana" is also the word for tomorrow, so
+/// "a las 9 de la mañana" scheduled the next day instead of setting the morning.
 public final class ESTimeExpressionParser: Parser {
     /// The pattern to match time expressions in Spanish
     public func pattern(context: ParsingContext) -> String {
         // Group 1: connector-form time (bare hour allowed)
         // Group 2: bare-form time (minutes and/or meridiem required)
+        // Group 3: an optional day period ("de la mañana", "por la tarde") that fixes the meridiem
         return "(?:(?<!\\w)(?:a\\s+las?|al|las)\\s+" +
                "(mediod[ií]a|medianoche|\\d{1,2}(?:[:.]\\d{2})?(?:\\s*[ap]\\.?m\\.?|[ap])?)" +
                "|(?<!\\S)" +
                "(\\d{1,2}(?:[:.]\\d{2})?(?:\\s*[ap]\\.?m\\.?|[ap])|\\d{1,2}:\\d{2}))" +
+               ESTimeExpressionParser.dayPeriodPattern +
                "(?=\\W|$)"
     }
+
+    /// "de/por/en la mañana|tarde|noche|madrugada", accent-optional. Kept optional so a plain
+    /// "a las 9" is unaffected.
+    private static let dayPeriodPattern =
+        "(?:\\s*(?:de|por|en)\\s+la\\s+(ma[ñn]ana|tarde|noche|madrugada))?"
 
     /// Extracts time components from a time expression
     public func extract(context: ParsingContext, match: TextMatch) -> Any? {
@@ -79,6 +91,20 @@ public final class ESTimeExpressionParser: Parser {
             guard (0...23).contains(hour) else { return nil }
             component.assign(.hour, value: hour)
             component.imply(.meridiem, value: hour < 12 ? Meridiem.am.rawValue : Meridiem.pm.rawValue)
+        }
+
+        // A stated day period wins over the 24-hour reading and, crucially, makes the meridiem
+        // *certain* — which is what marks this as a time the user really specified.
+        if let period = match.string(at: 3)?.lowercased() {
+            let morning = period.hasPrefix("ma")   // mañana / manana / madrugada
+            guard (1...12).contains(hour) else { return nil }
+            if morning {
+                component.assign(.meridiem, value: Meridiem.am.rawValue)
+                component.assign(.hour, value: hour == 12 ? 0 : hour)
+            } else {
+                component.assign(.meridiem, value: Meridiem.pm.rawValue)
+                component.assign(.hour, value: hour == 12 ? 12 : hour + 12)
+            }
         }
 
         if let minute {
