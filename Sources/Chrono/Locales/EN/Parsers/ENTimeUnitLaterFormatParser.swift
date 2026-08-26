@@ -15,6 +15,14 @@ public struct ENTimeUnitLaterFormatParser: Parser {
     }
     
     public func extract(context: ParsingContext, match: TextMatch) -> Any? {
+        // "in a minute" is English for "shortly", not sixty seconds from now, and a task due one
+        // minute out is no use to anybody. The article is what marks the idiom: "in 5 minutes"
+        // states a real duration and still parses, as do "in a week" and "in an hour".
+        if let count = match.string(at: 2)?.lowercased(), count == "a" || count == "an",
+           let unit = match.string(at: 3)?.lowercased(), unit.hasPrefix("minute") {
+            return nil
+        }
+
         let text = match.text
         let result = ParsingComponents(reference: context.reference)
         

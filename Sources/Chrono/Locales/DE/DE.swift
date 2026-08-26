@@ -31,10 +31,10 @@ public enum DE {
         ]
         
         let baseRefiners: [Refiner] = [
-            DEMergeDateTimeRefiner(),
-            DEMergeDateRangeRefiner(),
-            DEPrioritizeWeekNumberRefiner(),
-
+            // These lead the list. They only ever REMOVE a reading, and they must do it
+            // before the merge refiners run: a merge can glue a bogus reading to a real
+            // neighbouring date ("versao 3.5 entregar em 12 de setembro" became one range),
+            // and dropping the pair afterwards takes the real date down with it.
             // An end-of-period phrase Chrono cannot read must come back unrecognised, not
             // reversed: without this the month inside it was claimed alone and resolved to
             // the *first*, a month away from what was written.
@@ -44,7 +44,11 @@ public enum DE {
             // measurement, and neither is ever a date in any language.
             AdjacentWordGuardRefiner(
                 precedingWords: ["dr", "frau", "herr", "strasse des", "straße des", "weg", "allee", "platz", "str", "strasse", "straße", "version", "kapitel", "seite", "modell", "flug", "zimmer", "nr", "nummer", "verhältnis", "verhaltnis", "folge", "staffel", "schritt", "teil", "ergebnis", "stock", "etage"],
-                followingWords: ["allee", "platz", "strasse", "straße", "cm", "mm", "km", "kg", "gramm", "ml", "liter", "meter", "prozent", "euro", "jahren", "jahre"])
+                followingWords: ["allee", "platz", "strasse", "straße", "cm", "mm", "km", "kg", "gramm", "ml", "liter", "meter", "prozent", "euro", "jahren", "jahre"]),
+
+            DEMergeDateTimeRefiner(),
+            DEMergeDateRangeRefiner(),
+            DEPrioritizeWeekNumberRefiner()
         ]
         
         // Add common configuration (ISO parsers and refiners)
@@ -74,10 +78,10 @@ public enum DE {
         ]
         
         let baseRefiners: [Refiner] = [
-            DEMergeDateTimeRefiner(),
-            DEMergeDateRangeRefiner(),
-            DEPrioritizeWeekNumberRefiner(),
-
+            // These lead the list. They only ever REMOVE a reading, and they must do it
+            // before the merge refiners run: a merge can glue a bogus reading to a real
+            // neighbouring date ("versao 3.5 entregar em 12 de setembro" became one range),
+            // and dropping the pair afterwards takes the real date down with it.
             // An end-of-period phrase Chrono cannot read must come back unrecognised, not
             // reversed: without this the month inside it was claimed alone and resolved to
             // the *first*, a month away from what was written.
@@ -87,7 +91,11 @@ public enum DE {
             // measurement, and neither is ever a date in any language.
             AdjacentWordGuardRefiner(
                 precedingWords: ["dr", "frau", "herr", "strasse des", "straße des", "weg", "allee", "platz", "str", "strasse", "straße", "version", "kapitel", "seite", "modell", "flug", "zimmer", "nr", "nummer", "verhältnis", "verhaltnis", "folge", "staffel", "schritt", "teil", "ergebnis", "stock", "etage"],
-                followingWords: ["allee", "platz", "strasse", "straße", "cm", "mm", "km", "kg", "gramm", "ml", "liter", "meter", "prozent", "euro", "jahren", "jahre"])
+                followingWords: ["allee", "platz", "strasse", "straße", "cm", "mm", "km", "kg", "gramm", "ml", "liter", "meter", "prozent", "euro", "jahren", "jahre"]),
+
+            DEMergeDateTimeRefiner(),
+            DEMergeDateRangeRefiner(),
+            DEPrioritizeWeekNumberRefiner()
         ]
         
         // Add common configuration (ISO parsers and refiners)

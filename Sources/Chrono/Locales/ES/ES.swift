@@ -31,11 +31,10 @@ public enum ES {
         ]
         
         let baseRefiners: [Refiner] = [
-            // Basic mergers
-            ESMergeDateTimeRefiner(),
-            ESMergeDateRangeRefiner(),
-            ESPrioritizeWeekNumberRefiner(),
-
+            // These lead the list. They only ever REMOVE a reading, and they must do it
+            // before the merge refiners run: a merge can glue a bogus reading to a real
+            // neighbouring date ("versao 3.5 entregar em 12 de setembro" became one range),
+            // and dropping the pair afterwards takes the real date down with it.
             // An end-of-period phrase Chrono cannot read must come back unrecognised, not
             // reversed: without this the month inside it was claimed alone and resolved to
             // the *first*, a month away from what was written.
@@ -45,7 +44,12 @@ public enum ES {
             // measurement, and neither is ever a date in any language.
             AdjacentWordGuardRefiner(
                 precedingWords: ["avenida de", "plaza de", "calle de", "teatro", "cine", "bar", "hotel", "casa", "estadio", "restaurante", "versión", "version", "capítulo", "capitulo", "página", "pagina", "modelo", "vuelo", "habitación", "habitacion", "nº", "no", "ratio", "proporción", "proporcion", "episodio", "temporada", "paso", "parte", "nivel", "calle", "avenida", "plaza", "sr", "sra", "dr"],
-                followingWords: ["avenida", "plaza", "calle", "cm", "mm", "km", "kg", "ml", "litros", "litro", "metros", "metro", "euros", "por ciento"])
+                followingWords: ["avenida", "plaza", "calle", "cm", "mm", "km", "kg", "ml", "litros", "litro", "metros", "metro", "euros", "por ciento"]),
+
+            // Basic mergers
+            ESMergeDateTimeRefiner(),
+            ESMergeDateRangeRefiner(),
+            ESPrioritizeWeekNumberRefiner()
         ]
         
         // Add common configuration (ISO parsers and refiners)
@@ -75,10 +79,10 @@ public enum ES {
         ]
         
         let baseRefiners: [Refiner] = [
-            ESMergeDateTimeRefiner(),
-            ESMergeDateRangeRefiner(),
-            ESPrioritizeWeekNumberRefiner(),
-
+            // These lead the list. They only ever REMOVE a reading, and they must do it
+            // before the merge refiners run: a merge can glue a bogus reading to a real
+            // neighbouring date ("versao 3.5 entregar em 12 de setembro" became one range),
+            // and dropping the pair afterwards takes the real date down with it.
             // An end-of-period phrase Chrono cannot read must come back unrecognised, not
             // reversed: without this the month inside it was claimed alone and resolved to
             // the *first*, a month away from what was written.
@@ -88,7 +92,11 @@ public enum ES {
             // measurement, and neither is ever a date in any language.
             AdjacentWordGuardRefiner(
                 precedingWords: ["avenida de", "plaza de", "calle de", "teatro", "cine", "bar", "hotel", "casa", "estadio", "restaurante", "versión", "version", "capítulo", "capitulo", "página", "pagina", "modelo", "vuelo", "habitación", "habitacion", "nº", "no", "ratio", "proporción", "proporcion", "episodio", "temporada", "paso", "parte", "nivel", "calle", "avenida", "plaza", "sr", "sra", "dr"],
-                followingWords: ["avenida", "plaza", "calle", "cm", "mm", "km", "kg", "ml", "litros", "litro", "metros", "metro", "euros", "por ciento"])
+                followingWords: ["avenida", "plaza", "calle", "cm", "mm", "km", "kg", "ml", "litros", "litro", "metros", "metro", "euros", "por ciento"]),
+
+            ESMergeDateTimeRefiner(),
+            ESMergeDateRangeRefiner(),
+            ESPrioritizeWeekNumberRefiner()
         ]
         
         // Add common configuration (ISO parsers and refiners)

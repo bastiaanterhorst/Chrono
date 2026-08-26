@@ -22,10 +22,10 @@ public enum FR {
         ]
         
         let baseRefiners: [Refiner] = [
-            FRMergeDateTimeRefiner(),
-            FRMergeDateRangeRefiner(),
-            FRPrioritizeWeekNumberRefiner(),
-
+            // These lead the list. They only ever REMOVE a reading, and they must do it
+            // before the merge refiners run: a merge can glue a bogus reading to a real
+            // neighbouring date ("versao 3.5 entregar em 12 de setembro" became one range),
+            // and dropping the pair afterwards takes the real date down with it.
             // An end-of-period phrase Chrono cannot read must come back unrecognised, not
             // reversed: without this the month inside it was claimed alone and resolved to
             // the *first*, a month away from what was written.
@@ -35,7 +35,11 @@ public enum FR {
             // measurement, and neither is ever a date in any language.
             AdjacentWordGuardRefiner(
                 precedingWords: ["mlle", "match", "score", "gagne", "gagné", "perdu", "place de", "boulevard de", "avenue de", "rue de", "version", "chapitre", "page", "modèle", "modele", "vol", "chambre", "no", "ratio", "épisode", "episode", "saison", "étape", "etape", "partie", "niveau", "rue", "avenue", "boulevard", "place", "mme", "mr", "m.", "dr"],
-                followingWords: ["boulevard", "avenue", "rue", "gras", "cm", "mm", "km", "kg", "ml", "litres", "litre", "mètres", "metres", "pour", "comprimé", "comprime", "comprimés", "comprimes", "euros", "kwh"])
+                followingWords: ["boulevard", "avenue", "rue", "gras", "cm", "mm", "km", "kg", "ml", "litres", "litre", "mètres", "metres", "pour", "comprimé", "comprime", "comprimés", "comprimes", "euros", "kwh"]),
+
+            FRMergeDateTimeRefiner(),
+            FRMergeDateRangeRefiner(),
+            FRPrioritizeWeekNumberRefiner()
         ]
 
         let (parsers, refiners) = CommonConfiguration.includeCommonConfiguration(
@@ -63,10 +67,10 @@ public enum FR {
         ]
         
         let baseRefiners: [Refiner] = [
-            FRMergeDateTimeRefiner(),
-            FRMergeDateRangeRefiner(),
-            FRPrioritizeWeekNumberRefiner(),
-
+            // These lead the list. They only ever REMOVE a reading, and they must do it
+            // before the merge refiners run: a merge can glue a bogus reading to a real
+            // neighbouring date ("versao 3.5 entregar em 12 de setembro" became one range),
+            // and dropping the pair afterwards takes the real date down with it.
             // An end-of-period phrase Chrono cannot read must come back unrecognised, not
             // reversed: without this the month inside it was claimed alone and resolved to
             // the *first*, a month away from what was written.
@@ -76,7 +80,11 @@ public enum FR {
             // measurement, and neither is ever a date in any language.
             AdjacentWordGuardRefiner(
                 precedingWords: ["mlle", "match", "score", "gagne", "gagné", "perdu", "place de", "boulevard de", "avenue de", "rue de", "version", "chapitre", "page", "modèle", "modele", "vol", "chambre", "no", "ratio", "épisode", "episode", "saison", "étape", "etape", "partie", "niveau", "rue", "avenue", "boulevard", "place", "mme", "mr", "m.", "dr"],
-                followingWords: ["boulevard", "avenue", "rue", "gras", "cm", "mm", "km", "kg", "ml", "litres", "litre", "mètres", "metres", "pour", "comprimé", "comprime", "comprimés", "comprimes", "euros", "kwh"])
+                followingWords: ["boulevard", "avenue", "rue", "gras", "cm", "mm", "km", "kg", "ml", "litres", "litre", "mètres", "metres", "pour", "comprimé", "comprime", "comprimés", "comprimes", "euros", "kwh"]),
+
+            FRMergeDateTimeRefiner(),
+            FRMergeDateRangeRefiner(),
+            FRPrioritizeWeekNumberRefiner()
         ]
 
         let (parsers, refiners) = CommonConfiguration.includeCommonConfiguration(

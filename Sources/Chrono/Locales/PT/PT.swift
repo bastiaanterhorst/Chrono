@@ -25,10 +25,10 @@ public enum PT {
         ]
         
         let baseRefiners: [Refiner] = [
-            PTMergeDateTimeRefiner(),
-            PTMergeDateRangeRefiner(),
-            PTPrioritizeWeekNumberRefiner(),
-
+            // These lead the list. They only ever REMOVE a reading, and they must do it
+            // before the merge refiners run: a merge can glue a bogus reading to a real
+            // neighbouring date ("versao 3.5 entregar em 12 de setembro" became one range),
+            // and dropping the pair afterwards takes the real date down with it.
             // An end-of-period phrase Chrono cannot read must come back unrecognised, not
             // reversed: without this the month inside it was claimed alone and resolved to
             // the *first*, a month away from what was written.
@@ -38,7 +38,11 @@ public enum PT {
             // measurement, and neither is ever a date in any language.
             AdjacentWordGuardRefiner(
                 precedingWords: ["praça de", "praca de", "rua de", "teatro", "cinema", "bar", "hotel", "casa", "estadio", "restaurante", "versão", "versao", "capítulo", "capitulo", "página", "pagina", "modelo", "voo", "quarto", "nº", "no", "proporção", "proporcao", "episódio", "episodio", "temporada", "passo", "parte", "nível", "nivel", "rua", "avenida", "av", "sr", "sra", "dr"],
-                followingWords: ["avenida", "praça", "praca", "rua", "cm", "mm", "km", "kg", "ml", "litros", "litro", "metros", "metro", "reais", "mil"])
+                followingWords: ["avenida", "praça", "praca", "rua", "cm", "mm", "km", "kg", "ml", "litros", "litro", "metros", "metro", "reais", "mil"]),
+
+            PTMergeDateTimeRefiner(),
+            PTMergeDateRangeRefiner(),
+            PTPrioritizeWeekNumberRefiner()
         ]
         
         // Add common configuration (ISO parsers and refiners)
@@ -68,10 +72,10 @@ public enum PT {
         ]
         
         let baseRefiners: [Refiner] = [
-            PTMergeDateTimeRefiner(),
-            PTMergeDateRangeRefiner(),
-            PTPrioritizeWeekNumberRefiner(),
-
+            // These lead the list. They only ever REMOVE a reading, and they must do it
+            // before the merge refiners run: a merge can glue a bogus reading to a real
+            // neighbouring date ("versao 3.5 entregar em 12 de setembro" became one range),
+            // and dropping the pair afterwards takes the real date down with it.
             // An end-of-period phrase Chrono cannot read must come back unrecognised, not
             // reversed: without this the month inside it was claimed alone and resolved to
             // the *first*, a month away from what was written.
@@ -81,7 +85,11 @@ public enum PT {
             // measurement, and neither is ever a date in any language.
             AdjacentWordGuardRefiner(
                 precedingWords: ["praça de", "praca de", "rua de", "teatro", "cinema", "bar", "hotel", "casa", "estadio", "restaurante", "versão", "versao", "capítulo", "capitulo", "página", "pagina", "modelo", "voo", "quarto", "nº", "no", "proporção", "proporcao", "episódio", "episodio", "temporada", "passo", "parte", "nível", "nivel", "rua", "avenida", "av", "sr", "sra", "dr"],
-                followingWords: ["avenida", "praça", "praca", "rua", "cm", "mm", "km", "kg", "ml", "litros", "litro", "metros", "metro", "reais", "mil"])
+                followingWords: ["avenida", "praça", "praca", "rua", "cm", "mm", "km", "kg", "ml", "litros", "litro", "metros", "metro", "reais", "mil"]),
+
+            PTMergeDateTimeRefiner(),
+            PTMergeDateRangeRefiner(),
+            PTPrioritizeWeekNumberRefiner()
         ]
         
         // Add common configuration (ISO parsers and refiners)

@@ -41,6 +41,21 @@ public enum EN {
         ]
         
         let baseRefiners: [Refiner] = [
+            // These lead the list. They only ever REMOVE a reading, and they must do it
+            // before the merge refiners run: a merge can glue a bogus reading to a real
+            // neighbouring date ("versao 3.5 entregar em 12 de setembro" became one range),
+            // and dropping the pair afterwards takes the real date down with it.
+            // An end-of-period phrase Chrono cannot read must come back unrecognised, not
+            // reversed: without this the month inside it was claimed alone and resolved to
+            // the *first*, a month away from what was written.
+            AdjacentWordGuardRefiner(precedingWords: ["end of", "end of the"]),
+            // Words around a match can rule it out as a date: a number introduced by
+            // "version" or "chapter" is an identifier, one followed by a unit is a
+            // measurement, and neither is ever a date in any language.
+            AdjacentWordGuardRefiner(
+                precedingWords: ["flat", "final", "score", "drew", "beat", "won", "lost", "version", "chapter", "ch", "page", "p", "model", "flight", "room", "no", "nr", "ratio", "issue", "episode", "ep", "season", "apt", "suite", "step", "part", "level", "build"],
+                followingWords: ["blvd", "ave", "rd", "lane", "avenue", "road", "street", "inch", "inches", "cup", "cups", "cm", "mm", "km", "kg", "lb", "lbs", "oz", "ml", "tsp", "tbsp", "miles", "mile", "percent", "ratio"]),
+
             // Basic mergers
             ENMergeDateTimeRefiner(),
             ENMergeDateRangeRefiner(),
@@ -57,17 +72,7 @@ public enum EN {
             ENPrioritizeWeekNumberRefiner(),
             
             // Prioritization should be last
-            ENPrioritizeSpecificDateRefiner(),
-            // An end-of-period phrase Chrono cannot read must come back unrecognised, not
-            // reversed: without this the month inside it was claimed alone and resolved to
-            // the *first*, a month away from what was written.
-            AdjacentWordGuardRefiner(precedingWords: ["end of", "end of the"]),
-            // Words around a match can rule it out as a date: a number introduced by
-            // "version" or "chapter" is an identifier, one followed by a unit is a
-            // measurement, and neither is ever a date in any language.
-            AdjacentWordGuardRefiner(
-                precedingWords: ["flat", "final", "score", "drew", "beat", "won", "lost", "version", "chapter", "ch", "page", "p", "model", "flight", "room", "no", "nr", "ratio", "issue", "episode", "ep", "season", "apt", "suite", "step", "part", "level", "build"],
-                followingWords: ["blvd", "ave", "rd", "lane", "avenue", "road", "street", "inch", "inches", "cup", "cups", "cm", "mm", "km", "kg", "lb", "lbs", "oz", "ml", "tsp", "tbsp", "miles", "mile", "percent", "ratio"])
+            ENPrioritizeSpecificDateRefiner()
         ]
         
         // Add common configuration (ISO parsers and refiners)

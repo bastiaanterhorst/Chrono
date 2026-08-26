@@ -51,6 +51,21 @@ public struct NL {
         
         // Refiners
         let refiners: [Refiner] = [
+            // These lead the list. They only ever REMOVE a reading, and they must do it
+            // before the merge refiners run: a merge can glue a bogus reading to a real
+            // neighbouring date ("versao 3.5 entregar em 12 de setembro" became one range),
+            // and dropping the pair afterwards takes the real date down with it.
+            // An end-of-period phrase Chrono cannot read must come back unrecognised, not
+            // reversed: without this the month inside it was claimed alone and resolved to
+            // the *first*, a month away from what was written.
+            AdjacentWordGuardRefiner(precedingWords: ["eind", "einde", "eind van", "eind van de", "eind van het"]),
+            // Words around a match can rule it out as a date: a number introduced by
+            // "version" or "chapter" is an identifier, one followed by a unit is a
+            // measurement, and neither is ever a date in any language.
+            AdjacentWordGuardRefiner(
+                precedingWords: ["laan", "straat", "dr", "mw", "dhr", "mevr", "meneer", "mevrouw", "versie", "hoofdstuk", "pagina", "model", "vlucht", "kamer", "nr", "nummer", "verhouding", "aflevering", "seizoen", "stap", "deel", "niveau", "uitslag"],
+                followingWords: ["weg", "laan", "straat", "cm", "mm", "km", "kg", "gram", "ml", "liter", "meter", "procent", "euro"]),
+
             // Must precede OverlapRemovalRefiner so the weekday survives "volgende week donderdag".
             CombineRelativeWeekAndWeekdayRefiner(),
 
@@ -64,18 +79,7 @@ public struct NL {
             NLPrioritizeWeekNumberRefiner(),
 
             // Bare month → 1st of month (NL builds its own config, so add it explicitly).
-            MonthOnlyDayRefiner(),
-
-            // An end-of-period phrase Chrono cannot read must come back unrecognised, not
-            // reversed: without this the month inside it was claimed alone and resolved to
-            // the *first*, a month away from what was written.
-            AdjacentWordGuardRefiner(precedingWords: ["eind", "einde", "eind van", "eind van de", "eind van het"]),
-            // Words around a match can rule it out as a date: a number introduced by
-            // "version" or "chapter" is an identifier, one followed by a unit is a
-            // measurement, and neither is ever a date in any language.
-            AdjacentWordGuardRefiner(
-                precedingWords: ["laan", "straat", "dr", "mw", "dhr", "mevr", "meneer", "mevrouw", "versie", "hoofdstuk", "pagina", "model", "vlucht", "kamer", "nr", "nummer", "verhouding", "aflevering", "seizoen", "stap", "deel", "niveau", "uitslag"],
-                followingWords: ["weg", "laan", "straat", "cm", "mm", "km", "kg", "gram", "ml", "liter", "meter", "procent", "euro"])
+            MonthOnlyDayRefiner()
         ]
         
         return Chrono(parsers: parsers, refiners: refiners)
