@@ -108,8 +108,10 @@ final class NLWeekdayParser: Parser {
             }
         } else {
             // No modifier
-            // If the day has passed, it could refer to next week
-            if dayToAdd <= 0 && context.options.forwardDate {
+            // If the day has passed, it could refer to next week. Strictly *passed*: a bare
+            // "woensdag" typed on a Wednesday is today, as it is in every other locale — `<= 0`
+            // applied the "volgende" (next) rule to the bare form and pushed today a week out.
+            if dayToAdd < 0 && context.options.forwardDate {
                 dayToAdd += 7
             }
         }

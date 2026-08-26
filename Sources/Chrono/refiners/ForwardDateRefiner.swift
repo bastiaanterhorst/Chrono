@@ -39,10 +39,14 @@ public final class ForwardDateRefiner: Refiner {
         return results.map { result in
             // Handle ISO week shorthand with implied year (e.g. "w10").
             // If that inferred week is already behind the reference date, move it to next year.
+            // "Behind" is measured a whole week at a time: the date these components resolve to is
+            // the week's *Monday*, so comparing it against the reference instant would call the
+            // current week past from Tuesday onward — typing "w35" on the Wednesday of week 35
+            // would mean next year. A week has gone by only once its last day has.
             if result.start.isCertain(.isoWeek),
                !result.start.isCertain(.isoWeekYear),
                let parsedDate = result.start.date(),
-               parsedDate < refDate,
+               Self.isWeekBehind(weekStart: parsedDate, refDate: refDate),
                let week = result.start.get(.isoWeek),
                let inferredWeekYear = result.start.get(.isoWeekYear) {
                 let targetWeekYear = inferredWeekYear + 1
@@ -166,4 +170,15 @@ public final class ForwardDateRefiner: Refiner {
         guard years > 0, isYearShiftable(components), let year = components.get(.year) else { return }
         components.imply(.year, value: year + years)
     }
+
+    /// Whether the whole ISO week beginning at `weekStart` lies before the reference day. The week
+    /// runs Monday–Sunday, so it is only past once its Sunday is.
+    private static func isWeekBehind(weekStart: Date, refDate: Date) -> Bool {
+        let calendar = Calendar.current
+        guard let weekEnd = calendar.date(byAdding: .day, value: 6, to: weekStart) else {
+            return weekStart < refDate
+        }
+        return calendar.startOfDay(for: weekEnd) < calendar.startOfDay(for: refDate)
+    }
+
 }

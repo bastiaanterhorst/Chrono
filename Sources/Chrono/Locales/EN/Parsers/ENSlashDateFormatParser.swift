@@ -51,26 +51,11 @@ public final class ENSlashDateFormatParser: Parser {
                 component.assign(.year, value: year)
             }
         } else {
-            // If year is not specified, use the current year
-            let currentYear = calendar.component(.year, from: context.refDate)
-            component.imply(.year, value: currentYear)
-            
-            // Apply forward date adjustment if needed
-            if context.options.forwardDate {
-                let refDate = context.refDate
-                let currentMonth = calendar.component(.month, from: refDate)
-                let currentDay = calendar.component(.day, from: refDate)
-                
-                let componentMonth = component.get(.month) ?? 0
-                let componentDay = component.get(.day) ?? 0
-                
-                // If the specified date is earlier than the current date,
-                // move to the next year
-                if componentMonth < currentMonth ||
-                   (componentMonth == currentMonth && componentDay < currentDay) {
-                    component.assign(.year, value: currentYear + 1)
-                }
-            }
+            // No year stated, so only *infer* the reference year. Forward-dating a date that has
+            // already gone by is `ForwardDateRefiner`'s job — one rule, shared by every locale.
+            // Five copies of that comparison used to live in these parsers, and the NL copy had
+            // drifted into comparing months alone (so "20/8" on 26 August stayed in the past).
+            component.imply(.year, value: calendar.component(.year, from: context.refDate))
         }
         
         component.addTag("ENSlashDateFormatParser")

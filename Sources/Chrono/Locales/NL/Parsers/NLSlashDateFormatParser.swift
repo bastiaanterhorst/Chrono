@@ -31,30 +31,26 @@ final class NLSlashDateFormatParser: Parser {
             return nil
         }
         
+        let component = context.createParsingComponents()
+        component.assign(.day, value: day)
+        component.assign(.month, value: month)
+
         // Check if a specific year was provided
-        var year = Calendar.current.component(.year, from: context.refDate)
         if let yearStr = match.string(at: 3), let parsedYear = Int(yearStr) {
             if parsedYear < 100 {
                 // For two-digit years, interpret as 20XX for values < 50, 19XX for values >= 50
-                if parsedYear < 50 {
-                    year = 2000 + parsedYear
-                } else {
-                    year = 1900 + parsedYear
-                }
+                component.assign(.year, value: parsedYear < 50 ? 2000 + parsedYear : 1900 + parsedYear)
             } else {
-                year = parsedYear
+                component.assign(.year, value: parsedYear)
             }
-        } else if month < Calendar.current.component(.month, from: context.refDate) && context.options.forwardDate {
-            // If month is in the past and forwardDate is true, increment year
-            year += 1
+        } else {
+            // No year stated, so only *infer* the reference year — which lets `ForwardDateRefiner`
+            // roll a date that has already gone by into the next one. Doing it here instead used
+            // to compare months alone, so "20/8" typed on 26 August stayed six days in the past
+            // (and, being assigned, the inferred year looked stated and no refiner could fix it).
+            component.imply(.year, value: Calendar.current.component(.year, from: context.refDate))
         }
-        
-        // Build the result
-        var result: [Component: Int] = [:]
-        result[.day] = day
-        result[.month] = month
-        result[.year] = year
-        
-        return result
+
+        return component
     }
 }
