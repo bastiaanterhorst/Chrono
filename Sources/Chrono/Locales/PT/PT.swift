@@ -27,7 +27,12 @@ public enum PT {
         let baseRefiners: [Refiner] = [
             PTMergeDateTimeRefiner(),
             PTMergeDateRangeRefiner(),
-            PTPrioritizeWeekNumberRefiner()
+            PTPrioritizeWeekNumberRefiner(),
+
+            // An end-of-period phrase Chrono cannot read must come back unrecognised, not
+            // reversed: without this the month inside it was claimed alone and resolved to
+            // the *first*, a month away from what was written.
+            PeriodEndGuardRefiner(precedingWords: ["fim", "fim do", "fim de", "final do", "final de"])
         ]
         
         // Add common configuration (ISO parsers and refiners)
@@ -59,7 +64,12 @@ public enum PT {
         let baseRefiners: [Refiner] = [
             PTMergeDateTimeRefiner(),
             PTMergeDateRangeRefiner(),
-            PTPrioritizeWeekNumberRefiner()
+            PTPrioritizeWeekNumberRefiner(),
+
+            // An end-of-period phrase Chrono cannot read must come back unrecognised, not
+            // reversed: without this the month inside it was claimed alone and resolved to
+            // the *first*, a month away from what was written.
+            PeriodEndGuardRefiner(precedingWords: ["fim", "fim do", "fim de", "final do", "final de"])
         ]
         
         // Add common configuration (ISO parsers and refiners)

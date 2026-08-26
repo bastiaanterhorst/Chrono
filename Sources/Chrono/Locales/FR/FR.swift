@@ -24,7 +24,12 @@ public enum FR {
         let baseRefiners: [Refiner] = [
             FRMergeDateTimeRefiner(),
             FRMergeDateRangeRefiner(),
-            FRPrioritizeWeekNumberRefiner()
+            FRPrioritizeWeekNumberRefiner(),
+
+            // An end-of-period phrase Chrono cannot read must come back unrecognised, not
+            // reversed: without this the month inside it was claimed alone and resolved to
+            // the *first*, a month away from what was written.
+            PeriodEndGuardRefiner(precedingWords: ["fin", "fin du", "fin de", "fin de la", "à la fin de"])
         ]
 
         let (parsers, refiners) = CommonConfiguration.includeCommonConfiguration(
@@ -54,7 +59,12 @@ public enum FR {
         let baseRefiners: [Refiner] = [
             FRMergeDateTimeRefiner(),
             FRMergeDateRangeRefiner(),
-            FRPrioritizeWeekNumberRefiner()
+            FRPrioritizeWeekNumberRefiner(),
+
+            // An end-of-period phrase Chrono cannot read must come back unrecognised, not
+            // reversed: without this the month inside it was claimed alone and resolved to
+            // the *first*, a month away from what was written.
+            PeriodEndGuardRefiner(precedingWords: ["fin", "fin du", "fin de", "fin de la", "à la fin de"])
         ]
 
         let (parsers, refiners) = CommonConfiguration.includeCommonConfiguration(

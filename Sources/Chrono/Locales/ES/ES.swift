@@ -34,7 +34,12 @@ public enum ES {
             // Basic mergers
             ESMergeDateTimeRefiner(),
             ESMergeDateRangeRefiner(),
-            ESPrioritizeWeekNumberRefiner()
+            ESPrioritizeWeekNumberRefiner(),
+
+            // An end-of-period phrase Chrono cannot read must come back unrecognised, not
+            // reversed: without this the month inside it was claimed alone and resolved to
+            // the *first*, a month away from what was written.
+            PeriodEndGuardRefiner(precedingWords: ["fin", "fin de", "fin del", "finales de", "a fin de"])
         ]
         
         // Add common configuration (ISO parsers and refiners)
@@ -66,7 +71,12 @@ public enum ES {
         let baseRefiners: [Refiner] = [
             ESMergeDateTimeRefiner(),
             ESMergeDateRangeRefiner(),
-            ESPrioritizeWeekNumberRefiner()
+            ESPrioritizeWeekNumberRefiner(),
+
+            // An end-of-period phrase Chrono cannot read must come back unrecognised, not
+            // reversed: without this the month inside it was claimed alone and resolved to
+            // the *first*, a month away from what was written.
+            PeriodEndGuardRefiner(precedingWords: ["fin", "fin de", "fin del", "finales de", "a fin de"])
         ]
         
         // Add common configuration (ISO parsers and refiners)

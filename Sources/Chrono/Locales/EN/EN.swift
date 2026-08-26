@@ -57,7 +57,11 @@ public enum EN {
             ENPrioritizeWeekNumberRefiner(),
             
             // Prioritization should be last
-            ENPrioritizeSpecificDateRefiner()
+            ENPrioritizeSpecificDateRefiner(),
+            // An end-of-period phrase Chrono cannot read must come back unrecognised, not
+            // reversed: without this the month inside it was claimed alone and resolved to
+            // the *first*, a month away from what was written.
+            PeriodEndGuardRefiner(precedingWords: ["end of", "end of the"])
         ]
         
         // Add common configuration (ISO parsers and refiners)

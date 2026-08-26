@@ -33,7 +33,12 @@ public enum DE {
         let baseRefiners: [Refiner] = [
             DEMergeDateTimeRefiner(),
             DEMergeDateRangeRefiner(),
-            DEPrioritizeWeekNumberRefiner()
+            DEPrioritizeWeekNumberRefiner(),
+
+            // An end-of-period phrase Chrono cannot read must come back unrecognised, not
+            // reversed: without this the month inside it was claimed alone and resolved to
+            // the *first*, a month away from what was written.
+            PeriodEndGuardRefiner(precedingWords: ["ende", "ende des", "ende der", "zum ende"])
         ]
         
         // Add common configuration (ISO parsers and refiners)
@@ -65,7 +70,12 @@ public enum DE {
         let baseRefiners: [Refiner] = [
             DEMergeDateTimeRefiner(),
             DEMergeDateRangeRefiner(),
-            DEPrioritizeWeekNumberRefiner()
+            DEPrioritizeWeekNumberRefiner(),
+
+            // An end-of-period phrase Chrono cannot read must come back unrecognised, not
+            // reversed: without this the month inside it was claimed alone and resolved to
+            // the *first*, a month away from what was written.
+            PeriodEndGuardRefiner(precedingWords: ["ende", "ende des", "ende der", "zum ende"])
         ]
         
         // Add common configuration (ISO parsers and refiners)

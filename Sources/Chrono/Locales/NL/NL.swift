@@ -64,7 +64,12 @@ public struct NL {
             NLPrioritizeWeekNumberRefiner(),
 
             // Bare month → 1st of month (NL builds its own config, so add it explicitly).
-            MonthOnlyDayRefiner()
+            MonthOnlyDayRefiner(),
+
+            // An end-of-period phrase Chrono cannot read must come back unrecognised, not
+            // reversed: without this the month inside it was claimed alone and resolved to
+            // the *first*, a month away from what was written.
+            PeriodEndGuardRefiner(precedingWords: ["eind", "einde", "eind van", "eind van de", "eind van het"])
         ]
         
         return Chrono(parsers: parsers, refiners: refiners)
