@@ -64,9 +64,10 @@ func expectMatch(_ locale: String, _ text: String, _ comment: Comment,
 
 @Test func mergeProtectionDatePlusTime() {
     // Date + connected bare hour keeps merging into a full datetime (meridiem becomes known).
-    expectMatch("en", "tomorrow at 3", "EN date + bare hour merge", day: 17, hour: 3)
+    // A bare hour behind a connector reads as the afternoon — "at 3" is 15:00, not 03:00.
+    expectMatch("en", "tomorrow at 3", "EN date + bare hour merge", day: 17, hour: 15)
     expectMatch("en", "tomorrow at 15", "EN date + 24h bare hour merge", day: 17, hour: 15)
-    expectMatch("en", "friday at 3", "EN weekday + bare hour merge", day: 17, hour: 3)
+    expectMatch("en", "friday at 3", "EN weekday + bare hour merge", day: 17, hour: 15)
     expectMatch("ja", "明日の3時", "JA date + hour merge", day: 17, hour: 3)
     // ZH writes the date and the time with nothing between them; the merge refiner must still
     // produce ONE datetime rather than a bare 明天 plus a floating 下午3点.
@@ -165,8 +166,12 @@ func expectMatch(_ locale: String, _ text: String, _ comment: Comment,
 @Test func enConnectedBareHourIsAFragment() {
     // "at 3" stays matchable (so "tomorrow at 3" merges) but is a non-confident fragment:
     // hour known, meridiem only implied. Consumers ignore it standalone.
-    let r = expectMatch("en", "test at 3", "connected bare hour", hour: 3, matchedText: "at 3")
+    // The connector makes this a stated time, and a small bare hour means the afternoon: nobody
+    // schedules "at 3" for three in the morning. The meridiem stays *inferred* — the user did not
+    // write am or pm — while the minute becomes stated, which is what marks the time as real.
+    let r = expectMatch("en", "test at 3", "connected bare hour", hour: 15, matchedText: "at 3")
     #expect(r?.start.isCertain(.hour) == true)
+    #expect(r?.start.isCertain(.minute) == true)
     #expect(r?.start.isCertain(.meridiem) == false)
     expectMatch("en", "test at 15", "connected 24h bare hour", hour: 15, matchedText: "at 15")
 }
@@ -261,8 +266,12 @@ func expectMatch(_ locale: String, _ text: String, _ comment: Comment,
 }
 
 @Test func ptKeptBehavior() {
-    let r = expectMatch("pt", "chamar às 3", "connected bare hour is a fragment", hour: 3, matchedText: "às 3")
-    #expect(r?.start.isCertain(.minute) == false)
+    // A bare hour behind an explicit connector is now a *stated* time, not a loose fragment:
+    // "às 3" is idiomatic Portuguese for an appointment, and it means the afternoon — three in the
+    // morning is not what anyone puts in a to-do list. The connector is what licenses this; a bare
+    // number with no connector is still nothing (see the scope tests above).
+    let r = expectMatch("pt", "chamar às 3", "connected bare hour is a stated time", hour: 15, matchedText: "às 3")
+    #expect(r?.start.isCertain(.minute) == true)
     let marker = expectMatch("pt", "às 15h", "h-marker makes minutes known", hour: 15, minute: 0)
     #expect(marker?.start.isCertain(.minute) == true)
     expectMatch("pt", "15h30", "bare h-marker time with minutes", hour: 15, minute: 30)
@@ -371,7 +380,9 @@ func expectMatch(_ locale: String, _ text: String, _ comment: Comment,
 }
 
 @Test func esKeptBehavior() {
-    let r = expectMatch("es", "a las 3", "connected bare hour", hour: 3, matchedText: "a las 3")
+    // "a las 3" is three in the afternoon; the connector makes it a stated time.
+    let r = expectMatch("es", "a las 3", "connected bare hour", hour: 15, matchedText: "a las 3")
+    #expect(r?.start.isCertain(.minute) == true)
     #expect(r?.start.isCertain(.meridiem) == false)
     expectMatch("es", "a las 3pm", "connected meridiem hour", hour: 15)
     expectMatch("es", "hoy", "today", day: 16)

@@ -69,7 +69,13 @@ public struct NL {
             // An end-of-period phrase Chrono cannot read must come back unrecognised, not
             // reversed: without this the month inside it was claimed alone and resolved to
             // the *first*, a month away from what was written.
-            PeriodEndGuardRefiner(precedingWords: ["eind", "einde", "eind van", "eind van de", "eind van het"])
+            AdjacentWordGuardRefiner(precedingWords: ["eind", "einde", "eind van", "eind van de", "eind van het"]),
+            // Words around a match can rule it out as a date: a number introduced by
+            // "version" or "chapter" is an identifier, one followed by a unit is a
+            // measurement, and neither is ever a date in any language.
+            AdjacentWordGuardRefiner(
+                precedingWords: ["laan", "straat", "dr", "mw", "dhr", "mevr", "meneer", "mevrouw", "versie", "hoofdstuk", "pagina", "model", "vlucht", "kamer", "nr", "nummer", "verhouding", "aflevering", "seizoen", "stap", "deel", "niveau", "uitslag"],
+                followingWords: ["weg", "laan", "straat", "cm", "mm", "km", "kg", "gram", "ml", "liter", "meter", "procent", "euro"])
         ]
         
         return Chrono(parsers: parsers, refiners: refiners)

@@ -35,7 +35,7 @@ public enum KO {
         // An end-of-period phrase Chrono cannot read must come back unrecognised, not
         // reversed: without this "다음 달 말" claimed 다음 달 alone and resolved to the *first*
         // of next month, leaving the 말 stranded in the task name.
-        [PeriodEndGuardRefiner(followingWords: ["말"])]
+        [AdjacentWordGuardRefiner(followingWords: ["말"])]
     }
 
     static func createCasualConfiguration() -> Chrono {

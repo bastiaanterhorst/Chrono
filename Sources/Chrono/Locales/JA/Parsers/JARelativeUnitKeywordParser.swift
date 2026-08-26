@@ -6,7 +6,10 @@ public struct JARelativeUnitKeywordParser: Parser {
     public init() {}
 
     public func pattern(context: ParsingContext) -> String {
-        return "(今月|来月|先月|今年|来年|去年|昨年)"
+        // 度 turns any of the year words into a *fiscal* year — 今年度 is a period label, not a
+        // date — and 末 turns them into a period edge, which Chrono deliberately does not read.
+        // Without the guard 今年 was cut out of 今年度 and left the 度 stranded in the task name.
+        return "(今月|来月|先月|今年|来年|去年|昨年)(?![度末])"
     }
 
     public func extract(context: ParsingContext, match: TextMatch) -> Any? {

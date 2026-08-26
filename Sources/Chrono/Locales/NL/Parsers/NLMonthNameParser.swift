@@ -21,6 +21,16 @@ final class NLMonthNameParser: Parser {
             return nil
         }
 
+        // A month *abbreviation* standing entirely alone is too collision-prone to schedule: "jan"
+        // is one of the commonest Dutch first names, so "bellen met jan" booked 1 January. With a
+        // day or a year beside it the intent is unambiguous ("15 jan"), and the full name is
+        // unambiguous by itself, so only the bare-abbreviation case is refused. Detected by
+        // comparison rather than a hard-coded list, which keeps "mei" — three letters, but the
+        // whole word — working.
+        let isAbbreviation = NLConstants.MONTH_DICTIONARY
+            .contains { $0.value == month && $0.key.count > monthText.count }
+        if isAbbreviation, match.string(at: 2) == nil, match.string(at: 3) == nil { return nil }
+
         let component = context.createParsingComponents()
         component.assign(.month, value: month)
 

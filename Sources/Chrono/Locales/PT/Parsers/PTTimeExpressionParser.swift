@@ -74,7 +74,9 @@ public final class PTTimeExpressionParser: Parser {
         let hasHourMarker = timeText.lowercased().contains("h")
         if let minute {
             component.assign(.minute, value: minute)
-        } else if hasHourMarker {
+        } else if hasHourMarker || match.string(at: 1) != nil {
+            // The "h" marker, or an explicit "às" connector, is what turns a bare hour into a
+            // stated time rather than a stray number — "academia às 7" is a real appointment.
             component.assign(.minute, value: 0)
         } else {
             component.imply(.minute, value: 0)
@@ -88,6 +90,14 @@ public final class PTTimeExpressionParser: Parser {
         else if hour < 12 {
             component.imply(.meridiem, value: Meridiem.am.rawValue)
         } else {
+            component.imply(.meridiem, value: Meridiem.pm.rawValue)
+        }
+
+        if match.string(at: 1) != nil, !hasHourMarker, minute == nil, !component.isCertain(.meridiem),
+           let stated = component.get(.hour), (1...6).contains(stated) {
+            // A bare hour in the small numbers means the afternoon: "às 3" is three in the
+            // afternoon, not three in the morning.
+            component.assign(.hour, value: stated + 12)
             component.imply(.meridiem, value: Meridiem.pm.rawValue)
         }
 

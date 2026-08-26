@@ -61,7 +61,13 @@ public enum EN {
             // An end-of-period phrase Chrono cannot read must come back unrecognised, not
             // reversed: without this the month inside it was claimed alone and resolved to
             // the *first*, a month away from what was written.
-            PeriodEndGuardRefiner(precedingWords: ["end of", "end of the"])
+            AdjacentWordGuardRefiner(precedingWords: ["end of", "end of the"]),
+            // Words around a match can rule it out as a date: a number introduced by
+            // "version" or "chapter" is an identifier, one followed by a unit is a
+            // measurement, and neither is ever a date in any language.
+            AdjacentWordGuardRefiner(
+                precedingWords: ["flat", "final", "score", "drew", "beat", "won", "lost", "version", "chapter", "ch", "page", "p", "model", "flight", "room", "no", "nr", "ratio", "issue", "episode", "ep", "season", "apt", "suite", "step", "part", "level", "build"],
+                followingWords: ["blvd", "ave", "rd", "lane", "avenue", "road", "street", "inch", "inches", "cup", "cups", "cm", "mm", "km", "kg", "lb", "lbs", "oz", "ml", "tsp", "tbsp", "miles", "mile", "percent", "ratio"])
         ]
         
         // Add common configuration (ISO parsers and refiners)

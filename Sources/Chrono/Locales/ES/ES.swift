@@ -39,7 +39,13 @@ public enum ES {
             // An end-of-period phrase Chrono cannot read must come back unrecognised, not
             // reversed: without this the month inside it was claimed alone and resolved to
             // the *first*, a month away from what was written.
-            PeriodEndGuardRefiner(precedingWords: ["fin", "fin de", "fin del", "finales de", "a fin de"])
+            AdjacentWordGuardRefiner(precedingWords: ["fin", "fin de", "fin del", "finales de", "a fin de"]),
+            // Words around a match can rule it out as a date: a number introduced by
+            // "version" or "chapter" is an identifier, one followed by a unit is a
+            // measurement, and neither is ever a date in any language.
+            AdjacentWordGuardRefiner(
+                precedingWords: ["avenida de", "plaza de", "calle de", "teatro", "cine", "bar", "hotel", "casa", "estadio", "restaurante", "versión", "version", "capítulo", "capitulo", "página", "pagina", "modelo", "vuelo", "habitación", "habitacion", "nº", "no", "ratio", "proporción", "proporcion", "episodio", "temporada", "paso", "parte", "nivel", "calle", "avenida", "plaza", "sr", "sra", "dr"],
+                followingWords: ["avenida", "plaza", "calle", "cm", "mm", "km", "kg", "ml", "litros", "litro", "metros", "metro", "euros", "por ciento"])
         ]
         
         // Add common configuration (ISO parsers and refiners)
@@ -76,7 +82,13 @@ public enum ES {
             // An end-of-period phrase Chrono cannot read must come back unrecognised, not
             // reversed: without this the month inside it was claimed alone and resolved to
             // the *first*, a month away from what was written.
-            PeriodEndGuardRefiner(precedingWords: ["fin", "fin de", "fin del", "finales de", "a fin de"])
+            AdjacentWordGuardRefiner(precedingWords: ["fin", "fin de", "fin del", "finales de", "a fin de"]),
+            // Words around a match can rule it out as a date: a number introduced by
+            // "version" or "chapter" is an identifier, one followed by a unit is a
+            // measurement, and neither is ever a date in any language.
+            AdjacentWordGuardRefiner(
+                precedingWords: ["avenida de", "plaza de", "calle de", "teatro", "cine", "bar", "hotel", "casa", "estadio", "restaurante", "versión", "version", "capítulo", "capitulo", "página", "pagina", "modelo", "vuelo", "habitación", "habitacion", "nº", "no", "ratio", "proporción", "proporcion", "episodio", "temporada", "paso", "parte", "nivel", "calle", "avenida", "plaza", "sr", "sra", "dr"],
+                followingWords: ["avenida", "plaza", "calle", "cm", "mm", "km", "kg", "ml", "litros", "litro", "metros", "metro", "euros", "por ciento"])
         ]
         
         // Add common configuration (ISO parsers and refiners)

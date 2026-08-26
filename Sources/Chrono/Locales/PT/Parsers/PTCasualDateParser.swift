@@ -5,7 +5,10 @@ import Foundation
 public final class PTCasualDateParser: Parser {
     /// Returns the pattern for matching Portuguese casual date references
     public func pattern(context: ParsingContext) -> String {
-        return "(?<!\\w)(hoje|amanha|amanhã|ontem)(?=\\W|$)"
+        // "depois de amanhã" leads "amanhã", and "anteontem" leads "ontem": an alternation is tried
+        // left to right, so the shorter word would otherwise be matched inside the longer phrase and
+        // report the wrong day.
+        return "(?<!\\w)(depois\\s+de\\s+amanh[ãa]|anteontem|hoje|amanha|amanhã|ontem)(?=\\W|$)"
     }
     
     /// Extracts date components from a matched casual date reference
@@ -18,30 +21,20 @@ public final class PTCasualDateParser: Parser {
         
         // A stated day ("hoje", "amanhã", "ontem") is a KNOWN date, not an implied one — every
         // other locale assigns here, and consumers rely on known date components to schedule.
-        switch matchText {
-        case "hoje": // today
-            component.assign(.day, value: calendar.component(.day, from: refDate))
-            component.assign(.month, value: calendar.component(.month, from: refDate))
-            component.assign(.year, value: calendar.component(.year, from: refDate))
-
-        case "amanha": // tomorrow
-            if let tomorrow = calendar.date(byAdding: .day, value: 1, to: refDate) {
-                component.assign(.day, value: calendar.component(.day, from: tomorrow))
-                component.assign(.month, value: calendar.component(.month, from: tomorrow))
-                component.assign(.year, value: calendar.component(.year, from: tomorrow))
-            }
-
-        case "ontem": // yesterday
-            if let yesterday = calendar.date(byAdding: .day, value: -1, to: refDate) {
-                component.assign(.day, value: calendar.component(.day, from: yesterday))
-                component.assign(.month, value: calendar.component(.month, from: yesterday))
-                component.assign(.year, value: calendar.component(.year, from: yesterday))
-            }
-
-        default:
+        // Collapsed so "depois  de  amanhã" matches its key whatever the spacing.
+        let key = matchText.split(separator: " ", omittingEmptySubsequences: true).joined(separator: " ")
+        let offsets: [String: Int] = [
+            "hoje": 0, "amanha": 1, "ontem": -1,
+            "depois de amanha": 2, "anteontem": -2,
+        ]
+        guard let offset = offsets[key],
+              let target = calendar.date(byAdding: .day, value: offset, to: refDate) else {
             return nil
         }
-        
+        component.assign(.day, value: calendar.component(.day, from: target))
+        component.assign(.month, value: calendar.component(.month, from: target))
+        component.assign(.year, value: calendar.component(.year, from: target))
+
         component.addTag("PTCasualDateParser")
         return component
     }

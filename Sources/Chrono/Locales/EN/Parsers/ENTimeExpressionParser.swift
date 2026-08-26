@@ -84,8 +84,25 @@ public final class ENTimeExpressionParser: Parser {
 
         if let minute {
             component.assign(.minute, value: minute)
+        } else if match.string(at: 1) != nil {
+            // Connector form: the user typed an explicit time word, and that is what turns a bare
+            // hour into a stated time rather than a stray number. Assigning the minute is how that
+            // is recorded — merely implying it leaves the time indistinguishable from the "read
+            // chapter 12" case and consumers discard it. Idiomatic in this language; Dutch and
+            // French, where the unit word is obligatory ("om 9 uur", "à 9h"), deliberately do not
+            // do this.
+            component.assign(.minute, value: 0)
         } else {
             component.imply(.minute, value: 0)
+        }
+
+        if match.string(at: 1) != nil, minute == nil, !component.isCertain(.meridiem),
+           let stated = component.get(.hour), (1...6).contains(stated) {
+            // A bare hour in the small numbers means the afternoon: nobody schedules "at 3" for
+            // three in the morning. Only the connector form with no minutes and no stated meridiem
+            // is nudged — "3:00", "3am" and 24-hour times all say what they mean already.
+            component.assign(.hour, value: stated + 12)
+            component.imply(.meridiem, value: Meridiem.pm.rawValue)
         }
 
         component.imply(.second, value: 0)

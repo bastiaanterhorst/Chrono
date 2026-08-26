@@ -5,7 +5,10 @@ import Foundation
 public final class ENCasualDateParser: Parser {
     /// The pattern to match casual date references
     public func pattern(context: ParsingContext) -> String {
-        return "(today|tonight|tomorrow|tmr|tmrw|yesterday|last\\s*night)(?=\\W|$)"
+        // The two-word forms lead: an alternation is tried left to right, so with "tomorrow" first
+        // the engine matched it *inside* "day after tomorrow" and reported the wrong day entirely.
+        return "(day after tomorrow|day before yesterday|today|tonight|tomorrow|tmr|tmrw"
+             + "|yesterday|last\\s*night)(?=\\W|$)"
     }
     
     /// Extracts date components from a casual date reference
@@ -32,6 +35,22 @@ public final class ENCasualDateParser: Parser {
                 component.assign(.day, value: components.day ?? 0)
             }
             
+        case "day after tomorrow":
+            if let target = calendar.date(byAdding: .day, value: 2, to: refDate) {
+                let components = calendar.dateComponents([.year, .month, .day], from: target)
+                component.assign(.year, value: components.year ?? 0)
+                component.assign(.month, value: components.month ?? 0)
+                component.assign(.day, value: components.day ?? 0)
+            }
+
+        case "day before yesterday":
+            if let target = calendar.date(byAdding: .day, value: -2, to: refDate) {
+                let components = calendar.dateComponents([.year, .month, .day], from: target)
+                component.assign(.year, value: components.year ?? 0)
+                component.assign(.month, value: components.month ?? 0)
+                component.assign(.day, value: components.day ?? 0)
+            }
+
         case "tomorrow", "tmr", "tmrw":
             if let tomorrow = calendar.date(byAdding: .day, value: 1, to: refDate) {
                 let components = calendar.dateComponents([.year, .month, .day], from: tomorrow)

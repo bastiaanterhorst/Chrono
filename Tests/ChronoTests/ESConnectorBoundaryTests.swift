@@ -34,7 +34,7 @@ struct ESConnectorBoundaryTests {
     /// Genuine connectors must still be recognized.
     @Test func realConnectorsStillWork() async throws {
         let cases: [(String, Int, Int)] = [
-            ("a las 3", 3, 0),
+            ("a las 3", 15, 0),   // a bare small hour behind a connector means the afternoon
             ("a las 15:30", 15, 30),
             ("al mediodía", 12, 0),
         ]

@@ -38,7 +38,13 @@ public enum DE {
             // An end-of-period phrase Chrono cannot read must come back unrecognised, not
             // reversed: without this the month inside it was claimed alone and resolved to
             // the *first*, a month away from what was written.
-            PeriodEndGuardRefiner(precedingWords: ["ende", "ende des", "ende der", "zum ende"])
+            AdjacentWordGuardRefiner(precedingWords: ["ende", "ende des", "ende der", "zum ende"]),
+            // Words around a match can rule it out as a date: a number introduced by
+            // "version" or "chapter" is an identifier, one followed by a unit is a
+            // measurement, and neither is ever a date in any language.
+            AdjacentWordGuardRefiner(
+                precedingWords: ["dr", "frau", "herr", "strasse des", "straße des", "weg", "allee", "platz", "str", "strasse", "straße", "version", "kapitel", "seite", "modell", "flug", "zimmer", "nr", "nummer", "verhältnis", "verhaltnis", "folge", "staffel", "schritt", "teil", "ergebnis", "stock", "etage"],
+                followingWords: ["allee", "platz", "strasse", "straße", "cm", "mm", "km", "kg", "gramm", "ml", "liter", "meter", "prozent", "euro", "jahren", "jahre"])
         ]
         
         // Add common configuration (ISO parsers and refiners)
@@ -75,7 +81,13 @@ public enum DE {
             // An end-of-period phrase Chrono cannot read must come back unrecognised, not
             // reversed: without this the month inside it was claimed alone and resolved to
             // the *first*, a month away from what was written.
-            PeriodEndGuardRefiner(precedingWords: ["ende", "ende des", "ende der", "zum ende"])
+            AdjacentWordGuardRefiner(precedingWords: ["ende", "ende des", "ende der", "zum ende"]),
+            // Words around a match can rule it out as a date: a number introduced by
+            // "version" or "chapter" is an identifier, one followed by a unit is a
+            // measurement, and neither is ever a date in any language.
+            AdjacentWordGuardRefiner(
+                precedingWords: ["dr", "frau", "herr", "strasse des", "straße des", "weg", "allee", "platz", "str", "strasse", "straße", "version", "kapitel", "seite", "modell", "flug", "zimmer", "nr", "nummer", "verhältnis", "verhaltnis", "folge", "staffel", "schritt", "teil", "ergebnis", "stock", "etage"],
+                followingWords: ["allee", "platz", "strasse", "straße", "cm", "mm", "km", "kg", "gramm", "ml", "liter", "meter", "prozent", "euro", "jahren", "jahre"])
         ]
         
         // Add common configuration (ISO parsers and refiners)

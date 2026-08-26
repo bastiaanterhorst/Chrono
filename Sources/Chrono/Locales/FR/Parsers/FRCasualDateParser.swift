@@ -6,7 +6,7 @@ public final class FRCasualDateParser: Parser {
     /// The pattern to match French casual date references. Keywords match whole words only:
     /// "lendemain" must not match "demain", "soirée" must not match "soir".
     public func pattern(context: ParsingContext) -> String {
-        return "(?<![\\w-])(?:aujourd'hui|auj|avant[ -]hier|hier|apres[ -]demain|demain|cette nuit|ce matin|cet après-midi|cet apres-midi|ce soir|soir)(?=\\W|$)"
+        return "(?<![\\w-])(?:aujourd'hui|auj|avant[ -]hier|hier|apr[eè]s[ -]demain|demain|cette nuit|ce matin|cet après-midi|cet apres-midi|ce soir|soir)(?=\\W|$)"
     }
     
     /// Extracts date components from a French casual date reference
