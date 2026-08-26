@@ -90,14 +90,17 @@ public struct CombineRelativeWeekAndWeekdayRefiner: Refiner {
 
     private func merge(week: ParsingResult, weekday: ParsingResult, context: ParsingContext,
                        nsText: NSString, nsLen: Int) -> ParsingResult? {
-        guard let weekAnchor = week.start.date(),    // Monday of the relative ISO week
+        guard let weekAnchor = week.start.date(),    // first day of the relative week
               let weekdayDate = weekday.start.date()  // the weekday, in whatever week it resolved to
         else { return nil }
 
-        let iso = Calendar(identifier: .iso8601)
-        let comp = iso.component(.weekday, from: weekdayDate) // 1=Sun … 7=Sat
-        let daysFromMonday = (comp == 1) ? 6 : (comp - 2)     // Mon=0 … Sat=5, Sun=6
-        guard let target = iso.date(byAdding: .day, value: daysFromMonday, to: weekAnchor) else { return nil }
+        // Measure the weekday from whichever day the parse's week starts on — Monday under ISO,
+        // but Sunday or Saturday for a host that counts weeks from there. `weekAnchor` is already
+        // that first day, so a fixed Monday offset would land in the wrong week for those hosts.
+        let iso = context.weekCalendar
+        let comp = iso.component(.weekday, from: weekdayDate)      // 1=Sun … 7=Sat
+        let daysFromWeekStart = (comp - iso.firstWeekday + 7) % 7  // 0 = the week's first day
+        guard let target = iso.date(byAdding: .day, value: daysFromWeekStart, to: weekAnchor) else { return nil }
 
         let merged = week.start.clone()
         let dc = iso.dateComponents([.year, .month, .day], from: target)

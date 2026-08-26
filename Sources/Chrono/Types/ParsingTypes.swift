@@ -288,6 +288,12 @@ public final class ParsingContext: @unchecked Sendable {
     var refDate: Date {
         return reference.instant
     }
+
+    /// A calendar counting weeks by the convention this parse was asked for. Every week number this
+    /// parse reads or writes must go through it, or the number typed and the number stored differ.
+    var weekCalendar: Calendar {
+        return reference.weekCalendar
+    }
     
     /// Creates a new parsing context
     /// - Parameters:

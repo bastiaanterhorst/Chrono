@@ -19,7 +19,9 @@ public final class ENISOWeekNumberParser: AbstractParserWithWordBoundaryChecking
         }
 
         let explicitWeekYear = extractWeekYear(from: matchedText)
-        let calendar = Calendar(identifier: .iso8601)
+        // Weeks are counted by this parse's convention, so the number the user typed is
+        // the number that comes back out.
+        let calendar = context.weekCalendar
         let resolvedWeekYear = explicitWeekYear ?? calendar.component(.yearForWeekOfYear, from: context.reference.instant)
 
         let components = ParsingComponents(reference: context.reference)
@@ -34,7 +36,7 @@ public final class ENISOWeekNumberParser: AbstractParserWithWordBoundaryChecking
         var dateComponents = DateComponents()
         dateComponents.weekOfYear = weekNumber
         dateComponents.yearForWeekOfYear = resolvedWeekYear
-        dateComponents.weekday = 2
+        dateComponents.weekday = calendar.firstWeekday
         dateComponents.hour = 12
         dateComponents.minute = 0
         dateComponents.second = 0

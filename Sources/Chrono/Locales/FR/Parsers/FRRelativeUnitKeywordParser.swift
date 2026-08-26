@@ -77,8 +77,8 @@ public struct FRRelativeUnitKeywordParser: Parser {
     }
 
     private func extractWeek(context: ParsingContext, offset: Int) -> ParsingComponents? {
-        var isoCalendar = Calendar(identifier: .iso8601)
-        isoCalendar.firstWeekday = 2
+        // Weeks counted by this parse's convention, so "next week" is the host's week.
+        let isoCalendar = context.weekCalendar
 
         guard let targetDate = isoCalendar.date(
             byAdding: .weekOfYear,
@@ -99,7 +99,7 @@ public struct FRRelativeUnitKeywordParser: Parser {
         var weekStartComponents = DateComponents()
         weekStartComponents.weekOfYear = isoWeek
         weekStartComponents.yearForWeekOfYear = isoWeekYear
-        weekStartComponents.weekday = 2
+        weekStartComponents.weekday = context.weekCalendar.firstWeekday
 
         if let weekStart = isoCalendar.date(from: weekStartComponents) {
             let values = isoCalendar.dateComponents([.year, .month, .day], from: weekStart)

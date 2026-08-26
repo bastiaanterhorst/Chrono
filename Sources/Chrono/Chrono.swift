@@ -80,10 +80,14 @@ public struct Chrono: Sendable {
             reference = ReferenceWithTimezone()
         }
         
+        let resolvedOptions = options ?? ParsingOptions()
+        // Hand the week convention to the reference so it reaches every component built from it.
+        reference.weekRules = resolvedOptions.weekRules
+
         let context = ParsingContext(
             text: text,
             reference: reference,
-            options: options ?? ParsingOptions()
+            options: resolvedOptions
         )
         
         var results: [ParsingResult] = []

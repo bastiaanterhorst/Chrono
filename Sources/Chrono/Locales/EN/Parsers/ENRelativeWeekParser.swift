@@ -41,7 +41,7 @@ public class ENRelativeWeekParser: AbstractParserWithWordBoundaryChecking, @unch
         let matched = match.string(at: 0) ?? match.text
         let text = matched.lowercased()
         let referenceDate = context.reference.instant
-        let calendar = Calendar(identifier: .iso8601)
+        let calendar = context.weekCalendar
         
         // Enable debug logs to track the capture groups
         let DEBUG = true
@@ -203,7 +203,7 @@ public class ENRelativeWeekParser: AbstractParserWithWordBoundaryChecking, @unch
         var dateComponents = DateComponents()
         dateComponents.weekOfYear = targetWeek
         dateComponents.yearForWeekOfYear = targetWeekYear
-        dateComponents.weekday = 2 // Monday (2 in ISO 8601)
+        dateComponents.weekday = context.weekCalendar.firstWeekday // Monday (2 in ISO 8601)
         dateComponents.hour = 12
         dateComponents.minute = 0
         dateComponents.second = 0

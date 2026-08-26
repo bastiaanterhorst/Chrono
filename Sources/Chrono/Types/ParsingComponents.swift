@@ -61,8 +61,9 @@ public final class ParsingComponents: @unchecked Sendable {
         imply(.second, value: 0)
         imply(.millisecond, value: 0)
         
-        // Set default implied values for ISO week
-        let isoCalendar = Calendar(identifier: .iso8601)
+        // Set default implied values for the week holding the reference date, counted by the
+        // convention this parse was given (ISO unless the host said otherwise).
+        let isoCalendar = reference.weekCalendar
         let isoComponents = isoCalendar.dateComponents([.weekOfYear, .yearForWeekOfYear], from: reference.instant)
         
         imply(.isoWeek, value: isoComponents.weekOfYear ?? 1)
@@ -240,15 +241,17 @@ public final class ParsingComponents: @unchecked Sendable {
     /// - Parameters:
     ///   - week: The ISO week number (1-53)
     ///   - year: The ISO week year
-    /// - Returns: Date representing the Monday of that week
+    /// - Returns: Date representing the first day of that week
     private func dateFromISOWeek(week: Int, year: Int) -> Date? {
-        var calendar = Calendar(identifier: .iso8601)
-        calendar.firstWeekday = 2 // Monday is the first day
-        
+        // Counted by this parse's week convention, and landing on *its* first day — Monday under
+        // ISO, Sunday for a host that starts weeks there. Reading the number back off this date
+        // with the same calendar is then an identity round-trip, which is the whole point.
+        let calendar = reference.weekCalendar
+
         var components = DateComponents()
         components.weekOfYear = week
         components.yearForWeekOfYear = year
-        components.weekday = 2 // Monday (2 in ISO 8601)
+        components.weekday = calendar.firstWeekday
         
         // Add time components if available
         if let hour = get(.hour) {

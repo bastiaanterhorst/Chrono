@@ -91,7 +91,7 @@ final class ZHRelativeWeekParser: AbstractParserWithWordBoundaryChecking, @unche
         let matchedText = matched.trimmingCharacters(in: .whitespacesAndNewlines)
         let matchIndex = match.startIndex(at: 0) ?? match.index
         let referenceDate = context.reference.instant
-        let calendar = Calendar(identifier: .iso8601)
+        let calendar = context.weekCalendar
 
         let weekOffset: Int
         let isWeekend: Bool
@@ -140,7 +140,7 @@ final class ZHRelativeWeekParser: AbstractParserWithWordBoundaryChecking, @unche
         var dateComponents = DateComponents()
         dateComponents.weekOfYear = targetWeek
         dateComponents.yearForWeekOfYear = targetWeekYear
-        dateComponents.weekday = 2
+        dateComponents.weekday = context.weekCalendar.firstWeekday
         dateComponents.hour = 12
         dateComponents.minute = 0
         dateComponents.second = 0

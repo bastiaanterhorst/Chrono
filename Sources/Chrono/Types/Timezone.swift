@@ -257,6 +257,14 @@ public func getLastWeekdayOfMonth(year: Int, month: Month, weekday: Weekday, hou
 public final class ReferenceWithTimezone: @unchecked Sendable {
     /// The reference date
     let instant: Date
+
+    /// The week convention this parse counts in. Set from `ParsingOptions` at the top of a parse
+    /// and carried here because every `ParsingComponents` already holds the reference — it is the
+    /// one object on the path from `Chrono.parse` down to a week number becoming a date.
+    var weekRules: WeekRules = .iso
+
+    /// A calendar counting weeks the way this parse was asked to.
+    var weekCalendar: Calendar { weekRules.calendar }
     
     /// The timezone offset in minutes
     let timezoneOffset: Int?

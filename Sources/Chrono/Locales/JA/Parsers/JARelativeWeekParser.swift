@@ -39,7 +39,7 @@ final class JARelativeWeekParser: AbstractParserWithWordBoundaryChecking, @unche
         let matched = match.string(at: 0) ?? match.text
         let text = matched
         let referenceDate = context.reference.instant
-        let calendar = Calendar(identifier: .iso8601)
+        let calendar = context.weekCalendar
         let allNumbers = extractAllNumbers(from: text)
         var weekOffset = 0
 
@@ -91,7 +91,7 @@ final class JARelativeWeekParser: AbstractParserWithWordBoundaryChecking, @unche
         var dateComponents = DateComponents()
         dateComponents.weekOfYear = targetWeek
         dateComponents.yearForWeekOfYear = targetWeekYear
-        dateComponents.weekday = 2
+        dateComponents.weekday = context.weekCalendar.firstWeekday
         dateComponents.hour = 12
         dateComponents.minute = 0
         dateComponents.second = 0
