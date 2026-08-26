@@ -107,7 +107,13 @@ public final class ENMergeDateTimeRefiner: Refiner {
         }
         
         if let year = dateComponents.get(.year) {
-            mergedComponents.assign(.year, value: year)
+            // Carry the year across without inventing certainty: a year the user never typed stays
+            // *inferred*, so `ForwardDateRefiner` can still roll "april 22 3pm" into next April.
+            if dateComponents.isCertain(.year) {
+                mergedComponents.assign(.year, value: year)
+            } else {
+                mergedComponents.imply(.year, value: year)
+            }
         }
         
         if let weekday = dateComponents.get(.weekday) {

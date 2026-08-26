@@ -170,7 +170,13 @@ public final class FRMergeDateTimeRefiner: Refiner {
         }
         
         if let year = dateResult.start.get(.year) {
-            mergedComponents.assign(.year, value: year)
+            // Certainty must survive the merge unchanged — an inferred year stays inferred, so
+            // forward-dating can still correct a month that has already gone by.
+            if dateResult.start.isCertain(.year) {
+                mergedComponents.assign(.year, value: year)
+            } else {
+                mergedComponents.imply(.year, value: year)
+            }
         }
         
         if let weekday = dateResult.start.get(.weekday) {

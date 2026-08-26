@@ -17,7 +17,25 @@ public final class ForwardDateRefiner: Refiner {
         
         // Get the reference date
         let refDate = context.reference.instant
-        
+
+        // A stated month whose year was only *inferred* and that has already gone by means the
+        // NEXT one: on 26 August, "april 22" is 22 April next year, not four months ago. The
+        // reference year is the only year a month-name parser can infer, so the correction belongs
+        // here — once, after every locale's parsers have run — rather than in each of them (they
+        // variously get the month-first form right and the day-first form wrong, or miss a past day
+        // inside the current month). Runs before the narrow 1–3 day nudge below, which it subsumes
+        // for month-bearing results.
+        for result in results {
+            let shift = yearsForward(result.start, refDate: refDate)
+            applyYearShift(result.start, years: shift)
+            if let end = result.end {
+                // Shift the end by at least as much as the start, so a range never inverts:
+                // "20 August to 5 September" moves whole, and "28 December to 3 January" — where
+                // only the end has gone by — still closes in the following year.
+                applyYearShift(end, years: max(shift, yearsForward(end, refDate: refDate)))
+            }
+        }
+
         return results.map { result in
             // Handle ISO week shorthand with implied year (e.g. "w10").
             // If that inferred week is already behind the reference date, move it to next year.
@@ -112,5 +130,40 @@ public final class ForwardDateRefiner: Refiner {
             
             return result
         }
+    }
+
+    /// Whether these components state a month but only infer the year, making a year bump the
+    /// right way to forward-date them. Weekday- and ISO-week-based results are excluded: those
+    /// carry their own forward-dating, and a year is the wrong unit to move them by.
+    private func isYearShiftable(_ components: ParsingComponents) -> Bool {
+        components.isCertain(.month)
+            && !components.isCertain(.year)
+            && !components.isCertain(.weekday)
+            && !components.isCertain(.isoWeek)
+            && !components.isCertain(.isoWeekYear)
+    }
+
+    /// How many years these components must move to stop being in the past. Compared at day
+    /// granularity so that "26 August", typed on the afternoon of 26 August, stays today rather
+    /// than jumping a year. Bounded, so an impossible date (e.g. "february 30") can't spin.
+    private func yearsForward(_ components: ParsingComponents, refDate: Date) -> Int {
+        guard isYearShiftable(components) else { return 0 }
+        let calendar = Calendar.current
+        let refDay = calendar.startOfDay(for: refDate)
+        let probe = components.clone()
+        var years = 0
+        while years < 4 {
+            guard let date = probe.date(), calendar.startOfDay(for: date) < refDay,
+                  let year = probe.get(.year) else { break }
+            probe.imply(.year, value: year + 1)
+            years += 1
+        }
+        return years
+    }
+
+    /// Moves the inferred year forward by `years`, leaving it inferred — the user never stated it.
+    private func applyYearShift(_ components: ParsingComponents, years: Int) {
+        guard years > 0, isYearShiftable(components), let year = components.get(.year) else { return }
+        components.imply(.year, value: year + years)
     }
 }
