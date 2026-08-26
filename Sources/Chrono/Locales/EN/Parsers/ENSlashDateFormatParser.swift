@@ -3,7 +3,9 @@ import Foundation
 
 /// Parser for slash date formats (e.g., 12/31/2021, 12/31, 12-31-2021)
 public final class ENSlashDateFormatParser: Parser {
-    private static let PATTERN = "(?:on\\s*)?(0?[1-9]|1[0-2])[\\/-](0?[1-9]|[12][0-9]|3[01])(?:[\\/-]([0-9]{2,4}))?(?=\\W|$)"
+    // The leading lookbehind stops the match starting midway through a longer number: without
+    // it "22-4" matched from the second digit as "2-4" and became 4 February.
+    private static let PATTERN = "(?<![0-9./-])(?:on\\s*)?(0?[1-9]|1[0-2])[\\/-](0?[1-9]|[12][0-9]|3[01])(?:[\\/-]([0-9]{2,4}))?(?=\\W|$)"
     
     /// Returns the regex pattern for this parser
     public func pattern(context: ParsingContext) -> String {

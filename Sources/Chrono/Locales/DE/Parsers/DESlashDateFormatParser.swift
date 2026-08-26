@@ -6,7 +6,9 @@ public final class DESlashDateFormatParser: Parser {
     // Accept ".", "/" and "-" as separators so dotted "dd.mm" dates (common in DE) are recognized
     // as dates, not times. The leading "\\s*" makes this match's span align with the time parser's
     // (which consumes a leading boundary space) so OverlapRemovalRefiner prefers the date.
-    private static let PATTERN = "(?:am\\s*)?\\s*(0?[1-9]|[12][0-9]|3[01])[\\/\\.\\-](0?[1-9]|1[0-2])(?:[\\/\\.\\-]([0-9]{2,4}))?(?=\\W|$)"
+    // The leading lookbehind stops the match starting midway through a longer number:
+    // without it "123.4" matched from the second digit and became 23 April.
+    private static let PATTERN = "(?<![0-9./-])(?:am\\s*)?\\s*(0?[1-9]|[12][0-9]|3[01])[\\/\\.\\-](0?[1-9]|1[0-2])(?:[\\/\\.\\-]([0-9]{2,4}))?(?=\\W|$)"
     
     /// Returns the regex pattern for this parser
     public func pattern(context: ParsingContext) -> String {

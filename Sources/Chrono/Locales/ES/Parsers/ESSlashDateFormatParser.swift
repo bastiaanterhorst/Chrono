@@ -8,7 +8,9 @@ import Foundation
 /// the time parser's (which consumes a leading boundary space) so OverlapRemovalRefiner prefers
 /// the date when a dotted token could be read either way.
 public final class ESSlashDateFormatParser: Parser {
-    private static let PATTERN = "\\s*(0?[1-9]|[12][0-9]|3[01])[\\/\\.\\-](0?[1-9]|1[0-2])(?:[\\/\\.\\-]([0-9]{2,4}))?(?=\\W|$)"
+    // The leading lookbehind stops the match starting midway through a longer number:
+    // without it "123.4" matched from the second digit and became 23 April.
+    private static let PATTERN = "(?<![0-9./-])\\s*(0?[1-9]|[12][0-9]|3[01])[\\/\\.\\-](0?[1-9]|1[0-2])(?:[\\/\\.\\-]([0-9]{2,4}))?(?=\\W|$)"
 
     public init() {}
 

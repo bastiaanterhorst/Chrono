@@ -163,7 +163,13 @@ public struct Chrono: Sendable {
         // Loop to find all matches
         while searchRange.location < originalText.utf16.count && searchRange.length > 0 {
             // Find next match in the current search range
-            guard let match = regex.firstMatch(in: originalText, options: [], range: searchRange) else {
+            // `.withoutAnchoringBounds` keeps `^` and `$` tied to the whole string rather than to
+            // this search range. Without it, every time the loop stepped past a rejected match the
+            // range start became a fresh `^`, so a pattern guarding its left edge with `(\W|^)`
+            // silently stopped guarding: "22.4" was rejected as month 22, retried one digit in, and
+            // matched "2.4" — 4 February. Whole-string anchoring is what those guards assume.
+            guard let match = regex.firstMatch(in: originalText, options: [.withoutAnchoringBounds],
+                                               range: searchRange) else {
                 break
             }
             

@@ -4,7 +4,9 @@ import Foundation
 /// Parser for slash-separated dates in Dutch (day/month/year)
 final class NLSlashDateFormatParser: Parser {
     func pattern(context: ParsingContext) -> String {
-        return "(?:(?:op)\\s*)?\\s*" +
+        // The leading lookbehind stops the match starting midway through a longer number:
+        // without it "123.4" matched from the second digit and became 23 April.
+        return "(?<![0-9./-])(?:(?:op)\\s*)?\\s*" +
             "([0-9]{1,2})" +
             "[\\/\\.\\-]" +
             "([0-9]{1,2})" +
