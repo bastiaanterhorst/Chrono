@@ -27,8 +27,8 @@ enum KOConstants {
         ("내일", 1),
     ]
 
-    /// Rough times of day and the hour each names. Every token is two syllables: a bare 밤 ("night")
-    /// is also the word for chestnut, and a bare 낮 appears inside 낮잠, so neither stands alone.
+    /// Rough times of day and the hour each names, for use as a *prefix to a stated clock time*
+    /// ("밤 9시", "낮 12시"), where the following 시 is what proves the word is doing temporal work.
     static let timeOfDayHours: [String: (hour: Int, meridiem: Meridiem)] = [
         "새벽": (5, .am),
         "아침": (8, .am),
@@ -40,16 +40,32 @@ enum KOConstants {
         "오후": (15, .pm),
     ]
 
+    /// The subset that may stand alone as a time of day, with no clock time to vouch for it.
+    ///
+    /// Every one is two syllables, and that is the whole point. Hangul is `\w` to ICU, so `\b`
+    /// cannot separate two syllables, and a one-syllable token is therefore free to be cut out of a
+    /// longer word: 밤 is also the word for chestnut, so "밤 10개 사기" (buy ten chestnuts) became
+    /// 20:00, and 낮 sits inside 낮잠, so "낮잠 자기" (take a nap) became 14:00 with the word itself
+    /// broken in half. Both still work in front of a clock time, where 시 settles it.
+    static let standaloneTimeOfDayWords: [String] = [
+        "새벽", "아침", "점심", "저녁", "오전", "오후",
+    ]
+
     /// Weekday syllable → `Calendar` weekday number (1 = Sunday).
     static let weekdays: [String: Int] = [
         "일": 1, "월": 2, "화": 3, "수": 4, "목": 5, "금": 6, "토": 7,
     ]
 
     /// "this / next / last" as they attach to 주 (week), 달 (month) and 해 (year).
+    ///
+    /// 전 is deliberately absent. It would give 전달 for "last month", but 전달 is far more commonly
+    /// the everyday word for a delivery — "전달 확인" is checking one, not scheduling last month —
+    /// and Korean says 지난달 for the month anyway. The 전 in "2주 전" is a different thing: it is the
+    /// direction word of a counted expression, read elsewhere, and is unaffected.
     static let relativeModifiers: [String: Int] = [
         "이번": 0, "금": 0,
         "다음": 1, "담": 1, "오는": 1, "내": 1,
-        "지난": -1, "저번": -1, "전": -1,
+        "지난": -1, "저번": -1,
     ]
 
     /// Optional space: Korean compounds are written both ways ("다음 주" and "다음주").

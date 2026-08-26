@@ -114,9 +114,38 @@ struct KOParserTests {
         #expect(r?.start.isCertain(.meridiem) == true)
     }
 
+    /// A one-syllable token is free to be cut out of a longer word — Hangul is `\w` to ICU, so `\b`
+    /// never fires between two syllables. 밤 is also the word for chestnut and 낮 sits inside 낮잠,
+    /// so neither may stand alone as a time of day: "낮잠 자기" (take a nap) resolved to 14:00 with
+    /// the word itself broken in half, and "밤 10개 사기" (buy ten chestnuts) to 20:00.
+    @Test func oneSyllableTimeWordsDoNotStandAlone() {
+        for text in ["낮잠 자기", "밤 10개 사기", "밤새 작업"] {
+            let results = KO.casual.parse(text: text, referenceDate: ref, options: opts)
+            #expect(results.isEmpty, "'\(text)' should not parse, got \(results.map(\.text))")
+        }
+    }
+
+    /// The same words in front of a stated clock time are genuine: 시 vouches for them.
+    @Test func oneSyllableTimeWordsStillQualifyAClockTime() {
+        func hour(_ text: String) -> Int? {
+            KO.casual.parse(text: text, referenceDate: ref, options: opts)
+                .first(where: { $0.start.isCertain(.hour) })?.start.get(.hour)
+        }
+        #expect(hour("밤 9시 산책") == 21)
+        #expect(hour("낮 12시 약속") == 12)
+    }
+
+    /// A particle attached directly to a word is part of it: 내년도 is one word, and matching only
+    /// 내년 left the 도 stranded in the task name.
+    @Test func aTrailingParticleIsConsumed() {
+        let r = KO.casual.parse(text: "내년도 계획", referenceDate: ref, options: opts).first
+        #expect(r?.text.trimmingCharacters(in: .whitespaces) == "내년도")
+    }
+
     /// Ordinary Korean that merely contains a date syllable must not become a date.
     @Test func nonDatesStayNonDates() {
-        for text in ["3장 읽기", "사과 2개 사기", "일본 여행 계획", "생일 선물"] {
+        for text in ["3장 읽기", "사과 2개 사기", "일본 여행 계획", "생일 선물",
+                     "전달 확인", "말하기 연습", "월급날 확인"] {
             let dates = KO.casual.parse(text: text, referenceDate: ref, options: opts)
                 .filter { $0.start.isCertain(.day) || $0.start.isCertain(.month) }
             #expect(dates.isEmpty, "'\(text)' should not yield a date, got \(dates.map(\.text))")

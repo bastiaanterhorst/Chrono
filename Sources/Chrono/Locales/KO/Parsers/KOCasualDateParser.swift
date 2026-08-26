@@ -15,7 +15,10 @@ public struct KOCasualDateParser: Parser {
 
     public func pattern(context: ParsingContext) -> String {
         let days = KOConstants.dayWords.map { $0.token }.joined(separator: "|")
-        let periods = KOConstants.timeOfDayHours.keys.sorted { $0.count > $1.count }.joined(separator: "|")
+        // Only the words that can stand on their own — a one-syllable token would be cut out of a
+        // longer word, which is how "낮잠" (a nap) turned into 14:00.
+        let periods = KOConstants.standaloneTimeOfDayWords.sorted { $0.count > $1.count }
+            .joined(separator: "|")
         return "(?:(" + days + ")|(" + periods + ")" + KOConstants.notFollowedByClockTime + ")"
     }
 

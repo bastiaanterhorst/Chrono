@@ -24,11 +24,15 @@ public struct KORelativeUnitParser: Parser {
             .joined(separator: "|")
         // 1: count, 2: unit, 3: direction
         let counted = "(\\d{1,3})" + s + "(" + units + ")" + s + "(후|뒤|전|이내|안)"
-        // 4: modifier, 5: named unit (주말 first so it wins over 주)
+        // 5: modifier, 6: named unit (주말 first so it wins over 주)
         let named = "(" + modifiers + ")" + s + "(주말|주|달|월|해|년)(?!요일)"
-        // 6: standalone year words
-        let standalone = "(내년|작년|올해|금년)"
-        return "(?:" + counted + "|" + named + "|" + standalone + ")"
+        // 4: standalone year words. 도 ("also", "as well") attaches directly — 내년도 is one word —
+        // so it is consumed rather than left stranded in the task name.
+        let standalone = "(내년|작년|올해|금년)도?"
+        // `standalone` precedes `named` because a regex alternation is tried left to right at each
+        // position: 내년도 would otherwise be claimed by `named` as 내 + 년, matching only 내년 and
+        // leaving the 도 stranded in the task name.
+        return "(?:" + counted + "|" + standalone + "|" + named + ")"
     }
 
     public func extract(context: ParsingContext, match: TextMatch) -> Any? {
@@ -47,8 +51,8 @@ public struct KORelativeUnitParser: Parser {
             return components
         }
 
-        if let modifier = match.string(at: 4), let offset = KOConstants.relativeModifiers[modifier],
-           let unit = match.string(at: 5) {
+        if let modifier = match.string(at: 5), let offset = KOConstants.relativeModifiers[modifier],
+           let unit = match.string(at: 6) {
             switch unit {
             case "주말":
                 guard let components = WeekendResolver.weekendComponents(
@@ -64,7 +68,7 @@ public struct KORelativeUnitParser: Parser {
             }
         }
 
-        if let word = match.string(at: 6) {
+        if let word = match.string(at: 4) {
             let offset = (word == "내년") ? 1 : (word == "작년" ? -1 : 0)
             return shifted(context: context, component: .year, offset: offset, snapToFirst: false)
         }
